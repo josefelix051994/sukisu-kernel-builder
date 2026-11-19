@@ -14,9 +14,9 @@ const state = {
   curRunId: null,
   curDeviceLabel: '',
   pollTimer: null,
-  logXHR: null,
-  logLen: 0,
-  logStopped: false,
+  lastLogText: '',
+  logWaiting: false,
+  logBusy: false,
   logFollow: true,
   pollCount: 0,
 };
@@ -139,7 +139,8 @@ async function startBuild(dryRun) {
     $('artifacts').hidden = true;
     $('log').textContent = '';
     $('cancel-btn').hidden = false;
-    state.logLen = 0;
+    state.lastLogText = '';
+    state.logWaiting = false;
     const run = await findNewRun();
     if (!run) { setMsg('触发成功但 30 秒内未找到对应运行, 请稍后在「最近构建」中查看。', true); return; }
     state.curRunId = run.id;
@@ -195,8 +196,9 @@ async function attachRun(runId) {
   stopPolling();
   state.curRunId = runId;
   $('progress-card').hidden = false;
-  state.logLen = 0;
-  state.logStopped = false;
+  state.lastLogText = '';
+  state.logWaiting = false;
+  state.logBusy = false;
   $('log').textContent = '';
   $('artifacts').hidden = true;
   $('cancel-btn').hidden = true;
@@ -211,17 +213,16 @@ async function tick() {
     const run = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${state.curRunId}`);
     renderRun(run);
     const jobs = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${state.curRunId}/jobs`);
-    renderSteps(jobs.jobs || []);
+    const jobList = jobs.jobs || [];
+    renderSteps(jobList);
+    const jobLogsUrl = jobList.length ? jobList[0].logs_url : null;
     if (run.status === 'in_progress' || run.status === 'queued') {
-      if (!state.logStopped) startLogStream(run);
+      if (!state.logBusy) refreshLog(run, jobLogsUrl);
     } else if (run.status === 'completed') {
-      stopLogStream();
-      if (!$('log').textContent) {
-        $('log').textContent = '(构建已结束, 实时日志流已关闭。点击右上角「在 GitHub 打开」可查看完整日志。)';
-      }
+      stopPolling();
+      await refreshLog(run, jobLogsUrl, true);
       await renderArtifacts(run);
       $('cancel-btn').hidden = true;
-      stopPolling();
       await renderHistory();
     }
   } catch (e) {
@@ -275,41 +276,55 @@ function duration(a, b) {
   return m >= 60 ? `${Math.floor(m / 60)}h${m % 60}m` : `${m}m${s % 60}s`;
 }
 
-/* ---------- 实时日志(XHR 流式读取) ---------- */
-function startLogStream(run) {
-  if (state.logXHR || !run.logs_url) return;
-  const xhr = new XMLHttpRequest();
-  state.logXHR = xhr;
-  state.logStopped = false;
-  state.logLen = 0;
-  $('log').textContent = '';
-  xhr.open('GET', run.logs_url, true);
-  if (state.token) xhr.setRequestHeader('Authorization', `Bearer ${state.token}`);
-  xhr.onprogress = () => {
-    const ct = xhr.getResponseHeader('content-type') || '';
-    if (ct.includes('zip') || ct.includes('octet-stream')) { stopLogStream(); return; }
-    const t = xhr.responseText || '';
-    if (t.length > state.logLen) {
-      $('log').textContent += t.slice(state.logLen);
-      state.logLen = t.length;
-      trimLog();
+/* ---------- 实时日志(轮询 job 级日志端点) ----------
+ * 实测 GitHub API 行为:
+ *  - run 级 /logs: 进行中返回 404, 结束后返回 zip(不便于展示)
+ *  - job 级 /logs: 302 跳转到 Azure blob 的 job-logs.txt(签名 URL, 无需鉴权),
+ *    进行中该 blob 会逐渐增长, 结束后返回完整 text/plain —— 用它最稳 */
+async function refreshLog(run, jobLogsUrl, isFinal) {
+  if (state.logBusy) return;
+  state.logBusy = true;
+  try {
+    const url = jobLogsUrl || run.logs_url;
+    if (!url) { state.logBusy = false; return; }
+    const res = await fetch(url, { headers: state.token ? { Authorization: `Bearer ${state.token}` } : {} });
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('zip') || ct.includes('octet-stream')) {
+      // 极端情况: job 级也返回 zip —— 放弃解析
+      if (!$('log').textContent) $('log').textContent = '(日志为压缩包格式, 请点右上角「在 GitHub 打开」查看。)';
+      state.logBusy = false;
+      return;
+    }
+    if (!res.ok) {
+      // 进行中时 blob 可能尚未生成(404), 安静重试
+      if (!isFinal && !state.logWaiting && !$('log').textContent) {
+        state.logWaiting = true;
+        $('log').textContent = '(构建日志尚未生成, 自动每 10 秒重试…)\n';
+      } else if (isFinal && !$('log').textContent) {
+        $('log').textContent = '(无法获取日志, 请点右上角「在 GitHub 打开」查看。)';
+      }
+      state.logBusy = false;
+      if (!isFinal) setTimeout(() => { if (state.curRunId === run.id) refreshLog(run, jobLogsUrl); }, 10000);
+      return;
+    }
+    const text = await res.text();
+    if (text && text !== state.lastLogText) {
+      state.lastLogText = text;
+      state.logWaiting = false;
+      const lines = text.split('\n');
+      $('log').textContent = (lines.length > 300 ? '...(已截断, 仅显示末尾 300 行)\n' : '') + lines.slice(-300).join('\n');
       if (state.logFollow) $('log').scrollTop = $('log').scrollHeight;
     }
-  };
-  xhr.onerror = () => {
-    state.logXHR = null;
-    $('log').textContent += '\n[日志流连接失败, 请点击右上角「在 GitHub 打开」查看日志]\n';
-  };
-  xhr.onloadend = () => { state.logXHR = null; state.logStopped = true; };
-  try { xhr.send(); } catch { state.logXHR = null; state.logStopped = true; }
-}
-function stopLogStream() {
-  if (state.logXHR) { try { state.logXHR.abort(); } catch {} state.logXHR = null; }
-}
-function trimLog() {
-  const box = $('log');
-  const lines = box.textContent.split('\n');
-  if (lines.length > 400) box.textContent = '...(已截断)\n' + lines.slice(-300).join('\n');
+    state.logBusy = false;
+    if (!isFinal && (run.status === 'in_progress' || run.status === 'queued')) {
+      setTimeout(() => { if (state.curRunId === run.id) refreshLog(run, jobLogsUrl); }, 10000);
+    } else if (isFinal && !$('log').textContent) {
+      $('log').textContent = '(日志为空, 请点右上角「在 GitHub 打开」查看。)';
+    }
+  } catch {
+    state.logBusy = false;
+    if (!isFinal) setTimeout(() => { if (state.curRunId === run.id) refreshLog(run, jobLogsUrl); }, 10000);
+  }
 }
 
 /* ---------- 产物 ---------- */
