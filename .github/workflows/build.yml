@@ -12,11 +12,11 @@ on:
         required: false
         default: '1'
       ksu_branch:
-        description: 'SukiSU 集成分支'
-        required: true
+        description: 'SukiSU 集成分支(留空=自动: GKI 用 main, 传统内核用 builtin)'
+        required: false
         type: choice
-        options: [main, builtin]
-        default: main
+        options: ['', main, builtin]
+        default: ''
       ksu_mode:
         description: 'CONFIG_KSU 模式: 留空=自动(GKI 用 m, 非 GKI 用 y)'
         required: false
@@ -30,6 +30,11 @@ on:
         default: false
       debug_ksu:
         description: '启用 KSU_DEBUG'
+        required: false
+        type: boolean
+        default: false
+      susfs:
+        description: '启用 SUSFS(要求内核已集成 susfs4ksu 补丁, 否则编译失败)'
         required: false
         type: boolean
         default: false
@@ -103,6 +108,7 @@ jobs:
           KSU_MODE: ${{ inputs.ksu_mode }}
           KPM: ${{ inputs.kpm }}
           DEBUG_KSU: ${{ inputs.debug_ksu }}
+          SUSFS: ${{ inputs.susfs }}
           JOBS: ${{ inputs.jobs }}
           CLEAN: ${{ inputs.clean }}
           CUSTOM_REPO: ${{ inputs.custom_repo }}
@@ -124,10 +130,11 @@ jobs:
           else
             ARGS+=(--device "$DEVICE" --version "${VERSION:-1}")
           fi
-          ARGS+=(--ksu "$KSU_BRANCH")
+          [ -n "$KSU_BRANCH" ] && ARGS+=(--ksu "$KSU_BRANCH")
           [ -n "$KSU_MODE" ] && ARGS+=(--ksu-mode "$KSU_MODE")
           [ "$KPM" = "true" ] && ARGS+=(--kpm)
           [ "$DEBUG_KSU" = "true" ] && ARGS+=(--debug-ksu)
+          [ "$SUSFS" = "true" ] && ARGS+=(--susfs)
           [ -n "$JOBS" ] && ARGS+=(--jobs "$JOBS")
           [ "$CLEAN" = "true" ] && ARGS+=(--clean)
           [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
@@ -154,7 +161,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-${{ inputs.device }}-${{ inputs.ksu_branch }}
+          name: kernel-${{ inputs.device }}-${{ inputs.ksu_branch || 'auto' }}
           path: output/*
           if-no-files-found: error
           retention-days: 14

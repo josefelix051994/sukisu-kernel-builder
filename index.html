@@ -43,8 +43,9 @@
       </label>
       <label>SukiSU 集成分支
         <select id="ksu-branch">
-          <option value="main">main —— Kprobes 运行时 hook(教程默认)</option>
-          <option value="builtin">builtin —— 自动 hook 替代(需 4.19+)</option>
+          <option value="">自动(推荐: GKI → main, 传统内核 → builtin)</option>
+          <option value="main">main —— Kprobes 运行时 hook(GKI 用)</option>
+          <option value="builtin">builtin —— 传统内核 4.4+ 兼容分支</option>
         </select>
       </label>
     </div>
@@ -65,6 +66,7 @@
         </label>
         <label class="chk"><input type="checkbox" id="kpm"> 启用 KPM</label>
         <label class="chk"><input type="checkbox" id="debug-ksu"> 启用 KSU_DEBUG</label>
+        <label class="chk" title="仅当目标内核已集成 susfs4ksu 补丁时勾选"><input type="checkbox" id="susfs"> 启用 SUSFS(需内核已打补丁)</label>
         <label class="chk"><input type="checkbox" id="clean"> 全新构建(清空 work/)</label>
       </div>
       <div class="row custom-toggle">

@@ -109,8 +109,10 @@ function renderVersions() {
     sel.appendChild(o);
   });
   const v = dev.versions[0];
+  // 按设备类型预选集成分支: GKI → main, 传统内核 → builtin (用户仍可手动改)
+  $('ksu-branch').value = v && v.gki == 1 ? 'main' : 'builtin';
   $('device-info').innerHTML = v
-    ? `仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}`
+    ? `仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''}`
     : '';
 }
 
@@ -119,6 +121,11 @@ function toggleCustom() {
   $('custom-fields').hidden = !on;
   $('device').disabled = on;
   $('version').disabled = on;
+  if (on) {
+    $('ksu-branch').value = '';
+  } else {
+    renderVersions();
+  }
 }
 
 /* ---------- 触发构建 ---------- */
@@ -161,6 +168,7 @@ function collectInputs(dryRun) {
     ksu_mode: $('ksu-mode').value,
     kpm: String($('kpm').checked),
     debug_ksu: String($('debug-ksu').checked),
+    susfs: String($('susfs').checked),
     jobs: $('jobs').value.trim(),
     clean: String($('clean').checked),
     custom_repo: custom ? $('custom-repo').value.trim() : '',

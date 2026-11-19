@@ -2,14 +2,14 @@
 
 依据官方集成教程 [sukisu.org/zh/guide/how-to-integrate](https://sukisu.org/zh/guide/how-to-integrate) 编写的一键式内核编译工具。
 
-**核心流程:选设备型号 → 选内核版本 → 选集成分支 → 自动下载源码和工具链 → 集成 SukiSU-Ultra → 编译内核 → 打包产物。**
+**核心流程:选设备型号 → 选内核版本 → 自动选集成分支 → 自动下载源码和工具链 → 集成 SukiSU-Ultra → 编译内核 → 打包产物。**
 
 > 🌐 **在线编译**: 本仓库自带 GitHub Actions 工作流与网页,不用本地环境也能编译 ——
 > 打开 <https://xingyiqaq.github.io/sukisu-kernel-builder/>,选机型/版本,一键触发云端编译,实时看进度、下载产物。
 
 ```
 ┌─────────────┐   ┌──────────────┐   ┌────────────────┐   ┌──────────────┐
-│ 选设备型号   │ → │ 选内核版本    │ → │ 选 main/builtin│ → │ 自动编译打包  │
+│ 选设备型号   │ → │ 选内核版本    │ → │ 自动选集成分支  │ → │ 自动编译打包  │
 │ devices.conf│   │ (仓库+分支)   │   │ KSU 分支        │   │ AK3 zip / .ko│
 └─────────────┘   └──────────────┘   └────────────────┘   └──────────────┘
 ```
@@ -53,7 +53,7 @@ cd /mnt/e/文档/deepseek-harness/default-workspace/sukisu-kernel-builder
 bash build.sh
 ```
 
-**交互示例**(选 Redmi K40 的 Android 11 内核,main 分支):
+**交互示例**(选 Redmi K40 的 Android 11 内核,集成分支自动选择):
 
 ```
   [信息] 请选择设备型号:
@@ -63,10 +63,7 @@ bash build.sh
   >> 输入编号选择, 或输入关键词过滤 [默认 1]: k40        ← 支持关键词过滤
   ...
   >> 输入编号选择 [默认 1]: 1                            ← 该设备只有 1 个内核版本时自动跳过
-  [信息] 请选择 SukiSU 集成分支:
-      1) main —— Kprobes 运行时 hook (教程默认, 推荐)
-      2) builtin —— 不使用 Kprobes, 自动 hook 替代
-  >> 1
+  [信息] 集成分支(自动): builtin (GKI 设备用 main, 传统内核用 builtin; 可用 --ksu 覆盖)
   [信息] ==================== 编译任务 ====================
   设备       : Redmi K40 / POCO F3 (alioth)
   内核版本   : Android 11 · Linux 4.19
@@ -75,7 +72,7 @@ bash build.sh
   开始编译? [Y/n]
 ```
 
-随后自动完成:下载 Clang 工具链 → 克隆内核源码 → 运行官方 `setup.sh` 集成 SukiSU → 生成 defconfig 并启用 `CONFIG_KSU/KPROBES/EXT4_FS/KALLSYMS` → `make -j$(nproc)` 编译 → 打包。
+随后自动完成:下载 Clang 工具链 → 克隆内核源码 → 集成 SukiSU(自动选分支)→ 兼容性修复 → 生成 defconfig 并启用 `CONFIG_KSU` 等 → `make -j$(nproc)` 编译 → 打包。
 
 ## 三、命令行参数(非交互 / 自动化)
 
@@ -89,10 +86,11 @@ bash build.sh
 | `--defconfig <路径>` | 指定 defconfig(如 `vendor/alioth_user_defconfig`) |
 | `--kver <x.y>` / `--android <n>` | 自定义源时声明内核/Android 版本(用于选编译器) |
 | `--gki` | 标记为 GKI 通用内核(默认 LKM 模式) |
-| `--ksu <main\|builtin>` | SukiSU 集成分支 |
-| `--ksu-mode <y\|m>` | `y`=内置(非 GKI 默认),`m`=LKM 模块(GKI 默认) |
+| `--ksu <main\|builtin>` | SukiSU 集成分支(默认: GKI 设备=main, 传统内核=builtin) |
+| `--ksu-mode <y\|m>` | `y`=内置(非 GKI 默认),`m`=LKM 模块(GKI 默认;builtin 分支只支持 y) |
 | `--kpm` | 启用 KPM(`CONFIG_KPM=y`) |
 | `--debug-ksu` | 启用 `CONFIG_KSU_DEBUG` |
+| `--susfs` | 启用 `CONFIG_KSU_SUSFS`(要求内核已集成 susfs4ksu 补丁) |
 | `--clang <分支:目录>` | 覆盖 Clang 版本(如 `llvm-r522817:clang-r522817`) |
 | `--gcc` | 强制 GCC 4.9 工具链(老内核) |
 | `--jobs <n>` | 并行编译数(默认 nproc) |
@@ -163,16 +161,16 @@ sukisu-kernel-builder/
 ## 七、工作原理(对应教程章节)
 
 1. **下载内核源码** — 按所选设备与版本克隆官方开源内核
-2. **集成 SukiSU**(教程 *KernelSU 集成* 部分):优先运行官方 `setup.sh`(`curl ... | bash -s main|builtin`);失败时自动改用 GitHub 手动集成,等效操作:
+2. **集成 SukiSU**(教程 *KernelSU 集成* 部分):`main` 分支优先运行官方 `setup.sh`,失败自动回退 GitHub 手动集成;`builtin` 分支直接走 GitHub 手动集成(确定性最高),等效操作:
    - 克隆 SukiSU 到 `KernelSU/`
    - 符号链接 `KernelSU/kernel → drivers/kernelsu`
    - `drivers/Makefile` 追加 `obj-$(CONFIG_KSU) += kernelsu/`
    - `drivers/Kconfig` 插入 `source "drivers/kernelsu/Kconfig"`
-3. **内核配置**(教程 *KSU 配置* 部分),自动启用:
-   - `main` 分支:`CONFIG_KSU=y|m` + `CONFIG_KPROBES=y` + `CONFIG_EXT4_FS=y`
-   - 非 GKI 设备额外:`CONFIG_KALLSYMS=y` + `CONFIG_KALLSYMS_ALL=y`(教程安装页要求)
-   - `builtin` 分支额外:ARM64 且 ≥4.19 尝试 `CONFIG_KSU_HACK_ARM64_BRANCH_LINK=y`(自动 hook),否则尝试 `CONFIG_KSU_TAMPER_SYSCALL_TABLE=y`;若该分支 Kconfig 无对应符号,会提示按教程手动打 hook 补丁
+3. **内核配置**(教程 *KSU 配置* 部分),按分支自动启用:
+   - `main` 分支(GKI 默认):`CONFIG_KSU=y|m` + `CONFIG_KPROBES=y` + `CONFIG_EXT4_FS=y`
+   - `builtin` 分支(传统内核默认,4.4+):`CONFIG_KSU=y`(bool)+ `CONFIG_SECURITY_SELINUX=y` + `CONFIG_KALLSYMS=y/KALLSYMS_ALL=y`;`CONFIG_KSU_SUSFS` 默认显式关闭(需 `--susfs` 且内核已集成 susfs4ksu 补丁)
    - 可选:`--kpm`(KPM)、`--debug-ksu`
+   - 集成后自动做**兼容性修复**(main:12 项 4.x 老内核修复;builtin:3 项 4.x 修复,含 static_call.h 守卫、syscall_work、fallthrough),详见 `build.sh` 内注释
 4. **编译** — 按 Android 版本自动选择 AOSP Clang 预编译分支(GKI 或 ≥5.10 用 `LLVM=1`;<4.14 或 `--gcc` 用 GCC 4.9)
 5. **打包** — 内置模式用 AnyKernel3 打包 Image.gz + DTB(+DTBO);LKM 模式直接输出 `kernelsu.ko`
 
@@ -183,7 +181,7 @@ sukisu-kernel-builder/
 | 依赖缺失 | 按脚本提示运行 apt 安装命令 |
 | Clang 下载失败 | 网络问题;用 `--clang <分支:目录>` 换规格重试,工具链已下载部分会自动复用 |
 | 官方 setup.sh 失败 | 工具会自动改用 GitHub 手动集成(等效操作),无需干预 |
-| `CONFIG_KSU` 未生效 | 该内核缺 KPROBES/EXT4_FS 依赖;改用 `--ksu builtin`,或检查 `work/kernel/out/.config` |
+| `CONFIG_KSU` 未生效 | 依赖不满足: main 分支需 KPROBES/EXT4_FS, builtin 分支需 SECURITY_SELINUX;检查 `work/kernel/out/.config` |
 | 4.14 老内核编译报错 | 改用 `--gcc`;或 `EXTRA_MAKE_ARGS="LLVM_IAS=1" bash build.sh ...` |
 | 老内核脚本报 python2 缺失 | 需另装 python2(新发行版可考虑用 pyenv 或升级内核分支) |
 | 想换编译参数 | 用环境变量 `EXTRA_MAKE_ARGS` 追加透传给 make 的参数 |

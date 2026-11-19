@@ -44,6 +44,7 @@ OPT_CLEAN=0
 OPT_YES=0
 OPT_KPM=0
 OPT_KSU_DEBUG=0
+OPT_SUSFS=0
 OPT_GCC=0
 OPT_NO_PACK=0
 OPT_DRY_RUN=0
@@ -60,7 +61,6 @@ SEL_VERLABEL=""
 SEL_ROW=""
 KSU_BRANCH=""
 KSU_MODE=""
-KSU_HACK=0
 OPT_VERSION=""
 OPT_CLANG=""
 USE_CLANG=1
@@ -104,10 +104,11 @@ SukiSU-Ultra 内核编译工具
   --kver <x.y>       自定义源时声明内核版本 (用于选择编译器)
   --android <n>      自定义源时声明 Android 版本 (用于选择 Clang 版本)
   --gki              标记为 GKI 通用内核 (默认 LKM 模式)
-  --ksu <main|builtin>  SukiSU 集成分支
+  --ksu <main|builtin>  SukiSU 集成分支 (默认: GKI 设备=main, 传统内核=builtin)
   --ksu-mode <y|m>    KSU 编译形态: y=内置(默认), m=LKM 模块(GKI 默认)
   --kpm              启用 KPM (CONFIG_KPM=y)
   --debug-ksu        启用 CONFIG_KSU_DEBUG
+  --susfs            启用 CONFIG_KSU_SUSFS (要求内核已集成 susfs4ksu 补丁, 否则会失败)
   --clang <分支:目录>  覆盖 Clang 预编译 (如 llvm-r522817:clang-r522817)
   --gcc              强制使用 GCC 4.9 工具链 (老内核)
   --jobs <n>         并行编译数 (默认 nproc)
@@ -271,17 +272,19 @@ choose_version() {
 
 choose_ksu_branch() {
   if [ -z "$KSU_BRANCH" ]; then
-    local sel
-    if ! sel="$(menu_select "选择 SukiSU 集成分支:" \
-        "main —— Kprobes 运行时 hook (教程默认, 需要 CONFIG_KPROBES=y + CONFIG_EXT4_FS=y)" \
-        "builtin —— 不使用 Kprobes, 采用自动 hook 替代 / 手动 hook 补丁")"; then exit 0; fi
-    if [ "$sel" = "1" ]; then KSU_BRANCH=main; else KSU_BRANCH=builtin; fi
+    # 默认: GKI → main (kprobes 运行时 hook); 非 GKI 老内核 → builtin (backslashxx 式, 官方 4.4+ 兼容分支)
+    if [ "$SEL_GKI" = 1 ]; then KSU_BRANCH=main; else KSU_BRANCH=builtin; fi
+    info "集成分支(自动): $KSU_BRANCH (GKI 设备用 main, 传统内核用 builtin; 可用 --ksu 覆盖)"
   fi
   case "$KSU_BRANCH" in main|builtin) ;; *) die "--ksu 只能是 main 或 builtin" ;; esac
   if [ -z "$KSU_MODE" ]; then
     if [ "$SEL_GKI" = 1 ]; then KSU_MODE=m; else KSU_MODE=y; fi
   fi
   case "$KSU_MODE" in y|m) ;; *) die "--ksu-mode 只能是 y(内置) 或 m(LKM 模块)" ;; esac
+  if [ "$KSU_BRANCH" = builtin ] && [ "$KSU_MODE" = m ]; then
+    warn "builtin 分支的 CONFIG_KSU 是 bool 类型, 不支持 LKM (m), 已强制为 y"
+    KSU_MODE=y
+  fi
   if [ "$KSU_MODE" = m ] && [ "$SEL_GKI" != 1 ]; then
     warn "非 GKI 内核使用 LKM 模式 (CONFIG_KSU=m) 可能无法正常工作, 建议改用 --ksu-mode y"
   fi
@@ -451,13 +454,17 @@ integrate_sukisu() {
   (
     cd "$KERNEL_DIR"
     info "集成 SukiSU-Ultra (分支: $KSU_BRANCH) ..."
-    info "  尝试官方 setup.sh: curl .../setup.sh | bash -s $KSU_BRANCH"
-    if curl -LSs "$SUKISU_SETUP_URL" | bash -s "$KSU_BRANCH" >>"$LOG_FILE" 2>&1; then
-      ok "官方 setup.sh 集成成功"
-      return 0
+    if [ "$KSU_BRANCH" = main ]; then
+      # main: 先尝试官方 setup.sh (zako 私有源, runner 可达但可能不稳), 失败回退 GitHub 手动集成
+      info "  尝试官方 setup.sh: curl .../setup.sh | bash -s $KSU_BRANCH"
+      if curl -LSs "$SUKISU_SETUP_URL" | bash -s "$KSU_BRANCH" >>"$LOG_FILE" 2>&1; then
+        ok "官方 setup.sh 集成成功"
+        return 0
+      fi
+      warn "官方 setup.sh 失败(其私有 Git 源可能不可达), 改用 GitHub 手动集成... (日志: $LOG_FILE)"
+      tail -n 5 "$LOG_FILE" >&2 || true
     fi
-    warn "官方 setup.sh 失败(其私有 Git 源可能不可达), 改用 GitHub 手动集成... (日志: $LOG_FILE)"
-    tail -n 5 "$LOG_FILE" >&2 || true
+    # builtin: 官方 setup.sh 指向 zako 私有源且默认拉 main, 直接走 GitHub 手动集成 (确定性最高)
     if [ ! -d KernelSU/.git ]; then
       rm -rf KernelSU
       info "克隆 SukiSU 源码: $SUKISU_REPO (分支 $KSU_BRANCH)"
@@ -494,6 +501,34 @@ ksu_compat_fixups() {
   if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 8 ]; }; then lt58=1; fi
   if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 9 ]; }; then lt59=1; fi
   if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 11 ]; }; then lt511=1; fi
+  # === builtin 分支: 自带 kernel_compat.h 兼容层, 只需 3 处修复 (2026-11 全树扫描结论) ===
+  if [ "$KSU_BRANCH" = builtin ]; then
+    # B1) kernel_includes.h 无守卫地 include <linux/static_call.h> (5.10+ 才有, 4.19 无此头; 全树仅此一处使用)
+    local ki="$kd/kernel_includes.h"
+    if [ -f "$ki" ] && grep -q '#include <linux/static_call.h>' "$ki" \
+       && [ ! -f "$KERNEL_DIR/include/linux/static_call.h" ]; then
+      info "兼容修复(builtin): kernel_includes.h 的 static_call.h include 加 ≥5.10 守卫 (目标内核无此头)"
+      sed -i 's|#include <linux/static_call.h>|#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)\n#include <linux/static_call.h>\n#endif|' "$ki"
+    fi
+    # B2) app_profile.c 使用 clear_syscall_work(SECCOMP) (5.4+ 的 syscall_work 机制, 4.19 无);
+    #     下一行已有 clear_thread_flag(TIF_SECCOMP) (4.19 及更老的等价操作) → 删除该行
+    local ap="$kd/policy/app_profile.c"
+    if [ -f "$ap" ] && grep -q 'clear_syscall_work' "$ap" \
+       && ! grep -rq 'syscall_work' "$KERNEL_DIR/include/linux/thread_info.h"; then
+      info "兼容修复(builtin): app_profile.c 删除 clear_syscall_work 行 (目标内核无 syscall_work, 已有 clear_thread_flag 兜底)"
+      sed -i '/clear_syscall_work(SECCOMP);/d' "$ap"
+    fi
+    # B3) fallthrough; 语句 (5.4+ 宏; 目标内核 compiler 头无定义时替换为注释)
+    if ! grep -rq 'define[[:space:]]\+fallthrough' "$KERNEL_DIR/include/linux/compiler.h" "$KERNEL_DIR/include/linux/compiler_types.h" "$KERNEL_DIR/include/linux/compiler_attributes.h" 2>/dev/null; then
+      local bf
+      while IFS= read -r bf; do
+        info "兼容修复(builtin): ${bf#$KERNEL_DIR/} 的 fallthrough; 改为 /* fallthrough */"
+        sed -i 's/\bfallthrough;/\/* fallthrough *\//g' "$bf"
+      done < <(find -L "$kd" -type f -name '*.c' -exec grep -l '\bfallthrough;' {} + 2>/dev/null || true)
+    fi
+    return 0
+  fi
+  # === main 分支: 以下 12 项修复仅对 main 执行 ===
   # 1) MODULE_IMPORT_NS: 符号命名空间 5.4+ 才有, 更老内核上宏不存在 → 删除导入行
   local f="$kd/core/init.c"
   if [ "$lt54" = 1 ] && [ -f "$f" ] && grep -q 'MODULE_IMPORT_NS' "$f"; then
@@ -881,24 +916,6 @@ toolchain_make_args() {
   printf '%s\n' "${a[@]}"
 }
 
-# builtin 分支: 根据内核版本/架构决定自动 hook 选项
-decide_builtin_hook() {
-  KSU_HACK=0
-  if [ "$KSU_BRANCH" != builtin ]; then return 0; fi
-  local kmaj kmin kv
-  kv="$(echo "$KVER" | grep -oE '[0-9]+\.[0-9]+' | head -n1 || true)"
-  kmaj="${kv%%.*}"; kmin="${kv##*.}"
-  if [ -d "$KERNEL_DIR/arch/arm64" ] && [ -n "$kmaj" ] && [ -n "$kmin" ] \
-     && awk -v a="$kmaj" -v b="$kmin" 'BEGIN{exit !(a>4 || (a==4 && b>=19))}'; then
-    KSU_HACK=1
-  fi
-  if [ "$KSU_HACK" = 1 ]; then
-    info "builtin 分支: 尝试 KSU_HACK_ARM64_BRANCH_LINK=y (自动 hook, ARM64 且内核 ≥4.19)"
-  else
-    info "builtin 分支: 尝试 KSU_TAMPER_SYSCALL_TABLE=y (自动 hook 替代, 3.0~4.14)"
-  fi
-}
-
 make_config() {
   cd "$KERNEL_DIR"
   local -a TCA
@@ -919,30 +936,47 @@ make_config() {
   fi
   [ -f "$OUT_DIR/.config" ] || die_log "$LOG_FILE" "未生成 $OUT_DIR/.config"
   info "启用 SukiSU 相关配置 (scripts/config) ..."
-  if [ "$KSU_MODE" = m ]; then
-    $SC -m KSU || true
-  else
-    $SC -e KSU || true
-  fi
-  $SC -e KPROBES || true
-  $SC -e EXT4_FS || true
-  if [ "$SEL_GKI" = 1 ]; then
-    $SC -e MODULES || true
-  else
-    $SC -e KALLSYMS || true
-    $SC -e KALLSYMS_ALL || true
-  fi
-  if [ "$OPT_KPM" = 1 ]; then
-    $SC -e KPM -e KALLSYMS -e KALLSYMS_ALL || true
-  fi
-  if [ "$OPT_KSU_DEBUG" = 1 ]; then
-    $SC -e KSU_DEBUG || true
-  fi
   if [ "$KSU_BRANCH" = builtin ]; then
-    if [ "$KSU_HACK" = 1 ]; then
-      $SC -e KSU_HACK_ARM64_BRANCH_LINK || true
+    # builtin: KSU 是 bool (KSU_MODE 已被强制为 y); 依赖 SECURITY_SELINUX;
+    # SUSFS 需要内核自带 fs/susfs.c 补丁, 默认显式关闭, 仅 --susfs 时开启
+    $SC -e KSU || true
+    $SC -e SECURITY_SELINUX || true
+    if [ "$OPT_SUSFS" = 1 ]; then
+      $SC -e KSU_SUSFS || true
+      warn "已启用 KSU_SUSFS: 要求目标内核已集成 susfs4ksu 补丁 (fs/susfs.c), 否则编译/链接将失败"
     else
-      $SC -e KSU_TAMPER_SYSCALL_TABLE || true
+      $SC -d KSU_SUSFS || true
+    fi
+    if [ "$SEL_GKI" != 1 ]; then
+      $SC -e KALLSYMS || true
+      $SC -e KALLSYMS_ALL || true
+    fi
+    if [ "$OPT_KPM" = 1 ]; then
+      $SC -e KPM -e KALLSYMS -e KALLSYMS_ALL || true
+    fi
+    if [ "$OPT_KSU_DEBUG" = 1 ]; then
+      $SC -e KSU_DEBUG || true
+    fi
+  else
+    # main: tristate KSU; Kconfig 依赖 KPROBES + EXT4_FS
+    if [ "$KSU_MODE" = m ]; then
+      $SC -m KSU || true
+    else
+      $SC -e KSU || true
+    fi
+    $SC -e KPROBES || true
+    $SC -e EXT4_FS || true
+    if [ "$SEL_GKI" = 1 ]; then
+      $SC -e MODULES || true
+    else
+      $SC -e KALLSYMS || true
+      $SC -e KALLSYMS_ALL || true
+    fi
+    if [ "$OPT_KPM" = 1 ]; then
+      $SC -e KPM -e KALLSYMS -e KALLSYMS_ALL || true
+    fi
+    if [ "$OPT_KSU_DEBUG" = 1 ]; then
+      $SC -e KSU_DEBUG || true
     fi
   fi
   if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
@@ -951,10 +985,7 @@ make_config() {
   if grep -q "^CONFIG_KSU=[ym]" "$OUT_DIR/.config"; then
     ok "CONFIG_KSU 已生效: $(grep '^CONFIG_KSU=' "$OUT_DIR/.config" | tr -d '\n')"
   else
-    warn "CONFIG_KSU 未在最终配置中生效! 常见原因: KPROBES/EXT4_FS 依赖不满足。请检查 $OUT_DIR/.config, 或改用 --ksu builtin"
-  fi
-  if [ "$KSU_BRANCH" = builtin ] && ! grep -qE "^CONFIG_KSU_(HACK_ARM64_BRANCH_LINK|TAMPER_SYSCALL_TABLE)=y" "$OUT_DIR/.config"; then
-    warn "builtin 分支的自动 hook 选项未生效(该分支 Kconfig 可能没有此符号), 需要按教程手动添加 hook 补丁"
+    warn "CONFIG_KSU 未在最终配置中生效! 常见原因: 依赖不满足 (main 分支需要 KPROBES/EXT4_FS, builtin 分支需要 SECURITY_SELINUX)。请检查 $OUT_DIR/.config"
   fi
 }
 
@@ -1123,6 +1154,7 @@ parse_args() {
       --ksu-mode)  KSU_MODE="${2:?--ksu-mode 需要一个值}"; shift ;;
       --kpm)       OPT_KPM=1 ;;
       --debug-ksu) OPT_KSU_DEBUG=1 ;;
+      --susfs)     OPT_SUSFS=1 ;;
       --clang)     OPT_CLANG="${2:?--clang 需要一个值}"; shift ;;
       --gcc)       OPT_GCC=1 ;;
       --jobs)      JOBS="${2:?--jobs 需要一个值}"; shift ;;
@@ -1223,14 +1255,13 @@ main() {
   mkdir -p "$BASE_DIR" "$OUTPUT_DIR"
   : > "$LOG_FILE"
 
-  # 5) 工具链 → 6) 源码 → 7) 集成 → 8) hook 策略 → 9) defconfig → 10) 配置 → 11) 编译 → 12) 打包
+  # 5) 工具链 → 6) 源码 → 7) 集成 → 8) defconfig → 9) 配置 → 10) 编译 → 11) 打包
   setup_toolchain
   fetch_kernel
   compat_fixups
   detect_kver
   integrate_sukisu
   ksu_compat_fixups
-  decide_builtin_hook
   pick_defconfig
   info "使用 defconfig: $DEFCONFIG"
   make_config
