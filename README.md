@@ -93,7 +93,7 @@ bash build.sh
 | `--ksu-mode <y\|m>` | `y`=内置(非 GKI 默认),`m`=LKM 模块(GKI 默认) |
 | `--kpm` | 启用 KPM(`CONFIG_KPM=y`) |
 | `--debug-ksu` | 启用 `CONFIG_KSU_DEBUG` |
-| `--clang <分支>` | 覆盖 Clang 版本(如 `clang-r522817`) |
+| `--clang <分支:目录>` | 覆盖 Clang 版本(如 `llvm-r522817:clang-r522817`) |
 | `--gcc` | 强制 GCC 4.9 工具链(老内核) |
 | `--jobs <n>` | 并行编译数(默认 nproc) |
 | `--no-pack` | 只编译不打包 |
@@ -181,7 +181,7 @@ sukisu-kernel-builder/
 | 问题 | 解决 |
 |---|---|
 | 依赖缺失 | 按脚本提示运行 apt 安装命令 |
-| Clang 下载失败 | 网络问题;用 `--clang clang-rXXXXXX` 换分支重试,工具链已下载部分会自动复用 |
+| Clang 下载失败 | 网络问题;用 `--clang <分支:目录>` 换规格重试,工具链已下载部分会自动复用 |
 | 官方 setup.sh 失败 | 工具会自动改用 GitHub 手动集成(等效操作),无需干预 |
 | `CONFIG_KSU` 未生效 | 该内核缺 KPROBES/EXT4_FS 依赖;改用 `--ksu builtin`,或检查 `work/kernel/out/.config` |
 | 4.14 老内核编译报错 | 改用 `--gcc`;或 `EXTRA_MAKE_ARGS="LLVM_IAS=1" bash build.sh ...` |

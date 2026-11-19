@@ -30,6 +30,9 @@ LOG_FILE="$SCRIPT_DIR/build.log"
 CLANG_REPO="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86"
 GCC64_REPO="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9"
 GCC32_REPO="https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9"
+GCC64_MIRROR="https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9"
+GCC32_MIRROR="https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9"
+GCC_MIRROR_BR="lineage-19.1"
 SUKISU_REPO="https://github.com/SukiSU-Ultra/SukiSU-Ultra"
 SUKISU_SETUP_URL="https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh"
 AK3_REPO="https://github.com/osm0sis/AnyKernel3"
@@ -96,7 +99,7 @@ SukiSU-Ultra 内核编译工具
   --ksu-mode <y|m>    KSU 编译形态: y=内置(默认), m=LKM 模块(GKI 默认)
   --kpm              启用 KPM (CONFIG_KPM=y)
   --debug-ksu        启用 CONFIG_KSU_DEBUG
-  --clang <分支>     覆盖 Clang 预编译分支 (如 llvm-r522817)
+  --clang <分支:目录>  覆盖 Clang 预编译 (如 llvm-r522817:clang-r522817)
   --gcc              强制使用 GCC 4.9 工具链 (老内核)
   --jobs <n>         并行编译数 (默认 nproc)
   --no-pack          只编译不打包
@@ -276,17 +279,26 @@ choose_ksu_branch() {
 }
 
 # -------------------------------- 工具链 ----------------------------------
-# AOSP 已于 2024 年删除全部 clang-r* 分支, 现仅保留 llvm-r* 命名分支,
-# 且无 r370808 对应分支(Android 10 用 llvm-r365631 = clang 9.0.3 替代)。
-clang_branch_candidates() {
+# AOSP 已于 2024 年删除全部 clang-r* 分支, 现在每个版本是 llvm-r* 分支下的
+# clang-r* 子目录 (分支与目录已逐一核实, 见 2026-11 实测):
+#   版本 → llvm 分支:clang 目录
+#   r353983c → llvm-r365631:clang-r353983c
+#   r370808  → llvm-r416183:clang-r370808
+#   r416183b → llvm-r450784:clang-r416183b
+#   r450784d → llvm-r487747:clang-r450784d1
+#   r487747c → llvm-r510928:clang-r487747c
+#   r510928  → llvm-r510928:clang-r510928
+#   r522817  → llvm-r522817:clang-r522817
+# 下载用 gitiles 子目录 tarball: +archive/refs/heads/<分支>/<目录>.tar.gz
+clang_spec_candidates() {
   case "$1" in
-    1[5-9]) echo "llvm-r522817 llvm-r510928" ;;
-    14)     echo "llvm-r510928 llvm-r487747" ;;
-    13)     echo "llvm-r487747 llvm-r450784" ;;
-    12)     echo "llvm-r450784 llvm-r416183" ;;
-    11)     echo "llvm-r416183 llvm-r383902b" ;;
-    10)     echo "llvm-r365631 llvm-r353983 llvm-r383902b" ;;
-    *)      echo "llvm-r353983 llvm-r365631" ;;
+    1[5-9]) echo "llvm-r522817:clang-r522817 llvm-r510928:clang-r510928" ;;
+    14)     echo "llvm-r510928:clang-r510928 llvm-r487747:clang-r487747b" ;;
+    13)     echo "llvm-r510928:clang-r487747c llvm-r487747:clang-r487747" ;;
+    12)     echo "llvm-r487747:clang-r450784d1 llvm-r487747:clang-r450784e llvm-r450784:clang-r450784b" ;;
+    11)     echo "llvm-r450784:clang-r416183b llvm-r416183:clang-r416183" ;;
+    10)     echo "llvm-r416183:clang-r370808 llvm-r365631:clang-r365631b" ;;
+    *)      echo "llvm-r365631:clang-r353983c llvm-r353983:clang-r353983b" ;;
   esac
 }
 
@@ -315,38 +327,51 @@ setup_toolchain() {
     CLANG_DIR="$TOOLCHAIN_DIR/clang"
     if [ ! -x "$CLANG_DIR/bin/clang" ]; then
       info "下载 Clang 工具链, 约 1~2 GB, 请耐心等待..."
-      rm -rf "$CLANG_DIR.tmp"
-      local ok=0 gb
+      rm -rf "$CLANG_DIR.tmp" "$CLANG_DIR.tar"
+      local ok=0 spec br dir url
       if [ -n "$OPT_CLANG" ]; then
-        # --clang 用户指定: 原样作分支名, 支持 llvm-* / clang-* 等任何写法
-        set -- "$OPT_CLANG"
+        set -- "$OPT_CLANG"      # --clang 用户指定: 分支:目录
       else
-        set -- $(clang_branch_candidates "$SEL_ANDROID")
+        set -- $(clang_spec_candidates "$SEL_ANDROID")
       fi
-      for gb in "$@"; do
-        info "尝试分支: $gb"
-        if git clone --depth 1 -b "$gb" "$CLANG_REPO" "$CLANG_DIR.tmp"; then
-          ok=1; break
+      for spec in "$@"; do
+        br="${spec%%:*}"; dir="${spec##*:}"
+        if [ -z "$br" ] || [ -z "$dir" ] || [ "$br" = "$dir" ]; then
+          warn "忽略无效的 Clang 规格: $spec (应为 分支:目录)"
+          continue
         fi
-        warn "分支 $gb 不可用, 尝试下一个..."
-        rm -rf "$CLANG_DIR.tmp"
+        info "下载 $br/$dir ..."
+        url="$CLANG_REPO/+archive/refs/heads/$br/$dir.tar.gz"
+        if curl -fL --retry 3 --connect-timeout 30 --speed-time 60 -o "$CLANG_DIR.tar" "$url"; then
+          mkdir -p "$CLANG_DIR.tmp"
+          if tar -xzf "$CLANG_DIR.tar" -C "$CLANG_DIR.tmp" 2>/dev/null; then
+            if [ -x "$CLANG_DIR.tmp/$dir/bin/clang" ]; then
+              mv "$CLANG_DIR.tmp/$dir" "$CLANG_DIR"; ok=1; break
+            elif [ -x "$CLANG_DIR.tmp/bin/clang" ]; then
+              mv "$CLANG_DIR.tmp" "$CLANG_DIR"; ok=1; break
+            fi
+          fi
+        fi
+        warn "规格 $spec 下载或解压失败, 尝试下一个..."
+        rm -rf "$CLANG_DIR.tmp" "$CLANG_DIR.tar"
       done
+      rm -f "$CLANG_DIR.tar"
       if [ "$ok" != 1 ]; then
         rm -rf "$CLANG_DIR.tmp"
-        die "Clang 下载失败: 尝试过的分支 [$*] 均不存在或网络不可达 (可用 --clang 指定其它分支)"
+        die "Clang 下载失败: 尝试过的规格 [$*] 均不可用 (可用 --clang 分支:目录 覆盖)"
       fi
-      mv "$CLANG_DIR.tmp" "$CLANG_DIR"
     else
       info "复用已下载的 Clang: $CLANG_DIR"
     fi
   fi
   # GCC 4.9 (clang 经典模式也需要它的 binutils 作交叉前缀)
+  # 优先 LineageOS 的 GitHub 镜像 (快且稳定), 失败回退 googlesource
   GCC64_DIR="$TOOLCHAIN_DIR/gcc-arm64"
   if [ ! -x "$GCC64_DIR/bin/aarch64-linux-android-gcc" ]; then
     info "下载 GCC 4.9 (aarch64-linux-android) ..."
     rm -rf "$GCC64_DIR.tmp"
-    if ! git clone --depth 1 "$GCC64_REPO" "$GCC64_DIR.tmp" \
-      && ! git clone --depth 1 -b aarch64-linux-android-4.9 "$GCC64_REPO" "$GCC64_DIR.tmp"; then
+    if ! git clone --depth 1 -b "$GCC_MIRROR_BR" "$GCC64_MIRROR" "$GCC64_DIR.tmp" \
+      && ! git clone --depth 1 "$GCC64_REPO" "$GCC64_DIR.tmp"; then
       rm -rf "$GCC64_DIR.tmp"
       die "GCC aarch64 4.9 下载失败"
     fi
@@ -356,8 +381,8 @@ setup_toolchain() {
   if [ ! -x "$GCC32_DIR/bin/arm-linux-androideabi-gcc" ]; then
     info "下载 GCC 4.9 (arm-linux-androideabi) ..."
     rm -rf "$GCC32_DIR.tmp"
-    if ! git clone --depth 1 "$GCC32_REPO" "$GCC32_DIR.tmp" \
-      && ! git clone --depth 1 -b arm-linux-androideabi-4.9 "$GCC32_REPO" "$GCC32_DIR.tmp"; then
+    if ! git clone --depth 1 -b "$GCC_MIRROR_BR" "$GCC32_MIRROR" "$GCC32_DIR.tmp" \
+      && ! git clone --depth 1 "$GCC32_REPO" "$GCC32_DIR.tmp"; then
       rm -rf "$GCC32_DIR.tmp"
       die "GCC arm 4.9 下载失败"
     fi
@@ -794,7 +819,7 @@ main() {
   printf "  defconfig  : %s\n" "${SEL_DEFCONFIG:-自动探测}"
   printf "  SukiSU     : %s 分支, CONFIG_KSU=%s\n" "$KSU_BRANCH" "$KSU_MODE"
   if [ "$USE_CLANG" = 1 ]; then
-    printf "  编译器     : Clang (%s)\n" "${OPT_CLANG:-$(clang_branch_candidates "$SEL_ANDROID" | awk '{print $1}')}"
+    printf "  编译器     : Clang (%s)\n" "${OPT_CLANG:-$(clang_spec_candidates "$SEL_ANDROID" | awk '{print $1}')}"
   else
     printf "  编译器     : GCC 4.9 (aarch64-linux-android)\n"
   fi
