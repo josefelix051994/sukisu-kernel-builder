@@ -8,16 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: 探测 googlesource 仓库结构
+      - name: 探测 clang 仓库分支与布局
         run: |
           set -x
-          echo "=== clang host/linux-x86 heads ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | awk '{print $2}' | tail -40
-          echo "=== tarball HEAD main/clang-r416183b ==="
-          curl -sIL "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r416183b.tar.gz" | head -8
-          echo "=== tarball HEAD refs/heads/clang-r416183b.tar.gz (整仓库) ==="
-          curl -sIL "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/clang-r416183b.tar.gz" | head -8
-          echo "=== gcc64 4.9 heads ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 | awk '{print $2}'
-          echo "=== gcc32 4.9 heads ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 | awk '{print $2}'
+          echo "=== gitiles refs JSON (前 3000 字符) ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs/heads/?format=JSON" | head -c 3000
+          echo
+          echo "=== ls-remote 含 clang/r 的分支 ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -iE "clang|r[0-9]{6}|main|master" | head -50
+          echo "=== HEAD ==="
+          git ls-remote https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 HEAD
+          echo "=== 浅克隆 main(不含 blob)看顶层目录 ==="
+          rm -rf /tmp/c && git clone --depth 1 --filter=blob:none https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 /tmp/c 2>&1 | tail -3
+          ls /tmp/c | head -40
