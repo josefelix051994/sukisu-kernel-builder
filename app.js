@@ -214,9 +214,11 @@ async function tick() {
       startLogStream(run);
     } else if (run.status === 'completed') {
       stopLogStream();
+      if (!$('log').textContent) {
+        $('log').textContent = '(构建已结束, 实时日志流已关闭。点击右上角「在 GitHub 打开」可查看完整日志。)';
+      }
       await renderArtifacts(run);
       $('cancel-btn').hidden = true;
-      if (run.conclusion === 'success') { /* 已完成 */ }
       stopPolling();
       await renderHistory();
     }
