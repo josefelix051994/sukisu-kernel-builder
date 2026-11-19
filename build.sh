@@ -920,6 +920,11 @@ toolchain_make_args() {
     a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
     a+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
   fi
+  # 老内核 (lib/string.c 无 stpcpy, 5.10 前) 上, clang/gcc 会把 sprintf(p,"%s",s) 优化成 stpcpy 调用
+  # (tty_io.c 的 tty_line_name 即中招: undefined reference to `stpcpy' — run #16), 禁用该内置优化
+  if [ -n "$kmaj" ] && { [ "$kmaj" -lt 5 ] || { [ "$kmaj" -eq 5 ] && [ "$kmin" -lt 10 ]; }; }; then
+    a+=(KCFLAGS="-fno-builtin-sprintf -fno-builtin-stpcpy")
+  fi
   printf '%s\n' "${a[@]}"
 }
 
