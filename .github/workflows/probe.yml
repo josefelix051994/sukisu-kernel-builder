@@ -6,21 +6,22 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
-      - name: 探测 llvm 分支布局
+      - name: 探测 llvm 分支内版本目录
         run: |
           set -x
-          echo "=== 精确分支存在性 ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -E 'llvm-r(353983|365631|370808|383902|416183|450784|487747|510928|522817)' || echo "无匹配"
-          echo "=== llvm-r416183 顶层 ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/llvm-r416183/?format=JSON" | head -c 1400
-          echo
-          echo "=== llvm-r353983 顶层 ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/llvm-r353983/?format=JSON" | head -c 1400
-          echo
-          echo "=== llvm-r522817 顶层 ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/llvm-r522817/?format=JSON" | head -c 1400
-          echo
-          echo "=== gcc49 aarch64 main 顶层 ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+show/main/?format=JSON" | head -c 800
+          for b in llvm-r353983 llvm-r365631 llvm-r416183 llvm-r450784 llvm-r487747 llvm-r510928 llvm-r522817; do
+            echo "=== $b 条目 ==="
+            curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/$b/?format=JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(" ".join(e["name"] for e in d.get("entries",[])))'
+          done
+          echo "=== tarball 探测 (只取 1 字节看状态) ==="
+          for pair in "llvm-r416183/clang-r416183b" "llvm-r450784/clang-r450784d" "llvm-r487747/clang-r487747c" "llvm-r510928/clang-r510928" "llvm-r522817/clang-r522817" "llvm-r353983/clang-r353983c" "llvm-r365631/clang-r365631c"; do
+            b="${pair%%/*}"; d="${pair##*/}"
+            printf "%s/%s -> " "$b" "$d"
+            curl -sL -r 0-0 -o /dev/null -w 'status=%{http_code}\n' "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/$b/$d.tar.gz" || echo "curl 失败"
+          done
+          echo "=== gcc64 4.9 main 条目 ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+show/main/?format=JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(" ".join(e["name"] for e in d.get("entries",[])))'
+          echo "=== gcc64 4.9 bin 目录条目(前几个) ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+show/main/bin/?format=JSON" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(" ".join(e["name"] for e in d.get("entries",[])[:12]))'

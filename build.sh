@@ -96,7 +96,7 @@ SukiSU-Ultra 内核编译工具
   --ksu-mode <y|m>    KSU 编译形态: y=内置(默认), m=LKM 模块(GKI 默认)
   --kpm              启用 KPM (CONFIG_KPM=y)
   --debug-ksu        启用 CONFIG_KSU_DEBUG
-  --clang <分支>     覆盖 Clang 预编译分支 (如 clang-r522817)
+  --clang <分支>     覆盖 Clang 预编译分支 (如 llvm-r522817)
   --gcc              强制使用 GCC 4.9 工具链 (老内核)
   --jobs <n>         并行编译数 (默认 nproc)
   --no-pack          只编译不打包
@@ -276,15 +276,17 @@ choose_ksu_branch() {
 }
 
 # -------------------------------- 工具链 ----------------------------------
-clang_branch_for_android() {
+# AOSP 已于 2024 年删除全部 clang-r* 分支, 现仅保留 llvm-r* 命名分支,
+# 且无 r370808 对应分支(Android 10 用 llvm-r365631 = clang 9.0.3 替代)。
+clang_branch_candidates() {
   case "$1" in
-    1[5-9]) echo r522817 ;;
-    14)     echo r510928 ;;
-    13)     echo r487747c ;;
-    12)     echo r450784d ;;
-    11)     echo r416183b ;;
-    10)     echo r370808 ;;
-    *)      echo r353983c ;;
+    1[5-9]) echo "llvm-r522817 llvm-r510928" ;;
+    14)     echo "llvm-r510928 llvm-r487747" ;;
+    13)     echo "llvm-r487747 llvm-r450784" ;;
+    12)     echo "llvm-r450784 llvm-r416183" ;;
+    11)     echo "llvm-r416183 llvm-r383902b" ;;
+    10)     echo "llvm-r365631 llvm-r353983 llvm-r383902b" ;;
+    *)      echo "llvm-r353983 llvm-r365631" ;;
   esac
 }
 
@@ -310,16 +312,28 @@ decide_toolchain() {
 setup_toolchain() {
   mkdir -p "$TOOLCHAIN_DIR"
   if [ "$USE_CLANG" = 1 ]; then
-    CLANG_BRANCH="${OPT_CLANG:-$(clang_branch_for_android "$SEL_ANDROID")}"
-    CLANG_DIR="$TOOLCHAIN_DIR/clang-${CLANG_BRANCH}"
+    CLANG_DIR="$TOOLCHAIN_DIR/clang"
     if [ ! -x "$CLANG_DIR/bin/clang" ]; then
-      info "下载 Clang (${CLANG_BRANCH}), 约 1~2 GB, 请耐心等待..."
+      info "下载 Clang 工具链, 约 1~2 GB, 请耐心等待..."
       rm -rf "$CLANG_DIR.tmp"
-      local gb="$CLANG_BRANCH"
-      [[ "$gb" == clang-* ]] || gb="clang-$gb"
-      if ! git clone --depth 1 -b "$gb" "$CLANG_REPO" "$CLANG_DIR.tmp"; then
+      local ok=0 gb
+      if [ -n "$OPT_CLANG" ]; then
+        # --clang 用户指定: 原样作分支名, 支持 llvm-* / clang-* 等任何写法
+        set -- "$OPT_CLANG"
+      else
+        set -- $(clang_branch_candidates "$SEL_ANDROID")
+      fi
+      for gb in "$@"; do
+        info "尝试分支: $gb"
+        if git clone --depth 1 -b "$gb" "$CLANG_REPO" "$CLANG_DIR.tmp"; then
+          ok=1; break
+        fi
+        warn "分支 $gb 不可用, 尝试下一个..."
         rm -rf "$CLANG_DIR.tmp"
-        die "Clang 下载失败: 分支 $gb 不存在或网络不可达 (可用 --clang 指定其它分支)"
+      done
+      if [ "$ok" != 1 ]; then
+        rm -rf "$CLANG_DIR.tmp"
+        die "Clang 下载失败: 尝试过的分支 [$*] 均不存在或网络不可达 (可用 --clang 指定其它分支)"
       fi
       mv "$CLANG_DIR.tmp" "$CLANG_DIR"
     else
@@ -331,8 +345,8 @@ setup_toolchain() {
   if [ ! -x "$GCC64_DIR/bin/aarch64-linux-android-gcc" ]; then
     info "下载 GCC 4.9 (aarch64-linux-android) ..."
     rm -rf "$GCC64_DIR.tmp"
-    if ! git clone --depth 1 -b aarch64-linux-android-4.9 "$GCC64_REPO" "$GCC64_DIR.tmp" \
-      && ! git clone --depth 1 "$GCC64_REPO" "$GCC64_DIR.tmp"; then
+    if ! git clone --depth 1 "$GCC64_REPO" "$GCC64_DIR.tmp" \
+      && ! git clone --depth 1 -b aarch64-linux-android-4.9 "$GCC64_REPO" "$GCC64_DIR.tmp"; then
       rm -rf "$GCC64_DIR.tmp"
       die "GCC aarch64 4.9 下载失败"
     fi
@@ -342,8 +356,8 @@ setup_toolchain() {
   if [ ! -x "$GCC32_DIR/bin/arm-linux-androideabi-gcc" ]; then
     info "下载 GCC 4.9 (arm-linux-androideabi) ..."
     rm -rf "$GCC32_DIR.tmp"
-    if ! git clone --depth 1 -b arm-linux-androideabi-4.9 "$GCC32_REPO" "$GCC32_DIR.tmp" \
-      && ! git clone --depth 1 "$GCC32_REPO" "$GCC32_DIR.tmp"; then
+    if ! git clone --depth 1 "$GCC32_REPO" "$GCC32_DIR.tmp" \
+      && ! git clone --depth 1 -b arm-linux-androideabi-4.9 "$GCC32_REPO" "$GCC32_DIR.tmp"; then
       rm -rf "$GCC32_DIR.tmp"
       die "GCC arm 4.9 下载失败"
     fi
@@ -780,7 +794,7 @@ main() {
   printf "  defconfig  : %s\n" "${SEL_DEFCONFIG:-自动探测}"
   printf "  SukiSU     : %s 分支, CONFIG_KSU=%s\n" "$KSU_BRANCH" "$KSU_MODE"
   if [ "$USE_CLANG" = 1 ]; then
-    printf "  编译器     : Clang (%s)\n" "${OPT_CLANG:-$(clang_branch_for_android "$SEL_ANDROID")}"
+    printf "  编译器     : Clang (%s)\n" "${OPT_CLANG:-$(clang_branch_candidates "$SEL_ANDROID" | awk '{print $1}')}"
   else
     printf "  编译器     : GCC 4.9 (aarch64-linux-android)\n"
   fi
