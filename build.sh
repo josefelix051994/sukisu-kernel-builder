@@ -315,9 +315,11 @@ setup_toolchain() {
     if [ ! -x "$CLANG_DIR/bin/clang" ]; then
       info "下载 Clang (${CLANG_BRANCH}), 约 1~2 GB, 请耐心等待..."
       rm -rf "$CLANG_DIR.tmp"
-      if ! git clone --depth 1 -b "$CLANG_BRANCH" "$CLANG_REPO" "$CLANG_DIR.tmp"; then
+      local gb="$CLANG_BRANCH"
+      [[ "$gb" == clang-* ]] || gb="clang-$gb"
+      if ! git clone --depth 1 -b "$gb" "$CLANG_REPO" "$CLANG_DIR.tmp"; then
         rm -rf "$CLANG_DIR.tmp"
-        die "Clang 下载失败: 分支 ${CLANG_BRANCH} 不存在或网络不可达 (可用 --clang 指定其它分支)"
+        die "Clang 下载失败: 分支 $gb 不存在或网络不可达 (可用 --clang 指定其它分支)"
       fi
       mv "$CLANG_DIR.tmp" "$CLANG_DIR"
     else
@@ -329,7 +331,8 @@ setup_toolchain() {
   if [ ! -x "$GCC64_DIR/bin/aarch64-linux-android-gcc" ]; then
     info "下载 GCC 4.9 (aarch64-linux-android) ..."
     rm -rf "$GCC64_DIR.tmp"
-    if ! git clone --depth 1 "$GCC64_REPO" "$GCC64_DIR.tmp"; then
+    if ! git clone --depth 1 -b aarch64-linux-android-4.9 "$GCC64_REPO" "$GCC64_DIR.tmp" \
+      && ! git clone --depth 1 "$GCC64_REPO" "$GCC64_DIR.tmp"; then
       rm -rf "$GCC64_DIR.tmp"
       die "GCC aarch64 4.9 下载失败"
     fi
@@ -339,7 +342,8 @@ setup_toolchain() {
   if [ ! -x "$GCC32_DIR/bin/arm-linux-androideabi-gcc" ]; then
     info "下载 GCC 4.9 (arm-linux-androideabi) ..."
     rm -rf "$GCC32_DIR.tmp"
-    if ! git clone --depth 1 "$GCC32_REPO" "$GCC32_DIR.tmp"; then
+    if ! git clone --depth 1 -b arm-linux-androideabi-4.9 "$GCC32_REPO" "$GCC32_DIR.tmp" \
+      && ! git clone --depth 1 "$GCC32_REPO" "$GCC32_DIR.tmp"; then
       rm -rf "$GCC32_DIR.tmp"
       die "GCC arm 4.9 下载失败"
     fi
