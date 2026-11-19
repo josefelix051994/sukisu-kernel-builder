@@ -1,0 +1,23 @@
+name: Probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 探测 googlesource 仓库结构
+        run: |
+          set -x
+          echo "=== clang host/linux-x86 heads ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | awk '{print $2}' | tail -40
+          echo "=== tarball HEAD main/clang-r416183b ==="
+          curl -sIL "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r416183b.tar.gz" | head -8
+          echo "=== tarball HEAD refs/heads/clang-r416183b.tar.gz (整仓库) ==="
+          curl -sIL "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/clang-r416183b.tar.gz" | head -8
+          echo "=== gcc64 4.9 heads ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 | awk '{print $2}'
+          echo "=== gcc32 4.9 heads ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 | awk '{print $2}'
