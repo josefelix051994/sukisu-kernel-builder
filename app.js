@@ -16,6 +16,7 @@ const state = {
   pollTimer: null,
   logXHR: null,
   logLen: 0,
+  logStopped: false,
   logFollow: true,
   pollCount: 0,
 };
@@ -195,6 +196,7 @@ async function attachRun(runId) {
   state.curRunId = runId;
   $('progress-card').hidden = false;
   state.logLen = 0;
+  state.logStopped = false;
   $('log').textContent = '';
   $('artifacts').hidden = true;
   $('cancel-btn').hidden = true;
@@ -211,7 +213,7 @@ async function tick() {
     const jobs = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${state.curRunId}/jobs`);
     renderSteps(jobs.jobs || []);
     if (run.status === 'in_progress' || run.status === 'queued') {
-      startLogStream(run);
+      if (!state.logStopped) startLogStream(run);
     } else if (run.status === 'completed') {
       stopLogStream();
       if (!$('log').textContent) {
@@ -278,6 +280,7 @@ function startLogStream(run) {
   if (state.logXHR || !run.logs_url) return;
   const xhr = new XMLHttpRequest();
   state.logXHR = xhr;
+  state.logStopped = false;
   state.logLen = 0;
   $('log').textContent = '';
   xhr.open('GET', run.logs_url, true);
@@ -295,8 +298,8 @@ function startLogStream(run) {
     state.logXHR = null;
     $('log').textContent += '\n[日志流连接失败, 请点击右上角「在 GitHub 打开」查看日志]\n';
   };
-  xhr.onloadend = () => { state.logXHR = null; };
-  try { xhr.send(); } catch { state.logXHR = null; }
+  xhr.onloadend = () => { state.logXHR = null; state.logStopped = true; };
+  try { xhr.send(); } catch { state.logXHR = null; state.logStopped = true; }
 }
 function stopLogStream() {
   if (state.logXHR) { try { state.logXHR.abort(); } catch {} state.logXHR = null; }
