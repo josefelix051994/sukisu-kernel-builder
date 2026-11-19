@@ -21,7 +21,7 @@
 1. 打开 <https://xingyiqaq.github.io/sukisu-kernel-builder/>
 2. 填入一个 GitHub Token(需 `repo` + `workflow` 权限;只保存在浏览器 localStorage,不会上传)
 3. 选设备型号 → 内核版本 → SukiSU 分支 → 点「开始编译」
-4. 页面实时显示步骤状态与日志;完成后直接点「下载」拿 AnyKernel3 zip / kernelsu.ko
+4. 页面实时显示步骤状态(每 3 秒刷新)与构建日志(每 10 秒刷新;GitHub 对进行中任务的日志接口有延迟,想看完整实时日志可在页面上点「在 GitHub 打开」);完成后直接点「下载」拿 AnyKernel3 zip / kernelsu.ko
 
 也可在 GitHub 仓库页面 **Actions → SukiSU Kernel Build → Run workflow** 手动触发。
 
