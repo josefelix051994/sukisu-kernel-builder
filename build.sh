@@ -518,6 +518,32 @@ pick_defconfig() {
   DEFCONFIG="${all[$((sel-1))]}"
 }
 
+# 生成 make 工具链参数 (CC 必须显式传递: 小米/高通系内核 Makefile 默认把
+# CC 指向 python2 时代的 scripts/gcc-wrapper.py, 现代系统无 python2 会导致
+# init/Kconfig 的 $(success,$(CC) --version ...) 检查直接语法错误)
+toolchain_make_args() {
+  local -a a=()
+  local kmaj kmin kv
+  kv="$(echo "$KVER" | grep -oE '[0-9]+\.[0-9]+' | head -n1 || true)"
+  kmaj="${kv%%.*}"; kmin="${kv##*.}"
+  if [ "$USE_CLANG" = 1 ]; then
+    if [ "$SEL_GKI" = 1 ] \
+       || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
+       || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; then
+      a+=(LLVM=1 CC="$CLANG_DIR/bin/clang")
+    else
+      a+=(CC="$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
+      a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
+      a+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
+    fi
+  else
+    a+=(CC="$GCC64_DIR/bin/aarch64-linux-android-gcc")
+    a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
+    a+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
+  fi
+  printf '%s\n' "${a[@]}"
+}
+
 # builtin 分支: 根据内核版本/架构决定自动 hook 选项
 decide_builtin_hook() {
   KSU_HACK=0
@@ -538,17 +564,19 @@ decide_builtin_hook() {
 
 make_config() {
   cd "$KERNEL_DIR"
-  local MK="make O=$OUT_DIR ARCH=arm64"
+  local -a TCA
+  mapfile -t TCA < <(toolchain_make_args)
+  local -a MK=(make O="$OUT_DIR" ARCH=arm64 "${TCA[@]}")
   local SC="scripts/config --file $OUT_DIR/.config"
   info "生成内核配置 ($DEFCONFIG) ..."
   if [[ "$DEFCONFIG" == *defconfig ]]; then
-    if ! $MK "$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
+    if ! "${MK[@]}" "$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
       die_log "$LOG_FILE" "defconfig 生成失败: $DEFCONFIG"
     fi
   else
     mkdir -p "$OUT_DIR"
     cp "arch/arm64/configs/$DEFCONFIG" "$OUT_DIR/.config"
-    if ! $MK olddefconfig >>"$LOG_FILE" 2>&1; then
+    if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
       die_log "$LOG_FILE" "olddefconfig 失败"
     fi
   fi
@@ -580,7 +608,7 @@ make_config() {
       $SC -e KSU_TAMPER_SYSCALL_TABLE || true
     fi
   fi
-  if ! $MK olddefconfig >>"$LOG_FILE" 2>&1; then
+  if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
     die_log "$LOG_FILE" "olddefconfig 失败"
   fi
   if grep -q "^CONFIG_KSU=[ym]" "$OUT_DIR/.config"; then
@@ -596,7 +624,9 @@ make_config() {
 # --------------------------------- 编译 ------------------------------------
 build_kernel() {
   cd "$KERNEL_DIR"
-  local -a args=(O="$OUT_DIR" ARCH=arm64 "-j$JOBS")
+  local -a TCA args
+  mapfile -t TCA < <(toolchain_make_args)
+  args=(O="$OUT_DIR" ARCH=arm64 "-j$JOBS" "${TCA[@]}")
   local kmaj kmin kv
   kv="$(echo "$KVER" | grep -oE '[0-9]+\.[0-9]+' | head -n1 || true)"
   kmaj="${kv%%.*}"; kmin="${kv##*.}"
@@ -606,12 +636,8 @@ build_kernel() {
        || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; then
       info "编译方式: LLVM=1 全 LLVM 工具链"
       export PATH="$CLANG_DIR/bin:$PATH"
-      args+=(LLVM=1)
     else
       info "编译方式: Clang + GCC binutils 交叉前缀 (经典式)"
-      args+=(CC="$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
-      args+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
-      args+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
     fi
     if grep -q "CONFIG_LTO_CLANG" "$OUT_DIR/.config" 2>/dev/null; then
       info "检测到 LTO, 追加 LLVM 链接工具"
@@ -620,8 +646,6 @@ build_kernel() {
     fi
   else
     info "编译方式: GCC 4.9"
-    args+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
-    args+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
   fi
   if [ -n "${EXTRA_MAKE_ARGS:-}" ]; then
     args+=($EXTRA_MAKE_ARGS)
