@@ -400,6 +400,16 @@ setup_toolchain() {
 }
 
 # -------------------------------- 内核源码 --------------------------------
+# 老内核与新工具链 (bison 3.8+ / flex 2.6+) 的兼容修复
+compat_fixups() {
+  cd "$KERNEL_DIR"
+  # dtc-lexer.l 里定义了全局 yylloc, 而 bison 3.8+ 生成的 parser 也会定义一份 → 链接期重复定义
+  if grep -q '^YYLTYPE yylloc;' scripts/dtc/dtc-lexer.l 2>/dev/null; then
+    info "兼容修复: dtc-lexer.l 的 yylloc 改为 extern (bison 3.8+ 重复定义冲突)"
+    sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/' scripts/dtc/dtc-lexer.l
+  fi
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -879,6 +889,7 @@ main() {
   # 5) 工具链 → 6) 源码 → 7) 集成 → 8) hook 策略 → 9) defconfig → 10) 配置 → 11) 编译 → 12) 打包
   setup_toolchain
   fetch_kernel
+  compat_fixups
   detect_kver
   integrate_sukisu
   decide_builtin_hook
