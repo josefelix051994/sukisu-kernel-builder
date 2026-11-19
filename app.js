@@ -215,7 +215,8 @@ async function tick() {
     const jobs = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${state.curRunId}/jobs`);
     const jobList = jobs.jobs || [];
     renderSteps(jobList);
-    const jobLogsUrl = jobList.length ? jobList[0].logs_url : null;
+    // job 对象不带 logs_url 字段, 按 job.id 构造日志端点
+    const jobLogsUrl = jobList.length ? `${API}/repos/${OWNER}/${REPO}/actions/jobs/${jobList[0].id}/logs` : null;
     if (run.status === 'in_progress' || run.status === 'queued') {
       if (!state.logBusy) refreshLog(run, jobLogsUrl);
     } else if (run.status === 'completed') {
@@ -287,7 +288,9 @@ async function refreshLog(run, jobLogsUrl, isFinal) {
   try {
     const url = jobLogsUrl || run.logs_url;
     if (!url) { state.logBusy = false; return; }
-    const res = await fetch(url, { headers: state.token ? { Authorization: `Bearer ${state.token}` } : {} });
+    const h = { Accept: 'application/vnd.github+json' };
+    if (state.token) h.Authorization = `Bearer ${state.token}`;
+    const res = await fetch(url, { headers: h });
     const ct = res.headers.get('content-type') || '';
     if (ct.includes('zip') || ct.includes('octet-stream')) {
       // 极端情况: job 级也返回 zip —— 放弃解析
