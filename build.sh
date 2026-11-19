@@ -1021,6 +1021,11 @@ build_kernel() {
   fi
   # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
   info "预检: 快速编译 drivers/kernelsu/ (尽早发现兼容错误)..."
+  # builtin 分支的 kernel_includes.h 包含 <generated/compile.h>, 它由 init/Makefile 里的规则
+  # (scripts/mkcompile_h) 生成; 单编译 drivers/kernelsu 不会触达 init/, 故先编译一次 version.o 生成它
+  if ! make "${args[@]}" init/version.o >>"$LOG_FILE" 2>&1; then
+    die_log "$LOG_FILE" "预检失败: init/version.o 编译出错 (详见日志尾部)"
+  fi
   # 4.19 等老内核: KSU 的 selinux 代码 include 内核 security/selinux 生成的 flask.h;
   # 完整构建时 security/ 先于 drivers/ 构建所以没问题, 单独预检则需先生成它
   if ! make "${args[@]}" security/selinux/ >>"$LOG_FILE" 2>&1; then
