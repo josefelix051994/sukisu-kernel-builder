@@ -503,13 +503,16 @@ ksu_compat_fixups() {
       sed -i 's|#include <linux/pgtable.h>|#include <asm/pgtable.h>|' "$g"
     done < <(grep -rl '#include <linux/pgtable.h>' "$kd" --include='*.c' --include='*.h' 2>/dev/null || true)
   fi
-  # 3) copy_from_kernel_nofault: 5.8+ 才有, 更老内核用 probe_kernel_read
+  # 3) *_nofault API 族: 5.8 才引入 (5.7 及更老只有 probe_kernel_* / 普通 copy_* 与 strncpy_from_user)
   if [ "$lt58" = 1 ]; then
-    local s="$kd/selinux/inode.c"
-    if [ -f "$s" ] && grep -q 'copy_from_kernel_nofault' "$s"; then
-      info "兼容修复: copy_from_kernel_nofault 改为 probe_kernel_read (<5.8)"
-      sed -i 's/copy_from_kernel_nofault(/probe_kernel_read(/g' "$s"
-    fi
+    info "兼容修复: 替换 <5.8 内核上不存在的 *_nofault API (全 kernelsu 树)"
+    find "$kd" -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i \
+      -e 's/copy_to_kernel_nofault(/probe_kernel_write(/g' \
+      -e 's/copy_from_kernel_nofault(/probe_kernel_read(/g' \
+      -e 's/copy_from_user_nofault(/copy_from_user(/g' \
+      -e 's/copy_to_user_nofault(/copy_to_user(/g' \
+      -e 's/strncpy_from_user_nofault(/strncpy_from_user(/g' \
+      {} +
   fi
 }
 
@@ -696,6 +699,11 @@ build_kernel() {
   if [ -n "${EXTRA_MAKE_ARGS:-}" ]; then
     args+=($EXTRA_MAKE_ARGS)
     info "附加 make 参数: $EXTRA_MAKE_ARGS"
+  fi
+  # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
+  info "预检: 快速编译 drivers/kernelsu/ (尽早发现兼容错误)..."
+  if ! make "${args[@]}" -k drivers/kernelsu/ 2>&1 | tee -a "$LOG_FILE"; then
+    die_log "$LOG_FILE" "预检失败: drivers/kernelsu 编译出错 (详见上方日志尾部)"
   fi
   info "开始编译内核 (make -j$JOBS, 通常需要 10~60 分钟; 日志: $LOG_FILE) ..."
   if ! make "${args[@]}" Image.gz 2>&1 | tee -a "$LOG_FILE"; then
