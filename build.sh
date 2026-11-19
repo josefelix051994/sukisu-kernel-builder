@@ -479,17 +479,36 @@ integrate_sukisu() {
 
 # 集成后的 SukiSU 源码兼容修复 (依赖 KVER, 须在 detect_kver + integrate_sukisu 之后调用)
 ksu_compat_fixups() {
-  local f="$KERNEL_DIR/drivers/kernelsu/core/init.c"
-  [ -f "$f" ] || return 0
-  if grep -q 'MODULE_IMPORT_NS' "$f"; then
-    # 符号命名空间 (MODULE_IMPORT_NS / VFS_internal_...) 是内核 5.4+ 才有的,
-    # 4.x / 5.0~5.3 上宏不存在, 会触发 clang "declaration specifier missing" 报错 → 直接删掉该导入
-    local maj min
-    maj="${KVER%%.*}"
-    min="$(echo "$KVER" | sed -n 's/^[0-9]*\.\([0-9]*\).*/\1/p')"
+  local kd="$KERNEL_DIR/drivers/kernelsu"
+  [ -d "$kd" ] || return 0
+  local maj min
+  maj="${KVER%%.*}"
+  min="$(echo "$KVER" | sed -n 's/^[0-9]*\.\([0-9]*\).*/\1/p')"
+  local lt55=0 lt58=0
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 5 ]; }; then lt55=1; fi
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 8 ]; }; then lt58=1; fi
+  # 1) MODULE_IMPORT_NS: 符号命名空间 5.4+ 才有, 更老内核上宏不存在 → 删除导入行
+  local f="$kd/core/init.c"
+  if [ -f "$f" ] && grep -q 'MODULE_IMPORT_NS' "$f"; then
     if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 4 ]; }; then
       info "兼容修复: 删除 <5.4 内核上不存在的 MODULE_IMPORT_NS 导入 (init.c)"
       sed -i '/^MODULE_IMPORT_NS.*$/d' "$f"
+    fi
+  fi
+  # 2) linux/pgtable.h: 5.5+ 才有, 更老内核用 asm/pgtable.h
+  if [ "$lt55" = 1 ]; then
+    local g
+    while IFS= read -r g; do
+      info "兼容修复: $g 的 linux/pgtable.h 改为 asm/pgtable.h (<5.5)"
+      sed -i 's|#include <linux/pgtable.h>|#include <asm/pgtable.h>|' "$g"
+    done < <(grep -rl '#include <linux/pgtable.h>' "$kd" --include='*.c' --include='*.h' 2>/dev/null || true)
+  fi
+  # 3) copy_from_kernel_nofault: 5.8+ 才有, 更老内核用 probe_kernel_read
+  if [ "$lt58" = 1 ]; then
+    local s="$kd/selinux/inode.c"
+    if [ -f "$s" ] && grep -q 'copy_from_kernel_nofault' "$s"; then
+      info "兼容修复: copy_from_kernel_nofault 改为 probe_kernel_read (<5.8)"
+      sed -i 's/copy_from_kernel_nofault(/probe_kernel_read(/g' "$s"
     fi
   fi
 }
