@@ -8,19 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: 探测 clang 仓库分支
+      - name: 探测 llvm 分支布局
         run: |
           set -x
-          echo "=== 分支总数 ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | wc -l
-          echo "=== 含 clang 的分支 ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -i 'clang' | head -80
-          echo "=== 含 r+6位数字 的分支 ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -iE 'r[0-9]{6}' | head -40
-          echo "=== tags ==="
-          git ls-remote --tags https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -iE 'clang|r[0-9]{6}' | head -40
-          echo "=== HEAD 顶层目录(经 gitiles JSON) ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/HEAD/?format=JSON" | head -c 2000
+          echo "=== 精确分支存在性 ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -E 'llvm-r(353983|365631|370808|383902|416183|450784|487747|510928|522817)' || echo "无匹配"
+          echo "=== llvm-r416183 顶层 ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/llvm-r416183/?format=JSON" | head -c 1400
           echo
-          echo "=== android13-release 顶层目录 ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/android13-release/?format=JSON" | head -c 800
+          echo "=== llvm-r353983 顶层 ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/llvm-r353983/?format=JSON" | head -c 1400
+          echo
+          echo "=== llvm-r522817 顶层 ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/llvm-r522817/?format=JSON" | head -c 1400
+          echo
+          echo "=== gcc49 aarch64 main 顶层 ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+show/main/?format=JSON" | head -c 800
