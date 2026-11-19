@@ -286,6 +286,8 @@ function startLogStream(run) {
   xhr.open('GET', run.logs_url, true);
   if (state.token) xhr.setRequestHeader('Authorization', `Bearer ${state.token}`);
   xhr.onprogress = () => {
+    const ct = xhr.getResponseHeader('content-type') || '';
+    if (ct.includes('zip') || ct.includes('octet-stream')) { stopLogStream(); return; }
     const t = xhr.responseText || '';
     if (t.length > state.logLen) {
       $('log').textContent += t.slice(state.logLen);
