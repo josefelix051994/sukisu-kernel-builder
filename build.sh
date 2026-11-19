@@ -477,6 +477,23 @@ integrate_sukisu() {
   )
 }
 
+# 集成后的 SukiSU 源码兼容修复 (依赖 KVER, 须在 detect_kver + integrate_sukisu 之后调用)
+ksu_compat_fixups() {
+  local f="$KERNEL_DIR/drivers/kernelsu/core/init.c"
+  [ -f "$f" ] || return 0
+  if grep -q 'MODULE_IMPORT_NS' "$f"; then
+    # 符号命名空间 (MODULE_IMPORT_NS / VFS_internal_...) 是内核 5.4+ 才有的,
+    # 4.x / 5.0~5.3 上宏不存在, 会触发 clang "declaration specifier missing" 报错 → 直接删掉该导入
+    local maj min
+    maj="${KVER%%.*}"
+    min="$(echo "$KVER" | sed -n 's/^[0-9]*\.\([0-9]*\).*/\1/p')"
+    if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 4 ]; }; then
+      info "兼容修复: 删除 <5.4 内核上不存在的 MODULE_IMPORT_NS 导入 (init.c)"
+      sed -i '/^MODULE_IMPORT_NS.*$/d' "$f"
+    fi
+  fi
+}
+
 # -------------------------------- 配置选择 --------------------------------
 pick_defconfig() {
   local hint="${SEL_DEFCONFIG:-}"
@@ -892,6 +909,7 @@ main() {
   compat_fixups
   detect_kver
   integrate_sukisu
+  ksu_compat_fixups
   decide_builtin_hook
   pick_defconfig
   info "使用 defconfig: $DEFCONFIG"
