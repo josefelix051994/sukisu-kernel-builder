@@ -6,18 +6,21 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: 探测 clang 仓库分支与布局
+      - name: 探测 clang 仓库分支
         run: |
           set -x
-          echo "=== gitiles refs JSON (前 3000 字符) ==="
-          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+refs/heads/?format=JSON" | head -c 3000
+          echo "=== 分支总数 ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | wc -l
+          echo "=== 含 clang 的分支 ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -i 'clang' | head -80
+          echo "=== 含 r+6位数字 的分支 ==="
+          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -iE 'r[0-9]{6}' | head -40
+          echo "=== tags ==="
+          git ls-remote --tags https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -iE 'clang|r[0-9]{6}' | head -40
+          echo "=== HEAD 顶层目录(经 gitiles JSON) ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/HEAD/?format=JSON" | head -c 2000
           echo
-          echo "=== ls-remote 含 clang/r 的分支 ==="
-          git ls-remote --heads https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 | grep -iE "clang|r[0-9]{6}|main|master" | head -50
-          echo "=== HEAD ==="
-          git ls-remote https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 HEAD
-          echo "=== 浅克隆 main(不含 blob)看顶层目录 ==="
-          rm -rf /tmp/c && git clone --depth 1 --filter=blob:none https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 /tmp/c 2>&1 | tail -3
-          ls /tmp/c | head -40
+          echo "=== android13-release 顶层目录 ==="
+          curl -s "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+show/android13-release/?format=JSON" | head -c 800
