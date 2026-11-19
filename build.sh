@@ -526,6 +526,13 @@ ksu_compat_fixups() {
         sed -i 's/\bfallthrough;/\/* fallthrough *\//g' "$bf"
       done < <(find -L "$kd" -type f -name '*.c' -exec grep -l '\bfallthrough;' {} + 2>/dev/null || true)
     fi
+    # B4) extension/kpm/kpm.c:182 用 2 参 access_ok(5.0+ 签名; 4.19 是 access_ok(type,addr,size) 3 参) → ksu_access_ok
+    local kpmc="$kd/extension/kpm/kpm.c"
+    if [ -f "$kpmc" ] && grep -q '!access_ok(' "$kpmc" \
+       && grep -rq 'VERIFY_READ' "$KERNEL_DIR/include/linux/uaccess.h"; then
+      info "兼容修复(builtin): kpm.c 的 2 参 access_ok 改为 ksu_access_ok (4.19 是 3 参宏)"
+      sed -i 's/!access_ok(/!ksu_access_ok(/g' "$kpmc"
+    fi
     return 0
   fi
   # === main 分支: 以下 12 项修复仅对 main 执行 ===
