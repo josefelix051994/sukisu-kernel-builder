@@ -484,35 +484,323 @@ ksu_compat_fixups() {
   local maj min
   maj="${KVER%%.*}"
   min="$(echo "$KVER" | sed -n 's/^[0-9]*\.\([0-9]*\).*/\1/p')"
-  local lt55=0 lt58=0
+  # ltXX=1 表示 kver < X.Y (maj/min 由 Makefile 解析而来, 均为数字)
+  local lt411=0 lt51=0 lt52=0 lt54=0 lt55=0 lt58=0 lt59=0 lt511=0
+  if { [ "$maj" -lt 4 ] 2>/dev/null; } || { [ "$maj" = 4 ] && [ "${min:-0}" -lt 11 ]; }; then lt411=1; fi
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 1 ]; }; then lt51=1; fi
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 2 ]; }; then lt52=1; fi
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 4 ]; }; then lt54=1; fi
   if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 5 ]; }; then lt55=1; fi
   if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 8 ]; }; then lt58=1; fi
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 9 ]; }; then lt59=1; fi
+  if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 11 ]; }; then lt511=1; fi
   # 1) MODULE_IMPORT_NS: 符号命名空间 5.4+ 才有, 更老内核上宏不存在 → 删除导入行
   local f="$kd/core/init.c"
-  if [ -f "$f" ] && grep -q 'MODULE_IMPORT_NS' "$f"; then
-    if { [ "$maj" -lt 5 ] 2>/dev/null; } || { [ "$maj" = 5 ] && [ "${min:-0}" -lt 4 ]; }; then
-      info "兼容修复: 删除 <5.4 内核上不存在的 MODULE_IMPORT_NS 导入 (init.c)"
-      sed -i '/^MODULE_IMPORT_NS.*$/d' "$f"
-    fi
+  if [ "$lt54" = 1 ] && [ -f "$f" ] && grep -q 'MODULE_IMPORT_NS' "$f"; then
+    info "兼容修复: 删除 <5.4 内核上不存在的 MODULE_IMPORT_NS 导入 (core/init.c)"
+    sed -i '/^MODULE_IMPORT_NS.*$/d' "$f"
   fi
   # 2) linux/pgtable.h: 5.5+ 才有, 更老内核用 asm/pgtable.h
+  # 注意: 必须用 find -L — setup.sh 把 drivers/kernelsu 建成指向 KernelSU/kernel 的符号链接,
+  # 不带 -L 的 find 不会进入符号链接目录 (run #12 的 *_nofault 修复因此零文件执行)
   if [ "$lt55" = 1 ]; then
     local g
     while IFS= read -r g; do
-      info "兼容修复: $g 的 linux/pgtable.h 改为 asm/pgtable.h (<5.5)"
+      info "兼容修复: ${g#$KERNEL_DIR/} 的 linux/pgtable.h 改为 asm/pgtable.h (<5.5)"
       sed -i 's|#include <linux/pgtable.h>|#include <asm/pgtable.h>|' "$g"
-    done < <(grep -rl '#include <linux/pgtable.h>' "$kd" --include='*.c' --include='*.h' 2>/dev/null || true)
+    done < <(find -L "$kd" -type f \( -name '*.c' -o -name '*.h' \) -exec grep -l '#include <linux/pgtable.h>' {} + 2>/dev/null || true)
   fi
   # 3) *_nofault API 族: 5.8 才引入 (5.7 及更老只有 probe_kernel_* / 普通 copy_* 与 strncpy_from_user)
   if [ "$lt58" = 1 ]; then
     info "兼容修复: 替换 <5.8 内核上不存在的 *_nofault API (全 kernelsu 树)"
-    find "$kd" -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i \
+    find -L "$kd" -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i \
       -e 's/copy_to_kernel_nofault(/probe_kernel_write(/g' \
       -e 's/copy_from_kernel_nofault(/probe_kernel_read(/g' \
       -e 's/copy_from_user_nofault(/copy_from_user(/g' \
       -e 's/copy_to_user_nofault(/copy_to_user(/g' \
       -e 's/strncpy_from_user_nofault(/strncpy_from_user(/g' \
       {} +
+  fi
+  # 4) uapi/linux/mount.h: 5.2+ 才有; su_mount_ns.c 只用到 MS_PRIVATE|MS_REC (在 uapi/linux/fs.h)
+  if [ "$lt52" = 1 ]; then
+    local sm="$kd/infra/su_mount_ns.c"
+    if [ -f "$sm" ] && grep -q '#include <uapi/linux/mount.h>' "$sm"; then
+      info "兼容修复: infra/su_mount_ns.c 的 uapi/linux/mount.h 改为 uapi/linux/fs.h (<5.2)"
+      sed -i 's|#include <uapi/linux/mount.h>|#include <uapi/linux/fs.h>|' "$sm"
+    fi
+  fi
+  # 5) linux/minmax.h: 5.1+ 才有; event.c 只用 min/max 宏 (linux/kernel.h 亦有)
+  if [ "$lt51" = 1 ]; then
+    local ev="$kd/sulog/event.c"
+    if [ -f "$ev" ] && grep -q '#include <linux/minmax.h>' "$ev"; then
+      info "兼容修复: sulog/event.c 的 linux/minmax.h 改为 linux/kernel.h (<5.1)"
+      sed -i 's|#include <linux/minmax.h>|#include <linux/kernel.h>|' "$ev"
+    fi
+  fi
+  # 6) dispatch.c 缺 sched 头: tasklist_lock/init_task 在 sched/task.h, task_pgrp/task_session 在 sched/signal.h
+  #    (4.19 的 sched.h 不包含 sched/signal.h; 4.11 之前这两个 split 头还不存在, 用 sched.h 兜底)
+  local dp="$kd/supercall/dispatch.c"
+  if [ -f "$dp" ] && grep -q '#include <linux/thread_info.h>' "$dp" \
+     && ! grep -q '#include <linux/sched/signal.h>' "$dp"; then
+    if [ "$lt411" = 1 ]; then
+      info "兼容修复: supercall/dispatch.c 补 <linux/sched.h> (<4.11 无 split sched 头)"
+      sed -i 's|#include <linux/thread_info.h>|#include <linux/thread_info.h>\n#include <linux/sched.h>|' "$dp"
+    else
+      info "兼容修复: supercall/dispatch.c 补 sched/signal.h + sched/task.h (task_pgrp/task_session/tasklist_lock)"
+      sed -i 's|#include <linux/thread_info.h>|#include <linux/thread_info.h>\n#include <linux/sched/signal.h>\n#include <linux/sched/task.h>|' "$dp"
+    fi
+  fi
+  # 7) allowlist.c 缺 sched/task.h: put_task_struct 声明于 sched/task.h (4.11+)
+  local al="$kd/policy/allowlist.c"
+  if [ -f "$al" ] && grep -q 'put_task_struct(' "$al" \
+     && ! grep -q '#include <linux/sched/task.h>' "$al"; then
+    if [ "$lt411" = 1 ]; then
+      info "兼容修复: policy/allowlist.c 补 <linux/sched.h> (put_task_struct, <4.11)"
+      sed -i 's|#include <linux/version.h>|#include <linux/version.h>\n#include <linux/sched.h>|' "$al"
+    else
+      info "兼容修复: policy/allowlist.c 补 <linux/sched/task.h> (put_task_struct)"
+      sed -i 's|#include <linux/version.h>|#include <linux/version.h>\n#include <linux/sched/task.h>|' "$al"
+    fi
+  fi
+  # 8) TWA_RESUME: 5.9 才引入的枚举; 5.8 及更老 task_work_add 第三参是 bool → 用 true
+  if [ "$lt59" = 1 ]; then
+    local tf
+    for tf in "$kd/policy/allowlist.c" "$kd/supercall/supercall.c"; do
+      if [ -f "$tf" ] && grep -q 'TWA_RESUME' "$tf"; then
+        info "兼容修复: ${tf#$KERNEL_DIR/} 的 TWA_RESUME 改为 true (<5.9)"
+        sed -i 's/TWA_RESUME/true/g' "$tf"
+      fi
+    done
+  fi
+  # 9) fallthrough 语句: 5.4+ 才有的宏; 更老内核用 /* fallthrough */ 注释
+  if [ "$lt54" = 1 ]; then
+    local ff
+    while IFS= read -r ff; do
+      info "兼容修复: ${ff#$KERNEL_DIR/} 的 fallthrough; 改为 /* fallthrough */ (<5.4)"
+      sed -i 's/^\([[:space:]]*\)fallthrough;/\1\/\* fallthrough \*\//' "$ff"
+    done < <(find -L "$kd" -type f -name '*.c' -exec grep -l '^[[:space:]]*fallthrough;' {} + 2>/dev/null || true)
+  fi
+  # 10) seccomp action_cache 与 SECCOMP_ARCH_NATIVE_NR 都是 5.4+ 的; 4.x 内核 struct seccomp_filter
+  #     无 cache 字段 (镜像结构体错位有运行时风险) → 整文件替换为桩, 保住 setuid_hook.c 调用的 API
+  if [ "$lt54" = 1 ]; then
+    local sc="$kd/infra/seccomp_cache.c"
+    if [ -f "$sc" ] && grep -q 'SECCOMP_ARCH_NATIVE_NR' "$sc"; then
+      info "兼容修复: infra/seccomp_cache.c 整体替换为桩 (<5.4 无 action_cache, 避免结构错位)"
+      cat > "$sc" <<'KSU_EOF'
+// SPDX-License-Identifier: GPL-2.0
+/* seccomp action_cache 与 SECCOMP_ARCH_NATIVE_NR 均为 5.4+, 旧内核退化为空操作 */
+#include "infra/seccomp_cache.h"
+
+void ksu_seccomp_clear_cache(struct seccomp_filter *filter, int nr)
+{
+    (void)filter;
+    (void)nr;
+}
+
+void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
+{
+    (void)filter;
+    (void)nr;
+}
+KSU_EOF
+    fi
+  fi
+  # 11) fsnotify handle_inode_event 指定初始化需要 5.11+; 更老内核用 8 参 handle_event 旧 API
+  if [ "$lt511" = 1 ]; then
+    local po="$kd/manager/pkg_observer.c"
+    if [ -f "$po" ] && grep -q 'handle_inode_event' "$po"; then
+      info "兼容修复: manager/pkg_observer.c 替换为 fsnotify 旧 API 实现 (<5.11)"
+      cat > "$po" <<'KSU_EOF'
+// SPDX-License-Identifier: GPL-2.0
+/* <5.11 兼容版: fsnotify 旧 API (8 参 handle_event); 新 API 需 5.11+ */
+#include <linux/module.h>
+#include <linux/fs.h>
+#include <linux/limits.h>
+#include <linux/string.h>
+#include <linux/namei.h>
+#include <linux/fsnotify_backend.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/rculist.h>
+#include <linux/task_work.h>
+#include <linux/version.h>
+#include "klog.h" // IWYU pragma: keep
+#include "manager/throne_tracker.h"
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0) && !defined(TWA_RESUME)
+#define TWA_RESUME true
+#endif
+
+#define MASK_SYSTEM (FS_CREATE | FS_MOVE | FS_EVENT_ON_CHILD)
+
+struct watch_dir {
+    const char *path;
+    u32 mask;
+    struct path kpath;
+    struct inode *inode;
+    struct fsnotify_mark *mark;
+};
+
+static struct fsnotify_group *g;
+
+static void ksu_track_throne_tw_func(struct callback_head *cb)
+{
+    kfree(cb);
+    // Runs after exit_fs() if the task is exiting; path lookups would oops
+    if (current->flags & PF_EXITING)
+        return;
+    track_throne(false);
+}
+
+// Never scan from the fsnotify handler: fsnotify_mark_srcu and the rename's dir
+// locks would be held for the whole scan. Defer with task_work, not a kthread
+// or kworker: the scan must finish before the rename returns, or the manager
+// can be opened before it is crowned, and it must run in the renamer's
+// (Android's) namespaces, which differ from init_task's on WSA/Waydroid.
+static void ksu_defer_track_throne(void)
+{
+    struct callback_head *cb;
+
+    if (current->flags & PF_KTHREAD)
+        goto skipped;
+
+    cb = kzalloc(sizeof(*cb), GFP_KERNEL);
+    if (!cb)
+        goto skipped;
+
+    cb->func = ksu_track_throne_tw_func;
+    if (!task_work_add(current, cb, TWA_RESUME))
+        return;
+skipped:
+    kfree(cb);
+    pr_warn("defer track_throne failed, skipping scan\n");
+}
+
+/* 5.11 之前的 fsnotify_ops: 8 参 handle_event */
+static int ksu_handle_event(struct fsnotify_group *group, struct inode *inode,
+                            u32 mask, const void *data, int data_type,
+                            const unsigned char *file_name, u32 cookie,
+                            struct fsnotify_iter_info *iter_info)
+{
+    (void)group;
+    (void)inode;
+    (void)data;
+    (void)cookie;
+    (void)iter_info;
+    if (data_type != FSNOTIFY_EVENT_INODE || !file_name)
+        return 0;
+    if (mask & FS_ISDIR)
+        return 0;
+    if (strnlen(file_name, NAME_MAX + 1) == 13 &&
+        !memcmp(file_name, "packages.list", 13)) {
+        pr_info("packages.list detected: %d\n", mask);
+        ksu_defer_track_throne();
+    }
+    return 0;
+}
+
+static const struct fsnotify_ops ksu_ops = {
+    .handle_event = ksu_handle_event,
+};
+
+static int add_mark_on_inode(struct inode *inode, u32 mask, struct fsnotify_mark **out)
+{
+    struct fsnotify_mark *m;
+
+    m = kzalloc(sizeof(*m), GFP_KERNEL);
+    if (!m)
+        return -ENOMEM;
+
+    fsnotify_init_mark(m, g);
+    m->mask = mask;
+
+    if (fsnotify_add_inode_mark(m, inode, 0)) {
+        fsnotify_put_mark(m);
+        return -EINVAL;
+    }
+    *out = m;
+    return 0;
+}
+
+static int watch_one_dir(struct watch_dir *wd)
+{
+    int ret = kern_path(wd->path, LOOKUP_FOLLOW, &wd->kpath);
+    if (ret) {
+        pr_info("path not ready: %s (%d)\n", wd->path, ret);
+        return ret;
+    }
+    wd->inode = d_inode(wd->kpath.dentry);
+    ihold(wd->inode);
+
+    ret = add_mark_on_inode(wd->inode, wd->mask, &wd->mark);
+    if (ret) {
+        pr_err("Add mark failed for %s (%d)\n", wd->path, ret);
+        path_put(&wd->kpath);
+        iput(wd->inode);
+        wd->inode = NULL;
+        return ret;
+    }
+    pr_info("watching %s\n", wd->path);
+    return 0;
+}
+
+static void unwatch_one_dir(struct watch_dir *wd)
+{
+    if (wd->mark) {
+        fsnotify_destroy_mark(wd->mark, g);
+        fsnotify_put_mark(wd->mark);
+        wd->mark = NULL;
+    }
+    if (wd->inode) {
+        iput(wd->inode);
+        wd->inode = NULL;
+    }
+    if (wd->kpath.dentry) {
+        path_put(&wd->kpath);
+        memset(&wd->kpath, 0, sizeof(wd->kpath));
+    }
+}
+
+static struct watch_dir g_watch = { .path = "/data/system", .mask = MASK_SYSTEM };
+
+int ksu_observer_init(void)
+{
+    int ret = 0;
+
+    g = fsnotify_alloc_group(&ksu_ops);
+    if (IS_ERR(g))
+        return PTR_ERR(g);
+
+    ret = watch_one_dir(&g_watch);
+    pr_info("observer init done\n");
+    return 0;
+}
+
+void __exit ksu_observer_exit(void)
+{
+    unwatch_one_dir(&g_watch);
+    fsnotify_put_group(g);
+    pr_info("observer exit done\n");
+}
+KSU_EOF
+    fi
+  fi
+  # 12) cpu_spoof.c 的通用 vDSO 头 (vdso/datapage.h) 5.2+ 才有; 旧内核移除 vdso 改写段,
+  #     保留 MIDR/loops_per_jiffy/elf_hwcap 改写 (kallsyms 方案与版本无关)
+  if [ "$lt52" = 1 ]; then
+    local cs="$kd/extension/cpu_spoof.c"
+    if [ -f "$cs" ] && grep -q '#include <vdso/' "$cs"; then
+      info "兼容修复: extension/cpu_spoof.c 移除通用 vDSO 代码段 (<5.2)"
+      sed -i '\|#include <vdso/|d' "$cs"
+      local st en
+      st="$(grep -n 'KERNEL_VERSION(6, 18, 0)' "$cs" | head -n1 | cut -d: -f1)"
+      en="$(grep -n 'clear_bit(ARM64_WORKAROUND_1418040' "$cs" | head -n1 | cut -d: -f1)"
+      if [ -n "$st" ] && [ -n "$en" ] && [ "$en" -gt "$st" ]; then
+        sed -i "${st},$((en + 5))d" "$cs"
+      else
+        warn "cpu_spoof.c 的 vDSO 段定位失败, 仅移除了 include (编译报错请反馈)"
+      fi
+    fi
   fi
 }
 
@@ -702,6 +990,11 @@ build_kernel() {
   fi
   # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
   info "预检: 快速编译 drivers/kernelsu/ (尽早发现兼容错误)..."
+  # 4.19 等老内核: KSU 的 selinux 代码 include 内核 security/selinux 生成的 flask.h;
+  # 完整构建时 security/ 先于 drivers/ 构建所以没问题, 单独预检则需先生成它
+  if ! make "${args[@]}" security/selinux/ >>"$LOG_FILE" 2>&1; then
+    warn "预检: security/selinux/ 预构建失败 (完整构建时会重试, 先继续)"
+  fi
   if ! make "${args[@]}" -k drivers/kernelsu/ 2>&1 | tee -a "$LOG_FILE"; then
     die_log "$LOG_FILE" "预检失败: drivers/kernelsu 编译出错 (详见上方日志尾部)"
   fi
