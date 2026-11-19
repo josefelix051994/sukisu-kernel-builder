@@ -78,6 +78,15 @@ info() { echo -e "\033[1;34m[信息]\033[0m $*"; }
 ok()   { echo -e "\033[1;32m[完成]\033[0m $*"; }
 warn() { echo -e "\033[1;33m[警告]\033[0m $*" >&2; }
 die()  { echo -e "\033[1;31m[错误]\033[0m $*" >&2; exit 1; }
+# 打印日志尾部后报错退出 (便于在 CI 日志里直接看到失败原因)
+die_log() {
+  local f="$1"; shift
+  if [ -f "$f" ]; then
+    echo -e "\033[1;33m[警告]\033[0m 日志末尾 ($f, 最后 60 行):" >&2
+    tail -n 60 "$f" >&2 || true
+  fi
+  die "$@"
+}
 
 usage() {
   cat <<'EOF'
@@ -534,16 +543,16 @@ make_config() {
   info "生成内核配置 ($DEFCONFIG) ..."
   if [[ "$DEFCONFIG" == *defconfig ]]; then
     if ! $MK "$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
-      die "defconfig 生成失败: $DEFCONFIG (日志: $LOG_FILE)"
+      die_log "$LOG_FILE" "defconfig 生成失败: $DEFCONFIG"
     fi
   else
     mkdir -p "$OUT_DIR"
     cp "arch/arm64/configs/$DEFCONFIG" "$OUT_DIR/.config"
     if ! $MK olddefconfig >>"$LOG_FILE" 2>&1; then
-      die "olddefconfig 失败 (日志: $LOG_FILE)"
+      die_log "$LOG_FILE" "olddefconfig 失败"
     fi
   fi
-  [ -f "$OUT_DIR/.config" ] || die "未生成 $OUT_DIR/.config"
+  [ -f "$OUT_DIR/.config" ] || die_log "$LOG_FILE" "未生成 $OUT_DIR/.config"
   info "启用 SukiSU 相关配置 (scripts/config) ..."
   if [ "$KSU_MODE" = m ]; then
     $SC -m KSU || true
@@ -572,7 +581,7 @@ make_config() {
     fi
   fi
   if ! $MK olddefconfig >>"$LOG_FILE" 2>&1; then
-    die "olddefconfig 失败 (日志: $LOG_FILE)"
+    die_log "$LOG_FILE" "olddefconfig 失败"
   fi
   if grep -q "^CONFIG_KSU=[ym]" "$OUT_DIR/.config"; then
     ok "CONFIG_KSU 已生效: $(grep '^CONFIG_KSU=' "$OUT_DIR/.config" | tr -d '\n')"
@@ -620,14 +629,14 @@ build_kernel() {
   fi
   info "开始编译内核 (make -j$JOBS, 通常需要 10~60 分钟; 日志: $LOG_FILE) ..."
   if ! make "${args[@]}" Image.gz 2>&1 | tee -a "$LOG_FILE"; then
-    die "内核编译失败 (Image.gz), 详见 $LOG_FILE"
+    die_log "$LOG_FILE" "内核编译失败 (Image.gz)"
   fi
   if [ ! -f "$OUT_DIR/arch/arm64/boot/Image.gz" ]; then
     if [ -f "$OUT_DIR/arch/arm64/boot/Image" ]; then
       warn "Image.gz 目标缺失, 手动 gzip 压缩 Image"
       gzip -k -f -9 "$OUT_DIR/arch/arm64/boot/Image"
     else
-      die "编译产物缺失: 未生成 Image (详见 $LOG_FILE)"
+      die_log "$LOG_FILE" "编译产物缺失: 未生成 Image"
     fi
   fi
   info "编译 DTB ..."
@@ -637,7 +646,7 @@ build_kernel() {
   if [ "$KSU_MODE" = m ]; then
     info "编译内核模块 (kernelsu.ko) ..."
     if ! make "${args[@]}" modules 2>&1 | tee -a "$LOG_FILE"; then
-      die "模块编译失败, 详见 $LOG_FILE"
+      die_log "$LOG_FILE" "模块编译失败"
     fi
     if [ ! -f "$OUT_DIR/drivers/kernelsu/kernelsu.ko" ]; then
       warn "未找到 kernelsu.ko! 请确认 CONFIG_KSU=m 已生效"
