@@ -1,0 +1,151 @@
+name: SukiSU Kernel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: '设备 ID(如 alioth、op8、gki-a15;自定义源时填 custom)'
+        required: true
+        default: ''
+      version:
+        description: '版本序号(该设备的第几个版本, 从 1 开始)'
+        required: false
+        default: '1'
+      ksu_branch:
+        description: 'SukiSU 集成分支'
+        required: true
+        type: choice
+        options: [main, builtin]
+        default: main
+      ksu_mode:
+        description: 'CONFIG_KSU 模式: 留空=自动(GKI 用 m, 非 GKI 用 y)'
+        required: false
+        type: choice
+        options: ['', 'y', 'm']
+        default: ''
+      kpm:
+        description: '启用 KPM(内核补丁模块)'
+        required: false
+        type: boolean
+        default: false
+      debug_ksu:
+        description: '启用 KSU_DEBUG'
+        required: false
+        type: boolean
+        default: false
+      jobs:
+        description: '并行编译数(留空=自动, 公共 runner 只有 2 核, 建议留空)'
+        required: false
+        default: ''
+      clean:
+        description: '编译前清空 work/ 目录(每次全新构建; 公共 runner 本身不保留旧数据, 一般无需勾选)'
+        required: false
+        type: boolean
+        default: false
+      custom_repo:
+        description: '[自定义源] 内核仓库 URL'
+        required: false
+        default: ''
+      custom_branch:
+        description: '[自定义源] 仓库分支'
+        required: false
+        default: ''
+      custom_defconfig:
+        description: '[自定义源] defconfig(留空=自动探测)'
+        required: false
+        default: ''
+      custom_kver:
+        description: '[自定义源] 内核主版本提示, 如 5.15(用于选编译器)'
+        required: false
+        default: ''
+      custom_android:
+        description: '[自定义源] Android 版本号, 如 13(用于选 Clang)'
+        required: false
+        default: ''
+      custom_gki:
+        description: '[自定义源] 是否为 GKI 内核'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: '演练模式: 只打印任务不编译(调试用)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            git curl make gcc g++ bc bison flex python3 zip cpio \
+            libssl-dev xz-utils lz4 zstd dwarves || true
+          # 老内核 GCC 4.9 预编译可能需要 libtinfo5(新版本 Ubuntu 已移除, 装不上就忽略)
+          sudo apt-get install -y --no-install-recommends libtinfo5 || true
+          sudo apt-get install -y --no-install-recommends libncurses-dev || true
+          echo "=== 依赖就绪 ==="
+
+      - name: 组装编译参数并启动构建
+        env:
+          DEVICE: ${{ inputs.device }}
+          VERSION: ${{ inputs.version }}
+          KSU_BRANCH: ${{ inputs.ksu_branch }}
+          KSU_MODE: ${{ inputs.ksu_mode }}
+          KPM: ${{ inputs.kpm }}
+          DEBUG_KSU: ${{ inputs.debug_ksu }}
+          JOBS: ${{ inputs.jobs }}
+          CLEAN: ${{ inputs.clean }}
+          CUSTOM_REPO: ${{ inputs.custom_repo }}
+          CUSTOM_BRANCH: ${{ inputs.custom_branch }}
+          CUSTOM_DEFCONFIG: ${{ inputs.custom_defconfig }}
+          CUSTOM_KVER: ${{ inputs.custom_kver }}
+          CUSTOM_ANDROID: ${{ inputs.custom_android }}
+          CUSTOM_GKI: ${{ inputs.custom_gki }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          ARGS=()
+          if [ -n "$CUSTOM_REPO" ]; then
+            ARGS+=(--repo "$CUSTOM_REPO" --branch "$CUSTOM_BRANCH")
+            [ -n "$CUSTOM_DEFCONFIG" ] && ARGS+=(--defconfig "$CUSTOM_DEFCONFIG")
+            [ -n "$CUSTOM_KVER" ] && ARGS+=(--kver "$CUSTOM_KVER")
+            [ -n "$CUSTOM_ANDROID" ] && ARGS+=(--android "$CUSTOM_ANDROID")
+            [ "$CUSTOM_GKI" = "true" ] && ARGS+=(--gki)
+          else
+            ARGS+=(--device "$DEVICE" --version "${VERSION:-1}")
+          fi
+          ARGS+=(--ksu "$KSU_BRANCH")
+          [ -n "$KSU_MODE" ] && ARGS+=(--ksu-mode "$KSU_MODE")
+          [ "$KPM" = "true" ] && ARGS+=(--kpm)
+          [ "$DEBUG_KSU" = "true" ] && ARGS+=(--debug-ksu)
+          [ -n "$JOBS" ] && ARGS+=(--jobs "$JOBS")
+          [ "$CLEAN" = "true" ] && ARGS+=(--clean)
+          [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
+          ARGS+=(--yes)
+          echo ">>> 执行: bash build.sh ${ARGS[*]}"
+          bash build.sh "${ARGS[@]}"
+
+      - name: 产物清单
+        run: |
+          echo "=== output/ 目录 ==="
+          ls -lh output/ || echo "(无产物, 可能为 dry-run 或编译失败)"
+          echo "=== 完成 ==="
+
+      - name: 上传产物
+        if: ${{ !inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-${{ inputs.device }}-${{ inputs.ksu_branch }}
+          path: output/*
+          if-no-files-found: error
+          retention-days: 14

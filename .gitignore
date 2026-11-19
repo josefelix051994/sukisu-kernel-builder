@@ -1,0 +1,11 @@
+# 编译工作目录(本地/CI)
+work/
+output/
+build.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 不要把 token 提交进仓库(网页在浏览器 localStorage 保存)
+gh-token*.txt

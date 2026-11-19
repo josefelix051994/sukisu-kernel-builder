@@ -1,0 +1,162 @@
+﻿{
+  "devices": [
+    {
+      "id": "alioth",
+      "display": "Redmi K40 / POCO F3",
+      "versions": [
+          {"label": "Android 11 · Linux 4.19", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "alioth-r-oss", "kver": "4.19", "android": "11", "gki": 0, "defconfig": "vendor/alioth_user_defconfig"}
+      ]
+    },
+    {
+      "id": "raphael",
+      "display": "Redmi K20 Pro / Mi 9T Pro",
+      "versions": [
+          {"label": "Android 9 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "raphael-p-oss", "kver": "4.14", "android": "9", "gki": 0, "defconfig": "vendor/raphael_user_defconfig"}
+      ]
+    },
+    {
+      "id": "davinci",
+      "display": "Redmi K20 / Mi 9T",
+      "versions": [
+          {"label": "Android 9 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "davinci-p-oss", "kver": "4.14", "android": "9", "gki": 0, "defconfig": "vendor/davinci_user_defconfig"}
+      ]
+    },
+    {
+      "id": "lmi",
+      "display": "Redmi K30 Pro / POCO F2 Pro",
+      "versions": [
+          {"label": "Android 10 · Linux 4.19", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lmi-q-oss", "kver": "4.19", "android": "10", "gki": 0, "defconfig": "vendor/lmi_user_defconfig"}
+      ]
+    },
+    {
+      "id": "umi",
+      "display": "Mi 10 / Mi 10 Pro",
+      "versions": [
+          {"label": "Android 10 · Linux 4.19", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "umi-q-oss", "kver": "4.19", "android": "10", "gki": 0, "defconfig": "vendor/umi_user_defconfig"}
+      ]
+    },
+    {
+      "id": "sweet",
+      "display": "Redmi Note 10 Pro",
+      "versions": [
+          {"label": "Android 11 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sweet-r-oss", "kver": "4.14", "android": "11", "gki": 0, "defconfig": "vendor/sweet_user_defconfig"}
+      ]
+    },
+    {
+      "id": "ginkgo",
+      "display": "Redmi Note 8 / 8T",
+      "versions": [
+          {"label": "Android 10 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ginkgo-q-oss", "kver": "4.14", "android": "10", "gki": 0, "defconfig": "vendor/ginkgo-perf_defconfig"}
+      ]
+    },
+    {
+      "id": "surya",
+      "display": "POCO X3 NFC",
+      "versions": [
+          {"label": "Android 10 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "surya-q-oss", "kver": "4.14", "android": "10", "gki": 0, "defconfig": "vendor/sdmsteppe-perf_defconfig"}
+      ]
+    },
+    {
+      "id": "haydn",
+      "display": "Redmi K40 Pro / K40 Pro+",
+      "versions": [
+          {"label": "Android 11 · Linux 5.4", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "haydn-r-oss", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/haydn_QGKI.config"}
+      ]
+    },
+    {
+      "id": "venus",
+      "display": "Mi 11",
+      "versions": [
+          {"label": "Android 11 · Linux 5.4", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "venus-r-oss", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/venus_QGKI.config"}
+      ]
+    },
+    {
+      "id": "veux",
+      "display": "Redmi Note 11 Pro 5G / POCO X4 Pro 5G",
+      "versions": [
+          {"label": "Android 11 · Linux 5.4", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "veux-r-oss", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/veux_QGKI.config"}
+      ]
+    },
+    {
+      "id": "op7pro",
+      "display": "OnePlus 7 / 7 Pro / 7T / 7T Pro",
+      "versions": [
+          {"label": "OOS 9 · Linux 4.14", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150", "branch": "oneplus/SM8150_P_9.0", "kver": "4.14", "android": "9", "gki": 0, "defconfig": "vendor/sm8150-perf_defconfig"},
+          {"label": "OOS 10 · Linux 4.14", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150", "branch": "oneplus/SM8150_Q_10.0", "kver": "4.14", "android": "10", "gki": 0, "defconfig": "vendor/sm8150-perf_defconfig"},
+          {"label": "OOS 12.1 · Linux 4.14", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150", "branch": "oneplus/sm8150_s_12.1_op7pro", "kver": "4.14", "android": "12", "gki": 0, "defconfig": "vendor/sm8150-perf_defconfig"}
+      ]
+    },
+    {
+      "id": "op8",
+      "display": "OnePlus 8 / 8 Pro",
+      "versions": [
+          {"label": "OOS 10 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/SM8250_Q_10.0", "kver": "4.19", "android": "10", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
+          {"label": "OOS 11 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/SM8250_R_11.0", "kver": "4.19", "android": "11", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
+          {"label": "OOS 13 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_t_13.0.0_op8", "kver": "4.19", "android": "13", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"}
+      ]
+    },
+    {
+      "id": "op8t",
+      "display": "OnePlus 8T / 9R",
+      "versions": [
+          {"label": "OOS 11 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/SM8250_R_11.0", "kver": "4.19", "android": "11", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
+          {"label": "OOS 12.1 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_s_12.1", "kver": "4.19", "android": "12", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
+          {"label": "OOS 13.1 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_t_13.1_op8", "kver": "4.19", "android": "13", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
+          {"label": "OOS 14 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_u_14.0.0_op8t", "kver": "4.19", "android": "14", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"}
+      ]
+    },
+    {
+      "id": "op9",
+      "display": "OnePlus 9 / 9 Pro",
+      "versions": [
+          {"label": "OOS 11 · Linux 5.4", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/SM8350_R_11.0", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
+          {"label": "OOS 12 · Linux 5.4", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/SM8350_S_12.0_9Pro", "kver": "5.4", "android": "12", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
+          {"label": "OOS 13.1 · Linux 5.15", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/sm8350_t_13.1.0_oneplus9", "kver": "5.15", "android": "13", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
+          {"label": "OOS 14 · Linux 5.15", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/sm8350_u_14.0.0_oneplus9", "kver": "5.15", "android": "14", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"}
+      ]
+    },
+    {
+      "id": "op9rt",
+      "display": "OnePlus 9RT",
+      "versions": [
+          {"label": "OOS 11 · Linux 5.4", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/SM8350_R_11.0_9RT", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
+          {"label": "OOS 13.1 · Linux 5.15", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/sm8350_t_13.1.0_oneplus9rt", "kver": "5.15", "android": "13", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"}
+      ]
+    },
+    {
+      "id": "gki-a12",
+      "display": "通用 GKI · Android 12",
+      "versions": [
+          {"label": "Android 12 · Linux 5.10 (KMI android12-5.10)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android12-5.10", "kver": "5.10", "android": "12", "gki": 1, "defconfig": "gki_defconfig"}
+      ]
+    },
+    {
+      "id": "gki-a13",
+      "display": "通用 GKI · Android 13",
+      "versions": [
+          {"label": "Android 13 · Linux 5.15 (KMI android13-5.15)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android13-5.15", "kver": "5.15", "android": "13", "gki": 1, "defconfig": "gki_defconfig"}
+      ]
+    },
+    {
+      "id": "gki-a14",
+      "display": "通用 GKI · Android 14",
+      "versions": [
+          {"label": "Android 14 · Linux 6.1 (KMI android14-6.1)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android14-6.1", "kver": "6.1", "android": "14", "gki": 1, "defconfig": "gki_defconfig"}
+      ]
+    },
+    {
+      "id": "gki-a15",
+      "display": "通用 GKI · Android 15",
+      "versions": [
+          {"label": "Android 15 · Linux 6.6 (KMI android15-6.6)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android15-6.6", "kver": "6.6", "android": "15", "gki": 1, "defconfig": "gki_defconfig"}
+      ]
+    },
+    {
+      "id": "gki-a16",
+      "display": "通用 GKI · Android 16",
+      "versions": [
+          {"label": "Android 16 · Linux 6.12 (KMI android16-6.12)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android16-6.12", "kver": "6.12", "android": "16", "gki": 1, "defconfig": "gki_defconfig"}
+      ]
+    }
+  ]
+}
