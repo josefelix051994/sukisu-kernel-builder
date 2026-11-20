@@ -62,7 +62,16 @@ async function init() {
 
   try {
     const res = await fetch('devices.json', { cache: 'no-store' });
-    state.devices = (await res.json()).devices;
+    const buf = await res.arrayBuffer();
+    let text;
+    if (buf.byteLength >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) {
+      text = new TextDecoder('utf-16le').decode(buf);           // 防御: PowerShell 重定向写入的 UTF-16LE
+    } else {
+      text = new TextDecoder('utf-8').decode(buf);
+    }
+    text = text.replace(/^\uFEFF/, '');
+    const data = JSON.parse(text);
+    state.devices = data.devices;
     renderDevices();
   } catch (e) {
     $('device-info').textContent = '设备列表加载失败: ' + e.message;
