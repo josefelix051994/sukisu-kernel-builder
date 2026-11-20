@@ -112,11 +112,11 @@ bash build.sh --repo https://github.com/xxx/kernel --branch main \
 
 ## 四、设备库(devices.conf)
 
-已收录并通过 GitHub API 逐条核实的条目(**32 条**):
+已收录并通过 GitHub API 核实的条目(**177 条 / 146 台设备**):
 
 | 厂商 | 设备 | 内核版本 |
 |---|---|---|
-| 小米 | Redmi K40/POCO F3、K20 Pro、K20、K30 Pro、Mi 10/10 Pro、Note 10 Pro、Note 8/8T、POCO X3 NFC、K40 Pro、Mi 11、Note 11 Pro 5G | 4.14 / 4.19 / 5.4 |
+| 小米(全型号) | 小米/红米/POCO 共 146 台(从小米开源 `Xiaomi_Kernel_OpenSource` 自动枚举,完整清单见 [builds/README.md](builds/README.md)) | 3.18 / 4.4 / 4.9 / 4.14 / 4.19 / 5.4 / 5.10 / 5.15 / 6.1 / 6.6 |
 | 一加 | 7/7 Pro/7T/7T Pro、8/8 Pro、8T/9R、9/9 Pro、9RT | 4.14 / 4.19 / 5.4 / 5.15 |
 | 通用 GKI | Android 12 ~ 16(对应 KMI: 5.10 / 5.15 / 6.1 / 6.6 / 6.12) | GKI |
 
@@ -129,7 +129,13 @@ alioth|Android 11 · Linux 4.19|Redmi K40 / POCO F3|https://github.com/MiCode/Xi
 
 - `GKI标志`:`1` = GKI 通用内核(默认 LKM 模式),`0` = 非 GKI(默认内置模式)
 - `defconfig提示` 可留空(自动按设备 ID 探测),支持 glob(如 `vendor/kona*`)
-- 分支名请务必到对应仓库确认存在(工具会在克隆失败时报错)
+- **片段配置**(`vendor/*_consolidate.config`、`*_GKI.config` 等不足 200 行的文件):工具会自动以 `gki_defconfig` 为基础合并片段,并裁掉 FULL LTO / KASAN / DWARF 等调试选项(否则 2 核 runner 极易超时)
+- 改完 `devices.conf` 后请重新生成两份派生文件:
+
+```bash
+bash gen_devices.sh > devices.json      # 网页用的设备清单
+bash tools/gen_build_scripts.sh         # 每机型每版本的独立编译脚本(builds/)
+```
 
 ## 五、产物说明
 
@@ -146,16 +152,24 @@ alioth|Android 11 · Linux 4.19|Redmi K40 / POCO F3|https://github.com/MiCode/Xi
 
 ```
 sukisu-kernel-builder/
-├── build.sh          # 主工具(全部逻辑)
-├── devices.conf      # 设备库
-├── README.md         # 本文档
-├── work/             # 工作区(可整目录删除)
-│   ├── toolchains/   # Clang / GCC 工具链(首次下载后复用)
-│   ├── kernel/       # 内核源码 + 已集成的 SukiSU(KernelSU/)
-│   ├── AnyKernel3/   # AK3 打包模板
-│   └── ak3-pkg/      # 打包临时目录
-├── output/           # 最终产物(zip / .ko)
-└── build.log         # 编译日志
+├── build.sh               # 主工具(单次编译: 选机型 + 版本 → 产出内核)
+├── build-all.sh           # 本地一键全量编译(依次跑 builds/ 下全部脚本)
+├── gen_devices.sh         # devices.conf → devices.json(网页用)
+├── devices.conf           # 设备库(177 条)
+├── builds/                # 【自动生成】每机型每版本的独立编译脚本
+│   ├── README.md          #   索引表
+│   └── <设备ID>/v<序号>.sh
+├── tools/
+│   ├── gen_build_scripts.sh  # 生成 builds/ 下的独立脚本
+│   └── trigger-all.sh        # 触发云端全量编译(GitHub Actions 矩阵)
+├── logs/                  # build-all.sh 的日志与断点状态
+├── work/                  # 工作区(可整目录删除)
+│   ├── toolchains/        # Clang / GCC 工具链(首次下载后复用)
+│   ├── kernel/            # 内核源码 + 已集成的 SukiSU(KernelSU/)
+│   ├── AnyKernel3/        # AK3 打包模板
+│   └── ak3-pkg/           # 打包临时目录
+├── output/                # 最终产物(zip / .ko)
+└── build.log              # 编译日志
 ```
 
 ## 七、工作原理(对应教程章节)
@@ -184,9 +198,57 @@ sukisu-kernel-builder/
 | `CONFIG_KSU` 未生效 | 依赖不满足: main 分支需 KPROBES/EXT4_FS, builtin 分支需 SECURITY_SELINUX;检查 `work/kernel/out/.config` |
 | 4.14 老内核编译报错 | 改用 `--gcc`;或 `EXTRA_MAKE_ARGS="LLVM_IAS=1" bash build.sh ...` |
 | 老内核脚本报 python2 缺失 | 需另装 python2(新发行版可考虑用 pyenv 或升级内核分支) |
+| 编译很久/像卡住了 | Actions 只显示单个「组装编译参数并启动构建」步骤, 日志写在 build.log(结束才上传);5.10 厂商树在 2 核 runner 上 2~4 小时属正常, 上限 350 分钟 |
+| 想加快重复编译 | 云端已默认启用 **ccache + 工具链缓存**(同设备/版本第二次编译大幅提速);本地可用 `KERNEL_CCACHE=1 bash build.sh ...` |
+| 5.10 GKI 树第一次编译就超时 | 片段配置已自动合并到 gki_defconfig 并裁剪 FULL LTO/KASAN/DWARF;仍超时可用 `--jobs 4` 或换 `ubuntu-latest` 大机器(付费) |
 | 想换编译参数 | 用环境变量 `EXTRA_MAKE_ARGS` 追加透传给 make 的参数 |
 | 中断后重来 | 直接再跑一次 `bash build.sh --resume`(跳过源码/工具链下载);`--clean` 则全部重来 |
 | GKI LKM 模块刷入后不生效 | 确认模块 KMI 与设备内核 KMI 一致(用设备对应的 GKI 分支重新编译) |
+
+## 九、批量编译(每机型独立脚本 + 一键全量)
+
+### 9.1 每机型每版本的独立脚本 `builds/<设备ID>/v<序号>.sh`
+
+`tools/gen_build_scripts.sh` 会按 `devices.conf` 为**每个"机型 + 内核版本"组合**生成一个独立脚本(当前 177 个),内容就是固定好设备/版本的 `build.sh` 调用:
+
+```bash
+bash builds/alioth/v1.sh              # 编译红米 K40 的 4.19 内核
+bash builds/marble/v1.sh --dry-run    # 演练, 顺便确认参数
+bash builds/op8/v2.sh --kpm           # 追加任意 build.sh 参数
+```
+
+生成后不要再手改;改了 `devices.conf` 就重新执行 `bash tools/gen_build_scripts.sh`。完整索引见 [builds/README.md](builds/README.md)。
+
+### 9.2 本地一键全量编译 `build-all.sh`
+
+在 Linux/WSL2 里跑:
+
+```bash
+bash build-all.sh                     # 全量串行编译 177 个组合
+bash build-all.sh --dry-run --limit 5 # 冒烟: 前 5 个只演练
+bash build-all.sh --only alioth,marble
+bash build-all.sh --resume            # 只重跑上次失败的(跳过已成功)
+bash build-all.sh -j 2                # 2 个并行(内存 ≥16G 再考虑)
+bash build-all.sh --fail-fast
+```
+
+每个组合的日志在 `logs/<设备>_v<序号>.log`,最终输出成功/失败汇总;`--resume` 的断点记录在 `logs/build-all.state`。
+
+### 9.3 云端一键全量编译 `tools/trigger-all.sh`
+
+不用本地 Linux 环境,直接让 GitHub Actions 跑矩阵(`.github/workflows/build-all.yml`,内部复用 `build.yml` 单设备工作流):
+
+```bash
+GH_TOKEN=ghp_xxx bash tools/trigger-all.sh                  # 触发全部(真实编译)
+GH_TOKEN=ghp_xxx bash tools/trigger-all.sh --dry-run        # 只做参数检查
+GH_TOKEN=ghp_xxx bash tools/trigger-all.sh --only alioth,marble
+GH_TOKEN=ghp_xxx bash tools/trigger-all.sh --device gki-a15
+GH_TOKEN=ghp_xxx bash tools/trigger-all.sh --max-parallel 3 --wait
+```
+
+- `--max-parallel` 控制同时跑几个编译(默认 2;public 仓库 Actions 分钟数免费,但并发过高会争抢 2 核内存导致超时)
+- 177 个组合全量编译在云端是**队列排队**的,预计需要数小时到一天,建议先用 `--only` 挑机型
+- 也可以在仓库 Actions 页面手动运行「SukiSU 全量编译(矩阵)」工作流,选择 `only` / `max_parallel` / `dry_run`
 
 ## 免责声明
 

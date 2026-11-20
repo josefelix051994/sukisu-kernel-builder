@@ -1,0 +1,82 @@
+name: SukiSU 全量编译(矩阵)
+
+# 一键对 devices.json 里的每个"机型 + 内核版本"组合并行编译。
+# - 由 tools/trigger-all.sh 触发, 也可以在本仓库 Actions 页面手动 Run workflow。
+# - 每个组合复用 build.yml(单设备编译工作流), 产物各自上传为 kernel-<设备>-<分支>。
+# - 公共仓库的 Actions 分钟数免费, 但 177+ 个组合排队需要数小时, 请按需使用
+#   max_parallel(默认 2)控制并发, 避免 runner 上内存/CPU 争抢导致超时。
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: '只编译指定设备 ID(逗号分隔, 如 alioth,marble;留空=全部)'
+        required: false
+        default: ''
+      max_parallel:
+        description: '最大并行任务数(默认 2; public 仓库免费分钟数不限, 控制并发防超时)'
+        required: false
+        default: '2'
+      dry_run:
+        description: '演练模式(只跑参数检查与日志, 不真正编译)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: 生成编译矩阵
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      count: ${{ steps.matrix.outputs.count }}
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 由 devices.json 生成矩阵
+        id: matrix
+        env:
+          ONLY: ${{ inputs.only }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > matrix.json
+          import json, os
+          only = (os.environ.get('ONLY') or '').strip()
+          allowed = {x.strip() for x in only.split(',') if x.strip()} if only else None
+          data = json.load(open('devices.json'))
+          include = []
+          for dev in data['devices']:
+              if allowed is not None and dev['id'] not in allowed:
+                  continue
+              for idx, ver in enumerate(dev['versions'], 1):
+                  include.append({
+                      'device': dev['id'],
+                      'version': str(idx),
+                      'label': f"{dev['id']} v{idx} ({ver.get('label','')})",
+                  })
+          print(json.dumps({'include': include}))
+          PY
+          COUNT=$(python3 -c "import json;print(len(json.load(open('matrix.json'))['include']))")
+          echo "matrix=$(cat matrix.json)" >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo ">>> 将编译 $COUNT 个组合"
+          python3 -c "import json;[print('  -', x['label']) for x in json.load(open('matrix.json'))['include']]"
+
+  build:
+    name: 编译 ${{ matrix.label }}
+    needs: prepare
+    if: needs.prepare.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJson(inputs.max_parallel || '2') }}
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    uses: ./.github/workflows/build.yml
+    with:
+      device: ${{ matrix.device }}
+      version: ${{ matrix.version }}
+      dry_run: ${{ inputs.dry_run }}

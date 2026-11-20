@@ -77,6 +77,73 @@ on:
         required: false
         type: boolean
         default: false
+  # 可被其它工作流(如 build-all.yml 全量矩阵)复用调用
+  workflow_call:
+    inputs:
+      device:
+        required: true
+        type: string
+        default: ''
+      version:
+        required: false
+        type: string
+        default: '1'
+      ksu_branch:
+        required: false
+        type: string
+        default: ''
+      ksu_mode:
+        required: false
+        type: string
+        default: ''
+      kpm:
+        required: false
+        type: boolean
+        default: false
+      debug_ksu:
+        required: false
+        type: boolean
+        default: false
+      susfs:
+        required: false
+        type: boolean
+        default: false
+      jobs:
+        required: false
+        type: string
+        default: ''
+      clean:
+        required: false
+        type: boolean
+        default: false
+      custom_repo:
+        required: false
+        type: string
+        default: ''
+      custom_branch:
+        required: false
+        type: string
+        default: ''
+      custom_defconfig:
+        required: false
+        type: string
+        default: ''
+      custom_kver:
+        required: false
+        type: string
+        default: ''
+      custom_android:
+        required: false
+        type: string
+        default: ''
+      custom_gki:
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
