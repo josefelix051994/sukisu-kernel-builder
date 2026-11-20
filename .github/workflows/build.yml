@@ -4,85 +4,85 @@ on:
   workflow_dispatch:
     inputs:
       device:
-        description: '璁惧 ID(濡?alioth銆乷p8銆乬ki-a15;鑷畾涔夋簮鏃跺～ custom)'
+        description: '设备 ID(如 alioth、op8、gki-a15;自定义源时填 custom)'
         required: true
         default: ''
       version:
-        description: '鐗堟湰搴忓彿(璇ヨ澶囩殑绗嚑涓増鏈? 浠?1 寮€濮?'
+        description: '版本序号(该设备的第几个版本, 从 1 开始)'
         required: false
         default: '1'
       ksu_branch:
-        description: 'SukiSU 闆嗘垚鍒嗘敮(鐣欑┖=鑷姩: GKI 鐢?main, 浼犵粺鍐呮牳鐢?builtin)'
+        description: 'SukiSU 集成分支(留空=自动: GKI 用 main, 传统内核用 builtin)'
         required: false
         type: choice
         options: ['', main, builtin]
         default: ''
       ksu_mode:
-        description: 'CONFIG_KSU 妯″紡: 鐣欑┖=鑷姩(GKI 鐢?m, 闈?GKI 鐢?y)'
+        description: 'CONFIG_KSU 模式: 留空=自动(GKI 用 m, 非 GKI 用 y)'
         required: false
         type: choice
         options: ['', 'y', 'm']
         default: ''
       kpm:
-        description: '鍚敤 KPM(鍐呮牳琛ヤ竵妯″潡)'
+        description: '启用 KPM(内核补丁模块)'
         required: false
         type: boolean
         default: false
       debug_ksu:
-        description: '鍚敤 KSU_DEBUG'
+        description: '启用 KSU_DEBUG'
         required: false
         type: boolean
         default: false
       susfs:
-        description: '鍚敤 SUSFS(瑕佹眰鍐呮牳宸查泦鎴?susfs4ksu 琛ヤ竵, 鍚﹀垯缂栬瘧澶辫触)'
+        description: '启用 SUSFS(要求内核已集成 susfs4ksu 补丁, 否则编译失败)'
         required: false
         type: boolean
         default: false
       jobs:
-        description: '骞惰缂栬瘧鏁?鐣欑┖=鑷姩, 鍏叡 runner 鍙湁 2 鏍? 寤鸿鐣欑┖)'
+        description: '并行编译数(留空=自动, 公共 runner 只有 2 核, 建议留空)'
         required: false
         default: ''
       clean:
-        description: '缂栬瘧鍓嶆竻绌?work/ 鐩綍(姣忔鍏ㄦ柊鏋勫缓; 鍏叡 runner 鏈韩涓嶄繚鐣欐棫鏁版嵁, 涓€鑸棤闇€鍕鹃€?'
+        description: '编译前清空 work/ 目录(每次全新构建; 公共 runner 本身不保留旧数据, 一般无需勾选)'
         required: false
         type: boolean
         default: false
       custom_repo:
-        description: '[鑷畾涔夋簮] 鍐呮牳浠撳簱 URL'
+        description: '[自定义源] 内核仓库 URL'
         required: false
         default: ''
       custom_branch:
-        description: '[鑷畾涔夋簮] 浠撳簱鍒嗘敮'
+        description: '[自定义源] 仓库分支'
         required: false
         default: ''
       custom_defconfig:
-        description: '[鑷畾涔夋簮] defconfig(鐣欑┖=鑷姩鎺㈡祴)'
+        description: '[自定义源] defconfig(留空=自动探测)'
         required: false
         default: ''
       custom_kver:
-        description: '[鑷畾涔夋簮] 鍐呮牳涓荤増鏈彁绀? 濡?5.15(鐢ㄤ簬閫夌紪璇戝櫒)'
+        description: '[自定义源] 内核主版本提示, 如 5.15(用于选编译器)'
         required: false
         default: ''
       custom_android:
-        description: '[鑷畾涔夋簮] Android 鐗堟湰鍙? 濡?13(鐢ㄤ簬閫?Clang)'
+        description: '[自定义源] Android 版本号, 如 13(用于选 Clang)'
         required: false
         default: ''
       custom_gki:
-        description: '[鑷畾涔夋簮] 鏄惁涓?GKI 鍐呮牳'
+        description: '[自定义源] 是否为 GKI 内核'
         required: false
         type: boolean
         default: false
       dry_run:
-        description: '婕旂粌妯″紡: 鍙墦鍗颁换鍔′笉缂栬瘧(璋冭瘯鐢?'
+        description: '演练模式: 只打印任务不编译(调试用)'
         required: false
         type: boolean
         default: false
       publish:
-        description: '缂栬瘧鎴愬姛鍚庤嚜鍔ㄥ彂甯冨埌 GitHub Release(闄勫甫璁惧/鍐呮牳/鐗堟湰绛夎鏄?'
+        description: '编译成功后自动发布到 GitHub Release(附带设备/内核/版本等说明)'
         required: false
         type: boolean
         default: true
-  # 鍙鍏跺畠宸ヤ綔娴?濡?build-all.yml 鍏ㄩ噺鐭╅樀)澶嶇敤璋冪敤
+  # 可被其它工作流(如 build-all.yml 全量矩阵)复用调用
   workflow_call:
     inputs:
       device:
@@ -162,9 +162,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - name: 妫€鍑轰粨搴?        uses: actions/checkout@v4
+      - name: 检出仓库
+        uses: actions/checkout@v4
 
-      - name: 璁＄畻宸ュ叿閾剧紦瀛樻爣璇?鍚?clang/gcc 缁勫悎鍏变韩, 閬垮厤鍏ㄩ噺缂栬瘧閲嶅鍗犵紦瀛橀厤棰?
+      - name: 计算工具链缓存标识(同 clang/gcc 组合共享, 避免全量编译重复占缓存配额)
         id: tc
         env:
           DEVICE: ${{ inputs.device }}
@@ -218,9 +219,9 @@ jobs:
           print(f"{spec}-{gcc}")
           PY
           echo "key=$(cat tc-key.txt)" >> "$GITHUB_OUTPUT"
-          echo "宸ュ叿閾剧紦瀛樻爣璇? $(cat tc-key.txt)"
+          echo "工具链缓存标识: $(cat tc-key.txt)"
 
-      - name: 鎭㈠缂栬瘧宸ュ叿閾剧紦瀛?Clang/GCC, 鍛戒腑鍙渷鍘婚噸鏂颁笅杞借В鍘?
+      - name: 恢复编译工具链缓存(Clang/GCC, 命中可省去重新下载解压)
         uses: actions/cache@v4
         with:
           path: work/toolchains
@@ -228,7 +229,7 @@ jobs:
           restore-keys: |
             toolchains-
 
-      - name: 鎭㈠ ccache 缂栬瘧缂撳瓨(閲嶅缂栬瘧鍚屼竴璁惧/鐗堟湰鍙ぇ骞呮彁閫?
+      - name: 恢复 ccache 编译缓存(重复编译同一设备/版本可大幅提速)
         uses: actions/cache@v4
         with:
           path: /home/runner/.ccache
@@ -237,18 +238,19 @@ jobs:
             ccache-${{ inputs.device }}-
             ccache-
 
-      - name: 瀹夎缂栬瘧渚濊禆
+      - name: 安装编译依赖
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             git curl make gcc g++ bc bison flex python3 zip cpio ccache \
             libssl-dev xz-utils lz4 zstd dwarves libelf-dev || true
-          # 鑰佸唴鏍?GCC 4.9 棰勭紪璇戝彲鑳介渶瑕?libtinfo5(鏂扮増鏈?Ubuntu 宸茬Щ闄? 瑁呬笉涓婂氨蹇界暐)
+          # 老内核 GCC 4.9 预编译可能需要 libtinfo5(新版本 Ubuntu 已移除, 装不上就忽略)
           sudo apt-get install -y --no-install-recommends libtinfo5 || true
           sudo apt-get install -y --no-install-recommends libncurses-dev || true
-          echo "=== 渚濊禆灏辩华 ==="
+          echo "=== 依赖就绪 ==="
 
-      - name: 缁勮缂栬瘧鍙傛暟骞跺惎鍔ㄦ瀯寤?        env:
+      - name: 组装编译参数并启动构建
+        env:
           DEVICE: ${{ inputs.device }}
           VERSION: ${{ inputs.version }}
           KSU_BRANCH: ${{ inputs.ksu_branch }}
@@ -265,7 +267,8 @@ jobs:
           CUSTOM_ANDROID: ${{ inputs.custom_android }}
           CUSTOM_GKI: ${{ inputs.custom_gki }}
           DRY_RUN: ${{ inputs.dry_run }}
-          # ccache: 澶嶇敤缂栬瘧浜х墿缂撳瓨, 鍚屼竴璁惧/鐗堟湰閲嶅缂栬瘧鍙ぇ骞呮彁閫?          KERNEL_CCACHE: '1'
+          # ccache: 复用编译产物缓存, 同一设备/版本重复编译可大幅提速
+          KERNEL_CCACHE: '1'
           CCACHE_DIR: /home/runner/.ccache
           CCACHE_MAXSIZE: 3G
           CCACHE_SLOPPINESS: time_macros,include_file_mtime,include_file_ctime
@@ -290,22 +293,22 @@ jobs:
           [ "$CLEAN" = "true" ] && ARGS+=(--clean)
           [ "$DRY_RUN" = "true" ] && ARGS+=(--dry-run)
           ARGS+=(--yes)
-          echo ">>> 鎵ц: bash build.sh ${ARGS[*]}"
+          echo ">>> 执行: bash build.sh ${ARGS[*]}"
           bash build.sh "${ARGS[@]}"
 
-      - name: 浜х墿娓呭崟
+      - name: 产物清单
         run: |
-          echo "=== output/ 鐩綍 ==="
-          ls -lh output/ || echo "(鏃犱骇鐗? 鍙兘涓?dry-run 鎴栫紪璇戝け璐?"
-          echo "=== 瀹屾垚 ==="
+          echo "=== output/ 目录 ==="
+          ls -lh output/ || echo "(无产物, 可能为 dry-run 或编译失败)"
+          echo "=== 完成 ==="
 
-      - name: ccache 鍛戒腑缁熻
+      - name: ccache 命中统计
         if: always()
         run: |
-          ccache --show-stats || echo "(ccache 涓嶅彲鐢?"
-          echo "缂撳瓨鐩綍: $(du -sh /home/runner/.ccache 2>/dev/null | cut -f1 || echo 0)"
+          ccache --show-stats || echo "(ccache 不可用)"
+          echo "缓存目录: $(du -sh /home/runner/.ccache 2>/dev/null | cut -f1 || echo 0)"
 
-      - name: 涓婁紶璋冭瘯鏃ュ織(澶辫触鏃舵帓鏌ョ敤)
+      - name: 上传调试日志(失败时排查用)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -314,7 +317,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: 璇诲彇浜х墿鍚嶇О
+      - name: 读取产物名称
         id: art
         if: always()
         run: |
@@ -327,7 +330,7 @@ jobs:
             echo "file=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: 涓婁紶浜х墿
+      - name: 上传产物
         if: ${{ !inputs.dry_run }}
         uses: actions/upload-artifact@v4
         with:
@@ -336,17 +339,17 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: 鑷姩鍙戝竷 GitHub Release(闄勫娉ㄤ笌璇存槑)
+      - name: 自动发布 GitHub Release(附备注与说明)
         if: success() && !inputs.dry_run && inputs.publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           art="${{ steps.art.outputs.file }}"
-          if [ -z "$art" ] || [ ! -f "$art" ]; then echo "鏃犱骇鐗╂枃浠? 璺宠繃鍙戝竷"; exit 0; fi
+          if [ -z "$art" ] || [ ! -f "$art" ]; then echo "无产物文件, 跳过发布"; exit 0; fi
           base="$(basename "${art%.*}")"
           tag="build-${base}"
-          echo ">>> 鍙戝竷 $base (tag: $tag)"
+          echo ">>> 发布 $base (tag: $tag)"
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "$art" --clobber
           else
