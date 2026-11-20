@@ -89,11 +89,29 @@ jobs:
       - name: 检出仓库
         uses: actions/checkout@v4
 
+      - name: 恢复编译工具链缓存(Clang/GCC, 命中可省去重新下载解压)
+        uses: actions/cache@v4
+        with:
+          path: work/toolchains
+          key: toolchains-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.custom_kver }}-${{ inputs.custom_android }}-v1
+          restore-keys: |
+            toolchains-${{ inputs.device }}-
+            toolchains-
+
+      - name: 恢复 ccache 编译缓存(重复编译同一设备/版本可大幅提速)
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.ccache
+          key: ccache-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.ksu_branch }}-${{ inputs.custom_repo }}-v1
+          restore-keys: |
+            ccache-${{ inputs.device }}-
+            ccache-
+
       - name: 安装编译依赖
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            git curl make gcc g++ bc bison flex python3 zip cpio \
+            git curl make gcc g++ bc bison flex python3 zip cpio ccache \
             libssl-dev xz-utils lz4 zstd dwarves || true
           # 老内核 GCC 4.9 预编译可能需要 libtinfo5(新版本 Ubuntu 已移除, 装不上就忽略)
           sudo apt-get install -y --no-install-recommends libtinfo5 || true
@@ -118,6 +136,11 @@ jobs:
           CUSTOM_ANDROID: ${{ inputs.custom_android }}
           CUSTOM_GKI: ${{ inputs.custom_gki }}
           DRY_RUN: ${{ inputs.dry_run }}
+          # ccache: 复用编译产物缓存, 同一设备/版本重复编译可大幅提速
+          KERNEL_CCACHE: '1'
+          CCACHE_DIR: /home/runner/.ccache
+          CCACHE_MAXSIZE: 3G
+          CCACHE_SLOPPINESS: time_macros,include_file_mtime,include_file_ctime
         run: |
           set -euo pipefail
           ARGS=()

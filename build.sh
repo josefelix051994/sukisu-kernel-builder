@@ -938,20 +938,26 @@ pick_defconfig() {
 toolchain_make_args() {
   local -a a=()
   local kmaj kmin kv
+  local CCW=""
+  # KERNEL_CCACHE=1 且系统有 ccache 时, 用 ccache 包住编译器复用编译产物缓存
+  # (CI 由 actions/cache 缓存 CCACHE_DIR; 同一设备/版本重复编译时可直接命中绝大多数目标文件)
+  if [ "${KERNEL_CCACHE:-0}" = 1 ] && command -v ccache >/dev/null 2>&1; then
+    CCW="ccache "
+  fi
   kv="$(echo "$KVER" | grep -oE '[0-9]+\.[0-9]+' | head -n1 || true)"
   kmaj="${kv%%.*}"; kmin="${kv##*.}"
   if [ "$USE_CLANG" = 1 ]; then
     if [ "$SEL_GKI" = 1 ] \
        || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
        || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; then
-      a+=(LLVM=1 CC="$CLANG_DIR/bin/clang")
+      a+=(LLVM=1 CC="${CCW}$CLANG_DIR/bin/clang")
     else
-      a+=(CC="$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
+      a+=(CC="${CCW}$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
       a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
       a+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
     fi
   else
-    a+=(CC="$GCC64_DIR/bin/aarch64-linux-android-gcc")
+    a+=(CC="${CCW}$GCC64_DIR/bin/aarch64-linux-android-gcc")
     a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
     a+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
   fi
@@ -982,12 +988,59 @@ make_config() {
     fi
   fi
   info "生成内核配置 ($DEFCONFIG) ..."
-  if [[ "$DEFCONFIG" == *defconfig ]]; then
+  # Xiaomi 的 GKI 树常带"片段配置"(vendor/*_consolidate.config / *_GKI.config / *.fragment,
+  # 通常不足 200 行), 厂家构建脚本会把它合并到基础 defconfig (GKI 树为 gki_defconfig)。
+  # 直接把片段当完整 .config 用会得到与厂家意图不符的配置; 且 gki_defconfig 含 FULL LTO/KASAN/DWARF,
+  # 在 2 核 7GB runner 上极易超时, 因此合并后裁剪这些调试级选项。
+  local is_fragment=0 cfg_lines=0
+  if [ -f "arch/arm64/configs/$DEFCONFIG" ]; then
+    cfg_lines=$(grep -c '^CONFIG' "arch/arm64/configs/$DEFCONFIG" 2>/dev/null) || true
+    [ -z "$cfg_lines" ] && cfg_lines=0
+  fi
+  case "$DEFCONFIG" in
+    *consolidate.config|*_QGKI.config|*_GKI.config|*.fragment) is_fragment=1 ;;
+  esac
+  if [ "$cfg_lines" -gt 0 ] && [ "$cfg_lines" -lt 200 ]; then
+    is_fragment=1
+  fi
+  mkdir -p "$OUT_DIR"
+  if [ "$is_fragment" = 1 ]; then
+    local base_cfg=""
+    if [ -f arch/arm64/configs/gki_defconfig ]; then
+      base_cfg=gki_defconfig
+    elif [ -f arch/arm64/configs/defconfig ]; then
+      base_cfg=defconfig
+    fi
+    if [ -z "$base_cfg" ]; then
+      warn "未找到基础 defconfig, 退回直接使用片段配置: $DEFCONFIG"
+      cp "arch/arm64/configs/$DEFCONFIG" "$OUT_DIR/.config"
+      if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
+        die_log "$LOG_FILE" "olddefconfig 失败"
+      fi
+    else
+      info "检测到片段配置, 以 $base_cfg 为基础再合并 $DEFCONFIG ..."
+      if ! "${MK[@]}" "$base_cfg" >>"$LOG_FILE" 2>&1; then
+        die_log "$LOG_FILE" "基础配置生成失败: $base_cfg"
+      fi
+      if KCONFIG_CONFIG="$OUT_DIR/.config" bash scripts/kconfig/merge_config.sh -m "arch/arm64/configs/$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
+        ok "片段配置合并完成"
+      else
+        warn "merge_config.sh 合并片段失败, 继续使用基础配置: $base_cfg"
+      fi
+      # 裁剪调试/体积型选项: 避免 FULL LTO 链接爆内存、KASAN 拖慢编译、DWARF 撑大产物
+      local opt
+      for opt in LTO_CLANG LTO_CLANG_FULL LTO_CLANG_THIN KASAN KASAN_HW_TAGS KASAN_INLINE DEBUG_INFO DEBUG_INFO_DWARF4; do
+        $SC -d "$opt" >/dev/null 2>&1 || true
+      done
+      $SC -e LTO_NONE >/dev/null 2>&1 || true
+      $SC -e DEBUG_INFO_NONE >/dev/null 2>&1 || true
+      info "已裁剪 LTO/KASAN/DWARF 等调试选项以控制编译时间"
+    fi
+  elif [[ "$DEFCONFIG" == *defconfig ]]; then
     if ! "${MK[@]}" "$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
       die_log "$LOG_FILE" "defconfig 生成失败: $DEFCONFIG"
     fi
   else
-    mkdir -p "$OUT_DIR"
     cp "arch/arm64/configs/$DEFCONFIG" "$OUT_DIR/.config"
     if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
       die_log "$LOG_FILE" "olddefconfig 失败"
