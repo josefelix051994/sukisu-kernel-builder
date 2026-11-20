@@ -1108,6 +1108,7 @@ make_config() {
     echo "--- 诊断: 内核树改动文件 ---"
     (cd "$KERNEL_DIR" && git status --porcelain 2>/dev/null | head -30) || true
   } >>"$LOG_FILE" 2>&1
+}
 
 # --------------------------------- 编译 ------------------------------------
 build_kernel() {
