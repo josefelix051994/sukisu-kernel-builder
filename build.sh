@@ -225,6 +225,17 @@ resolve_ksu_version() {
          v="$(printf '%s' "$v" | sed -E 's/-[0-9]+-g([0-9a-f]+)$/_\1/')" ;;
     esac
     case "$v" in
+      *_*)                          # TAG_HASH 形态: tag 部分必须是语义版本, 否则改用远端最新语义 tag
+         local _tag="${v%_*}" _hash="${v##*_}"
+         case "$_tag" in
+           v[0-9]*|[0-9]*) : ;;
+           *) lt="$(git -C "$d" ls-remote --tags origin 2>/dev/null |
+                    awk -F/ '{print $NF}' | grep -v '\^{}' |
+                    grep -E '^v?[0-9]+\.[0-9]+' | sort -V | tail -1 || true)"
+              [ -n "$lt" ] && v="${lt}_${_hash}" ;;
+         esac ;;
+    esac
+    case "$v" in
       ""|*[!0-9a-f]*) : ;;          # 空 或 真的带了 tag 名/版本号, 直接用
       *)                            # 纯提交号: 取远端最新语义 tag 拼短提交
          short="$v"

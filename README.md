@@ -231,6 +231,7 @@ sukisu-kernel-builder/
 | 4.19 | ✅ 通过(全类) | `dtc` 的 `yylloc` 重复定义、`KPROBES/EXT4_FS` 依赖、`-Wno-error`(厂商 `subdir-ccflags -Werror` 直接剥离,扫描范围覆盖全树 Makefile/Kbuild + `mm/Makefile`) |
 | 4.14 | ✅ 通过(davinci/begonia/biloba/fleur 等) | GCC4.9 binutils 符号链接(`aarch64-linux-gnu-ld` 支持 `-pie -shared` 链接)、`kvcalloc`、vdso 宏前导逗号、`_shipped` dtc 源码补丁、宏形式闭源固件(`#define FTS_UPGRADE_FW_FILE "*.i"` + `#include 宏名`)写占位字节、`-fno-builtin-memcmp/bcmp`(厂商树删了 bcmp)、`.builtin_fw` 段 `ALIGN(8)`(clang LDST64 重定位截断) |
 | 4.9 / 4.4 | ✅ 通过(jasmine/dandelion) | `sched/signal.h`→`sched.h`(4.11 前无拆分头)、KPM 自动关闭(4.14 以下不支持)、`fallthrough` 宏、`MIN/MAX` 头 |
+| GKI(5.x/6.x)内置 | ✅ 通过(gki-a13/a15 等) | 上游 AOSP 镜像树不是 KMI 完整树, LKM(CONFIG_KSU=m)会在 modpost 阶段缺导出符号; 因此 GKI 也默认内置(KSU=y, main 分支 kprobes), 需要 LKM 请加 `--ksu-mode m` |
 | 3.18 | ❌ 不支持 | SukiSU-Ultra builtin 最低要求 Linux 4.4+(3.x 会在预检阶段快速失败并给出明确提示);网页上这类版本标注「⚠ 不支持」,只能演练 |
 
 **厂商源码不完整导致的失败(非工具问题)**:小米开源树存在未公开的目录/文件,工具会尽量自动修补(注释缺失的 `source`/`obj-y` 条目、缺失闭源固件 `.i` 自动写占位字节、平台 HAL 目录按 `CONFIG_MTK_PLATFORM` 正确下钻),但少数机型仍可能因为厂商驱动缺失而链接失败。常见类别与代表机型:
