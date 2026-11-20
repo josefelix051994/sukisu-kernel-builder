@@ -2,7 +2,7 @@ name: SukiSU 全量编译(矩阵)
 
 # 一键对 devices.json 里的每个"机型 + 内核版本"组合并行编译。
 # - 由 tools/trigger-all.sh 触发, 也可以在本仓库 Actions 页面手动 Run workflow。
-# - 每个组合复用 build.yml(单设备编译工作流), 产物各自上传为 kernel-<设备>-<分支>。
+# - 每个组合复用 build.yml(单设备编译工作流), 产物名即产品名(品牌_机型_代码_内核版本_SukiSU-版本_日期时间)。
 # - 公共仓库的 Actions 分钟数免费, 但 177+ 个组合排队需要数小时, 请按需使用
 #   max_parallel(默认 2)控制并发, 避免 runner 上内存/CPU 争抢导致超时。
 
@@ -22,9 +22,14 @@ on:
         required: false
         type: boolean
         default: true
+      publish:
+        description: '编译成功后自动发布到 GitHub Release(全量会生成较多 Release, 默认关闭)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   prepare:
@@ -87,3 +92,4 @@ jobs:
       device: ${{ matrix.device }}
       version: ${{ matrix.version }}
       dry_run: ${{ inputs.dry_run }}
+      publish: ${{ inputs.publish }}

@@ -70,6 +70,10 @@ GCC64_DIR=""
 GCC32_DIR=""
 DEFCONFIG=""
 KVER=""
+KSU_VERSION="unknown"
+BUILD_BRAND=""
+BUILD_MODEL=""
+ARTIFACT_PATH=""
 JOBS="$(nproc 2>/dev/null || echo 4)"
 DEV_ROWS=()
 
@@ -156,6 +160,109 @@ row_field() {
   IFS='|' read -r -a f <<< "$row"
   echo "${f[$((idx-1))]:-}"
 }
+
+# ------- 产物命名 (品牌_机型_机型代码_内核版本_SukiSU版本_日期时间) ----------
+
+# 从设备显示名推导 品牌 + 机型, 输出 "品牌|机型"
+# 机型可为空: 自动枚举的设备显示名就是代码, 此时命名里只出现一次代码
+derive_brand_model() {
+  local disp="$1" id="$2" brand="" model=""
+  case "$disp" in
+    Redmi\ *)    brand="Redmi";   model="${disp#Redmi }" ;;
+    POCO\ *)     brand="POCO";    model="${disp#POCO }" ;;
+    Mi\ *)       brand="Xiaomi";  model="${disp#Mi }" ;;
+    Xiaomi\ *)   brand="Xiaomi";  model="${disp#Xiaomi }" ;;
+    OnePlus\ *)  brand="OnePlus"; model="${disp#OnePlus }" ;;
+    通用\ GKI*)  brand="Google";  model="${disp#通用 GKI · }" ;;
+  esac
+  if [ -z "$brand" ]; then
+    case "$SEL_REPO" in
+      *OnePlusOSS*)                  brand="OnePlus" ;;
+      *aosp-mirror*|*kernel_common*) brand="Google"; model="GKI" ;;
+      *)                             brand="Xiaomi" ;;
+    esac
+  fi
+  if [ "$disp" = "$id" ] || [ "$model" = "$id" ]; then model=""; fi
+  printf '%s|%s\n' "$brand" "$model"
+}
+
+# 文件名安全化: 空白与 / 保留语义(变 +), 其余非法字符变 _, 合并连续 _
+sanitize_name() {
+  printf '%s' "$1" \
+    | sed -e 's/[[:space:]]*\/[[:space:]]*/+/g' \
+          -e 's/[^A-Za-z0-9._+-]/_/g' \
+          -e 's/__*/_/g' -e 's/^_//' -e 's/_$//'
+}
+
+# 解析 SukiSU 版本 (best-effort): git describe > 短提交 > unknown
+resolve_ksu_version() {
+  local d="$KERNEL_DIR/KernelSU" v=""
+  if [ -d "$d/.git" ]; then
+    v="$(git -C "$d" describe --tags --always 2>/dev/null || true)"
+    [ -n "$v" ] || v="$(git -C "$d" rev-parse --short HEAD 2>/dev/null || true)"
+  fi
+  [ -n "$v" ] || v="unknown"
+  sanitize_name "$v"
+}
+
+# 产物基础名: 品牌_机型_机型代码_内核版本_SukiSU-<版本>_<北京时间>
+# 可选参数 3~5: 内核版本 / 时间戳 / SukiSU 版本 (预览用占位符)
+build_artifact_base() {
+  local brand="$1" model="$2"
+  local kver="${3:-$KVER}"
+  local ts="${4:-$(TZ=Asia/Shanghai date +%Y%m%d-%H%M)}"
+  local ksuv="${5:-${KSU_VERSION:-unknown}}"
+  local -a p=()
+  [ -n "$brand" ] && p+=("$(sanitize_name "$brand")")
+  [ -n "$model" ] && p+=("$(sanitize_name "$model")")
+  p+=("$(sanitize_name "$SEL_DEVICE_ID")")
+  p+=("$(sanitize_name "$kver")")
+  p+=("SukiSU-$(sanitize_name "$ksuv")")
+  p+=("$(sanitize_name "$ts")")
+  local IFS=_
+  printf '%s\n' "${p[*]}" | sed 's/__*/_/g'
+}
+
+# 生成发布备注 (output/release-notes.md) 与产物清单 (output/LAST_ARTIFACT)
+write_release_notes() {
+  local base="$1" art="$2" kind="AnyKernel3 刷机包 (zip)"
+  [ "$KSU_MODE" = m ] && kind="LKM 模块 (kernelsu.ko)"
+  {
+    echo "## ${base}"
+    echo
+    echo "| 项目 | 内容 |"
+    echo "|---|---|"
+    echo "| 品牌 / 机型 | ${BUILD_BRAND} ${BUILD_MODEL} (${SEL_DEVICE_ID}) |"
+    echo "| 内核版本 | ${KVER} |"
+    echo "| Android 版本 | ${SEL_ANDROID} |"
+    echo "| 内核源码 | ${SEL_REPO} @ ${SEL_BRANCH} |"
+    echo "| SukiSU-Ultra | ${KSU_BRANCH} 分支 · CONFIG_KSU=${KSU_MODE} · 版本 ${KSU_VERSION} |"
+    echo "| 产物类型 | ${kind} |"
+    echo "| 编译时间 | $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S') (UTC+8) |"
+    echo "| 编译环境 | GitHub Actions · ubuntu-latest |"
+    echo
+    echo "### 安装说明"
+    echo
+    if [ "$KSU_MODE" = m ]; then
+      echo "1. 安装 SukiSU-Ultra 管理器 App;"
+      echo "2. 管理器 → 安装 → 选择「使用本地 LKM 文件」, 选中本 .ko (需与设备 KMI 匹配);"
+      echo "3. 重启后打开管理器确认工作状态。"
+    else
+      echo "1. 先备份原机 boot 分区 (TWRP 备份或用工具导出);"
+      echo "2. 用 TWRP 等支持 AnyKernel3 的 Recovery 刷入本 zip;"
+      echo "3. 重启后安装 SukiSU-Ultra 管理器 App 并确认;"
+      echo "4. 若卡第一屏, 用备份恢复 boot 分区。"
+    fi
+    echo
+    echo "### 说明"
+    echo
+    echo "- 由 [SukiSU-Ultra 内核编译工具](https://github.com/xingyiqaq/sukisu-kernel-builder) 自动构建;"
+    echo "- 源码取自上述开源内核仓库, 未包含闭源组件; 仅供个人学习研究使用;"
+    echo "- 刷机有风险, 请自行承担。"
+  } > "$OUTPUT_DIR/release-notes.md"
+  printf '%s\n' "$art" > "$OUTPUT_DIR/LAST_ARTIFACT"
+}
+
 
 list_devices() {
   local row
@@ -1216,13 +1323,17 @@ build_kernel() {
 # --------------------------------- 打包 ------------------------------------
 package_output() {
   mkdir -p "$OUTPUT_DIR"
-  local zname="SukiSU-Ultra_${SEL_DEVICE_ID}_$(echo "$SEL_BRANCH" | tr '/' '-')_${KVER}_${KSU_BRANCH}"
+  # 产物命名: 品牌_机型_机型代码_内核版本_SukiSU-<版本>_<日期时间>
+  local base
+  base="$(build_artifact_base "$BUILD_BRAND" "$BUILD_MODEL")"
   if [ "$KSU_MODE" = m ]; then
     local ko="$OUT_DIR/drivers/kernelsu/kernelsu.ko"
     if [ -f "$ko" ]; then
-      cp "$ko" "$OUTPUT_DIR/${zname}_kernelsu.ko"
-      ok "LKM 产物: $OUTPUT_DIR/${zname}_kernelsu.ko"
+      ARTIFACT_PATH="$OUTPUT_DIR/${base}.ko"
+      cp "$ko" "$ARTIFACT_PATH"
+      ok "LKM 产物: $ARTIFACT_PATH"
       info "使用方法: SukiSU 管理器 → 安装 → 使用本地 LKM 文件 (仅支持 .ko)"
+      write_release_notes "$base" "$ARTIFACT_PATH"
     else
       die "kernelsu.ko 不存在, 无法产出 LKM 产物"
     fi
@@ -1291,10 +1402,11 @@ split_boot;
 flash_boot;
 flash_dtbo;
 AKEOF
-  local zip_out="$OUTPUT_DIR/$zname.zip"
-  ( cd "$PKG_DIR" && rm -f "$zip_out" && zip -r9q "$zip_out" . )
-  ok "AnyKernel3 产物: $zip_out"
+  ARTIFACT_PATH="$OUTPUT_DIR/${base}.zip"
+  ( cd "$PKG_DIR" && rm -f "$ARTIFACT_PATH" && zip -r9q "$ARTIFACT_PATH" . )
+  ok "AnyKernel3 产物: $ARTIFACT_PATH"
   info "刷入方式: TWRP 等支持 AnyKernel3 的 Recovery 刷入; 刷入前请务必备份原 boot 分区"
+  write_release_notes "$base" "$ARTIFACT_PATH"
 }
 
 # --------------------------------- 主流程 ----------------------------------
@@ -1382,6 +1494,12 @@ main() {
   # 3) 工具链策略
   decide_toolchain
 
+  # 产物命名信息 (品牌 + 机型)
+  local _bm
+  _bm="$(derive_brand_model "$SEL_DISPLAY" "$SEL_DEVICE_ID")"
+  BUILD_BRAND="${_bm%%|*}"
+  BUILD_MODEL="${_bm#*|}"
+
   # 4) 汇总确认
   echo
   info "==================== 编译任务 ===================="
@@ -1401,6 +1519,10 @@ main() {
   else
     printf "  产物       : AnyKernel3 zip (内置)\n"
   fi
+  local _eg
+  _eg="$(build_artifact_base "$BUILD_BRAND" "$BUILD_MODEL" "${SEL_KVER:-4.19.113}" "20261120-2003" "v3.0.0")"
+  printf "  产物命名   : <品牌>_<机型>_<代码>_<内核版本>_SukiSU-<版本>_<日期时间>.zip\n"
+  printf "               例: %s.zip\n" "$_eg"
   echo "===================================================="
   if [ "$OPT_DRY_RUN" = 1 ]; then
     info "演练模式 (--dry-run): 以上即为将执行的任务, 未下载/编译任何内容。去掉 --dry-run 即可正式开始。"
@@ -1422,6 +1544,8 @@ main() {
   fix_missing_kconfig_sources
   detect_kver
   integrate_sukisu
+  KSU_VERSION="$(resolve_ksu_version)"
+  info "SukiSU-Ultra 版本: $KSU_VERSION"
   ksu_compat_fixups
   pick_defconfig
   info "使用 defconfig: $DEFCONFIG"
@@ -1439,6 +1563,10 @@ main() {
 
   echo
   ok "全部完成! 产物目录: $OUTPUT_DIR"
+  [ -n "$ARTIFACT_PATH" ] && ok "产物文件: $ARTIFACT_PATH"
+  if [ -n "$ARTIFACT_PATH" ] && [ -f "$OUTPUT_DIR/release-notes.md" ]; then
+    info "发布备注: $OUTPUT_DIR/release-notes.md"
+  fi
   if [ "$KSU_MODE" = m ]; then
     info "提示: GKI 设备可在管理器中选择对应 KMI, 或直接使用本地 LKM 文件刷入"
   else

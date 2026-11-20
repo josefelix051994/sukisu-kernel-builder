@@ -90,7 +90,8 @@ function renderDevices() {
   for (const d of state.devices) {
     const o = document.createElement('option');
     o.value = d.id;
-    o.textContent = `${d.display} (${d.id})`;
+    const label = d.brand && d.model ? `${d.brand} ${d.model} (${d.id})` : `${d.display} (${d.id})`;
+    o.textContent = label;
     sel.appendChild(o);
   }
   renderVersions();
@@ -177,6 +178,7 @@ function collectInputs(dryRun) {
     custom_kver: custom ? $('custom-kver').value.trim() : '',
     custom_android: custom ? $('custom-android').value.trim() : '',
     custom_gki: custom ? String($('custom-gki').checked) : 'false',
+    publish: String($('publish').checked),
     dry_run: String(dryRun),
   };
   if (custom && (!inputs.custom_repo || !inputs.custom_branch)) {
@@ -369,7 +371,13 @@ async function renderArtifacts(run) {
     }
     if (arts.length === 0) {
       wrap.hidden = false;
-      ul.innerHTML = '<li>没有可用产物(可能已过期或为演练任务)</li>';
+      ul.innerHTML = '<li>没有可用产物(可能已过期、为演练任务, 或编译失败)</li>';
+    }
+    // 自动发布提示: 产物同时发布到 Release 页
+    const relHint = $('release-hint');
+    if (relHint) {
+      relHint.hidden = arts.length === 0;
+      relHint.querySelector('a').href = `https://github.com/${OWNER}/${REPO}/releases`;
     }
   } catch { /* 忽略 */ }
 }

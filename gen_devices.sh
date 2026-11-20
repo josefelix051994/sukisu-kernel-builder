@@ -11,7 +11,30 @@ CONF="${1:-$SRC/devices.conf}"
 
 json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 
+# 品牌/机型推导 (与 build.sh derive_brand_model 一致)
+derive_brand_model() {
+  local disp="$1" id="$2" repo="$3" brand="" model=""
+  case "$disp" in
+    Redmi\ *)    brand="Redmi";   model="${disp#Redmi }" ;;
+    POCO\ *)     brand="POCO";    model="${disp#POCO }" ;;
+    Mi\ *)       brand="Xiaomi";  model="${disp#Mi }" ;;
+    Xiaomi\ *)   brand="Xiaomi";  model="${disp#Xiaomi }" ;;
+    OnePlus\ *)  brand="OnePlus"; model="${disp#OnePlus }" ;;
+    通用\ GKI*)  brand="Google";  model="${disp#通用 GKI · }" ;;
+  esac
+  if [ -z "$brand" ]; then
+    case "$repo" in
+      *OnePlusOSS*)                  brand="OnePlus" ;;
+      *aosp-mirror*|*kernel_common*) brand="Google"; model="GKI" ;;
+      *)                             brand="Xiaomi" ;;
+    esac
+  fi
+  if [ "$disp" = "$id" ] || [ "$model" = "$id" ]; then model=""; fi
+  printf '%s|%s\n' "$brand" "$model"
+}
+
 declare -A DISPLAY_OF
+declare -A REPO_OF
 declare -A ORDER_OF
 declare -A VERSIONS_OF   # id -> 多行拼接, 行间用 \n
 IDS=()
@@ -32,6 +55,7 @@ while IFS= read -r line || [ -n "$line" ]; do
     ORDER_OF[$did]="${#IDS[@]}"
     IDS+=("$did")
     DISPLAY_OF[$did]="$disp"
+    REPO_OF[$did]="$repo"
   fi
   item="    {"
   item+="\"label\": \"$(json_escape "$label")\", "
@@ -57,9 +81,13 @@ n="${#IDS[@]}"
 i=0
 for did in "${IDS[@]}"; do
   i=$((i+1))
+  bm="$(derive_brand_model "${DISPLAY_OF[$did]}" "$did" "${REPO_OF[$did]:-}")"
+  brand="${bm%%|*}"; model="${bm#*|}"
   echo "    {"
   echo "      \"id\": \"$(json_escape "$did")\","
   echo "      \"display\": \"$(json_escape "${DISPLAY_OF[$did]}")\","
+  echo "      \"brand\": \"$(json_escape "$brand")\","
+  echo "      \"model\": \"$(json_escape "$model")\","
   echo "      \"versions\": ["
   echo "${VERSIONS_OF[$did]}" | sed 's/^/      /'
   echo "      ]"

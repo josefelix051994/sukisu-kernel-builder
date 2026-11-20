@@ -142,12 +142,23 @@ bash tools/gen_build_scripts.sh         # 每机型每版本的独立编译脚�
 
 ## 五、产物说明
 
-产物输出到 `output/` 目录:
+产物输出到 `output/` 目录,文件名规则统一为:
+
+```
+<品牌>_<机型>_<机型代码>_<内核版本>_SukiSU-<版本>_<日期时间>.zip   (或 .ko)
+```
 
 | 模式 | 产物 | 用法 |
 |---|---|---|
-| 内置(`CONFIG_KSU=y`,非 GKI 默认) | `SukiSU-Ultra_<设备>_<分支>_<版本>_<main\|builtin>.zip` | TWRP 等 Recovery 刷入(AnyKernel3 格式) |
-| LKM(`CONFIG_KSU=m`,GKI 默认) | `SukiSU-Ultra_<设备>_<分支>_<版本>_<main\|builtin>_kernelsu.ko` | SukiSU 管理器 → 安装 → **使用本地 LKM 文件**(仅支持 `.ko`) |
+| 内置(`CONFIG_KSU=y`,非 GKI 默认) | 如 `Redmi_K40+POCO_F3_alioth_4.19.113_SukiSU-v3.0.0_20261120-2003.zip` | TWRP 等 Recovery 刷入(AnyKernel3 格式) |
+| LKM(`CONFIG_KSU=m`,GKI 默认) | 如 `Google_Android_15_gki-a15_6.6_SukiSU-v3.0.0_20261120-2003.ko` | SukiSU 管理器 → 安装 → **使用本地 LKM 文件**(仅支持 `.ko`) |
+
+- 品牌/机型来自 `devices.conf` 第 3 列(显示名),例如 `Redmi K40 / POCO F3` → `Redmi_K40+POCO_F3`;
+  自动枚举的设备(显示名等于代码)按仓库归属推断品牌(小米内核 → `Xiaomi`),机型字段省略,代码只出现一次;
+- 内核版本以克隆后源码 `Makefile` 的 `VERSION.PATCHLEVEL.SUBLEVEL` 为准;
+- SukiSU 版本取集成后的 `KernelSU` 目录 `git describe --tags`(拿不到时用短提交);
+- 日期时间为北京时间(UTC+8);
+- 每次编译同时生成 `output/release-notes.md`(发布备注:设备/内核/SukiSU 版本 + 刷入说明)与 `output/LAST_ARTIFACT`(产物清单),CI 用它们自动创建 GitHub Release。
 
 > ⚠️ 刷机有风险:刷入前务必备份原 boot 分区(卡第一屏时恢复用);部分设备还需考虑 AVB/锁 BL 问题。
 
@@ -251,7 +262,16 @@ GH_TOKEN=ghp_xxx bash tools/trigger-all.sh --max-parallel 3 --wait
 
 - `--max-parallel` 控制同时跑几个编译(默认 2;public 仓库 Actions 分钟数免费,但并发过高会争抢 2 核内存导致超时)
 - 177 个组合全量编译在云端是**队列排队**的,预计需要数小时到一天,建议先用 `--only` 挑机型
-- 也可以在仓库 Actions 页面手动运行「SukiSU 全量编译(矩阵)」工作流,选择 `only` / `max_parallel` / `dry_run`
+- 也可以在仓库 Actions 页面手动运行「SukiSU 全量编译(矩阵)」工作流,选择 `only` / `max_parallel` / `dry_run` / `publish`
+
+### 9.4 自动发布 Release
+
+`build.yml` 支持 **编译成功后自动创建 GitHub Release**(网页「高级选项 → 自动发布到 Release」,默认勾选;命令行用 `build-all.yml` 的 `publish` 输入):
+
+- Release tag 形如 `build-Redmi_K40+POCO_F3_alioth_4.19.113_SukiSU-v3.0.0_20261120-2003`,标题即产物名;
+- 正文由 `output/release-notes.md` 生成,包含品牌/机型、机型代码、内核版本、内核源码分支、SukiSU 版本与集成分支、CONFIG_KSU 模式、编译时间,以及对应的刷入步骤和免责声明;
+- 附件即编译产物(zip / .ko),可直接从 Releases 页面下载,不受 artifact 14 天过期限制;
+- 全量编译默认不发布(避免一次生成上百个 Release),需要时给 `build-all.yml` 传 `publish: true`。
 
 ## 免责声明
 

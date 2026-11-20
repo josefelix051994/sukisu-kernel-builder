@@ -77,6 +77,11 @@ on:
         required: false
         type: boolean
         default: false
+      publish:
+        description: '编译成功后自动发布到 GitHub Release(附带设备/内核/版本等说明)'
+        required: false
+        type: boolean
+        default: true
   # 可被其它工作流(如 build-all.yml 全量矩阵)复用调用
   workflow_call:
     inputs:
@@ -144,9 +149,13 @@ on:
         required: false
         type: boolean
         default: false
+      publish:
+        required: false
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -156,13 +165,68 @@ jobs:
       - name: 检出仓库
         uses: actions/checkout@v4
 
+      - name: 计算工具链缓存标识(同 clang/gcc 组合共享, 避免全量编译重复占缓存配额)
+        id: tc
+        env:
+          DEVICE: ${{ inputs.device }}
+          VERSION: ${{ inputs.version }}
+          CUSTOM_ANDROID: ${{ inputs.custom_android }}
+          CUSTOM_KVER: ${{ inputs.custom_kver }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > tc-key.txt
+          import json, os
+          dev = (os.environ.get('DEVICE') or '').strip()
+          ver = (os.environ.get('VERSION') or '1').strip() or '1'
+          android = (os.environ.get('CUSTOM_ANDROID') or '').strip()
+          kver = (os.environ.get('CUSTOM_KVER') or '').strip()
+          try:
+              raw = open('devices.json', 'rb').read()
+              if raw[:2] == b'\xff\xfe':
+                  text = raw.decode('utf-16-le').lstrip('\ufeff')
+              elif raw[:3] == b'\xef\xbb\xbf':
+                  text = raw.decode('utf-8-sig')
+              else:
+                  text = raw.decode('utf-8')
+              for d in json.loads(text).get('devices', []):
+                  if d.get('id') == dev:
+                      idx = int(ver) - 1
+                      vers = d.get('versions') or []
+                      if 0 <= idx < len(vers):
+                          v = vers[idx]
+                          android = str(v.get('android') or '') or android
+                          kver = str(v.get('kver') or '') or kver
+                      break
+          except Exception:
+              pass
+          try:
+              a = int(float(android))
+          except Exception:
+              a = 0
+          spec = {
+              9: 'llvm-r365631', 10: 'llvm-r416183',
+              11: 'llvm-r450784', 12: 'llvm-r450784',
+              13: 'llvm-r487747', 14: 'llvm-r510928',
+              15: 'llvm-r522817', 16: 'llvm-r522817', 17: 'llvm-r522817',
+          }.get(a, 'llvm-r365631')
+          gcc = 'clang+gcc49'
+          try:
+              parts = [int(x) for x in kver.split('.')[:2]]
+              if len(parts) >= 2 and (parts[0], parts[1]) < (4, 14):
+                  gcc = 'gcc49-only'
+          except Exception:
+              gcc = 'unknown'
+          print(f"{spec}-{gcc}")
+          PY
+          echo "key=$(cat tc-key.txt)" >> "$GITHUB_OUTPUT"
+          echo "工具链缓存标识: $(cat tc-key.txt)"
+
       - name: 恢复编译工具链缓存(Clang/GCC, 命中可省去重新下载解压)
         uses: actions/cache@v4
         with:
           path: work/toolchains
-          key: toolchains-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.custom_kver }}-${{ inputs.custom_android }}-v1
+          key: toolchains-${{ steps.tc.outputs.key }}-v2
           restore-keys: |
-            toolchains-${{ inputs.device }}-
             toolchains-
 
       - name: 恢复 ccache 编译缓存(重复编译同一设备/版本可大幅提速)
@@ -253,11 +317,44 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: 读取产物名称
+        id: art
+        if: always()
+        run: |
+          if [ -f output/LAST_ARTIFACT ]; then
+            b="$(basename "$(cat output/LAST_ARTIFACT)")"
+            echo "name=${b%.*}" >> "$GITHUB_OUTPUT"
+            echo "file=$(cat output/LAST_ARTIFACT)" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=kernel-${{ inputs.device }}" >> "$GITHUB_OUTPUT"
+            echo "file=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 上传产物
         if: ${{ !inputs.dry_run }}
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-${{ inputs.device }}-${{ inputs.ksu_branch || 'auto' }}
+          name: ${{ steps.art.outputs.name }}
           path: output/*
           if-no-files-found: error
           retention-days: 14
+
+      - name: 自动发布 GitHub Release(附备注与说明)
+        if: success() && !inputs.dry_run && inputs.publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          art="${{ steps.art.outputs.file }}"
+          if [ -z "$art" ] || [ ! -f "$art" ]; then echo "无产物文件, 跳过发布"; exit 0; fi
+          base="$(basename "${art%.*}")"
+          tag="build-${base}"
+          echo ">>> 发布 $base (tag: $tag)"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$art" --clobber
+          else
+            gh release create "$tag" "$art" \
+              --title "$base" \
+              --notes-file output/release-notes.md
+          fi
+          gh release view "$tag" --json url,assets --jq '.url, (.assets[] | "  - \(.name) (\(.size) bytes)")'
