@@ -48,7 +48,14 @@ jobs:
           import json, os
           only = (os.environ.get('ONLY') or '').strip()
           allowed = {x.strip() for x in only.split(',') if x.strip()} if only else None
-          data = json.load(open('devices.json'))
+          raw = open('devices.json', 'rb').read()
+          if raw[:2] == b'\xff\xfe':
+              text = raw.decode('utf-16-le').lstrip('\ufeff')
+          elif raw[:3] == b'\xef\xbb\xbf':
+              text = raw.decode('utf-8-sig')
+          else:
+              text = raw.decode('utf-8')
+          data = json.loads(text)
           include = []
           for dev in data['devices']:
               if allowed is not None and dev['id'] not in allowed:

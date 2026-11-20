@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # 生成 devices.json(供网页使用)。纯 bash 实现, 不依赖 python。
 # 用法: bash gen_devices.sh > devices.json
+# 注意: 必须用 bash 自己的重定向输出!
+#   PowerShell 的 `>` 会把输出写成 UTF-16LE(带 BOM), 浏览器 fetch().json() 和 CI 的
+#   python json 都会解析失败。在 PowerShell 里请这样调用:
+#     & 'C:\Program Files\Git\bin\bash.exe' -c 'bash gen_devices.sh > devices.json'
 set -euo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONF="${1:-$SRC/devices.conf}"

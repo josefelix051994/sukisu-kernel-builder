@@ -137,6 +137,9 @@ bash gen_devices.sh > devices.json      # 网页用的设备清单
 bash tools/gen_build_scripts.sh         # 每机型每版本的独立编译脚本(builds/)
 ```
 
+> ⚠️ Windows 用户注意:`devices.json` 必须用 **bash 自己的重定向** 生成。PowerShell 的 `>` 会把文件写成 UTF-16LE(带 BOM),浏览器和 CI 都无法解析。在 PowerShell 里请这样调用:
+> `& 'C:\Program Files\Git\bin\bash.exe' -c 'bash gen_devices.sh > devices.json'`
+
 ## 五、产物说明
 
 产物输出到 `output/` 目录:
