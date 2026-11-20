@@ -524,13 +524,35 @@ setup_toolchain() {
 }
 
 # -------------------------------- 内核源码 --------------------------------
-# 老内核与新工具链 (bison 3.8+ / flex 2.6+) 的兼容修复
+# 老内核与新工具链 (bison 3.8+ / flex 2.6+ / clang IAS / 新版主机头) 的兼容修复
 compat_fixups() {
   cd "$KERNEL_DIR"
   # dtc-lexer.l 里定义了全局 yylloc, 而 bison 3.8+ 生成的 parser 也会定义一份 → 链接期重复定义
   if grep -q '^YYLTYPE yylloc;' scripts/dtc/dtc-lexer.l 2>/dev/null; then
     info "兼容修复: dtc-lexer.l 的 yylloc 改为 extern (bison 3.8+ 重复定义冲突)"
     sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/' scripts/dtc/dtc-lexer.l
+  fi
+  # 4.14 等老树还带 flex/bison 预生成文件 (*_shipped), make 有时直接用它们 → 同样处理
+  local f
+  for f in scripts/dtc/dtc-lexer.lex.c_shipped scripts/dtc/dtc-lexer.lex.c; do
+    if [ -f "$f" ] && grep -q '^YYLTYPE yylloc;' "$f"; then
+      info "兼容修复: ${f} 的 yylloc 改为 extern (预生成 lexer 与 bison 3.8 parser 冲突)"
+      sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/' "$f"
+    fi
+  done
+  # selinux classmap.h 的 "PF_MAX > N" 维护性断言: 主机内核头比内核树新时 (runner 上是 6.x 头)
+  # genheaders 会误报 #error New address family defined → 注释掉该断言 (只影响维护提示, 不影响生成内容)
+  local cm=security/selinux/include/classmap.h
+  if [ -f "$cm" ] && grep -q '^#error New address family defined' "$cm"; then
+    info "兼容修复: security/selinux/include/classmap.h 注释 PF_MAX 上限断言 (主机头较新时 genheaders 误报)"
+    sed -i 's@^#error New address family defined.*@/* & */@' "$cm"
+  fi
+  # 老 arm64 vdso (<=4.14) 用 GNU as 的 "宏名, 形参=值" 形式 (前导逗号), clang 集成汇编器不支持
+  # → 报 "too many positional arguments"; 去掉前导逗号改成标准的 "宏名 形参=值"
+  local vd=arch/arm64/kernel/vdso/gettimeofday.S
+  if [ -f "$vd" ] && grep -q 'clock_gettime_return, shift=' "$vd"; then
+    info "兼容修复: arch/arm64/kernel/vdso/gettimeofday.S 去掉宏调用前导逗号 (clang IAS 兼容)"
+    sed -i 's/clock_gettime_return, shift=/clock_gettime_return shift=/g' "$vd"
   fi
 }
 
@@ -707,6 +729,25 @@ ksu_compat_fixups() {
        && grep -rq 'VERIFY_READ' "$KERNEL_DIR/include/linux/uaccess.h"; then
       info "兼容修复(builtin): kpm.c 的 2 参 access_ok 改为 ksu_access_ok (4.19 是 3 参宏)"
       sed -i 's/!access_ok(/!ksu_access_ok(/g' "$kpmc"
+    fi
+    # B5) kvcalloc 是 4.18+ 才有 (4.14 树 supercall/dispatch.c 使用) → 补兼容宏 (kvzalloc 4.12+)
+    local comp="$kd/kernel_compat.h"
+    if [ -f "$comp" ] && ! grep -rq 'kvcalloc' "$KERNEL_DIR/include/linux/mm.h" 2>/dev/null \
+       && ! grep -q 'ksu_compat_kvcalloc' "$comp"; then
+      info "兼容修复(builtin): kernel_compat.h 补 kvcalloc/kvzalloc 兼容宏 (<4.18 无此 API)"
+      cat >> "$comp" <<'KSUEOF'
+
+/* dsh: <4.18 没有 kvcalloc (4.14 树 dispatch.c 使用); kvzalloc 自 4.12 起可用,
+ * 更老内核由上方 kvmalloc 兼容层兜底, 这里只做补充定义 */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 18, 0)
+#ifndef kvzalloc
+#define kvzalloc(size, flags) kvmalloc((size), (flags) | __GFP_ZERO)
+#endif
+#ifndef kvcalloc
+#define kvcalloc(n, size, flags) kvzalloc((n) * (size), (flags))
+#endif
+#endif /* dsh kvcalloc compat */
+KSUEOF
     fi
     return 0
   fi
