@@ -718,7 +718,8 @@ compat_fixups() {
     sed -i -E 's/^int qpnp_pon_wd_config\(bool enable\)[[:space:]]*$/static int qpnp_pon_wd_config(bool enable)/' "$qpon"
   fi
   # 厂商源码 #include "hwid.h" 而 hwid 目录从未公开 (marble/garnet/flourite 等 5.10+ 树):
-  # 实测这些 .c 只是 include、并不使用其中任何符号 → 在源文件同目录与 drivers/misc/ 写空桩头即可编译。
+  # 桩头提供 gpio-testing-mode.c 用到的两个符号 (get_hw_country_version / CountryCN),
+  # 其余引用方通常只 include 不使用符号 → 桩头足够编译通过。
   local hsrc hdir
   while IFS= read -r hsrc; do
     [ -n "$hsrc" ] || continue
@@ -726,10 +727,10 @@ compat_fixups() {
     for hp2 in "$hdir/hwid.h" "drivers/misc/hwid.h"; do
       if [ ! -e "$hp2" ]; then
         mkdir -p "$(dirname "$hp2")" 2>/dev/null || true
-        printf '/* stub by sukisu-kernel-builder: 厂商未公开 hwid.h, 引用方未使用其符号 */\n' > "$hp2" 2>/dev/null || true
+        printf '/* stub by sukisu-kernel-builder: 厂商未公开 hwid.h */\n#ifndef _SUKI_HWID_STUB_H\n#define _SUKI_HWID_STUB_H\nstatic inline unsigned int get_hw_country_version(void) { return 0; }\nenum { CountryCN = 1 };\n#endif\n' > "$hp2" 2>/dev/null || true
       fi
     done
-    info "兼容修复: 为 $(basename "$hsrc") 生成空 hwid.h 桩 (厂商未公开私有头)"
+    info "兼容修复: 为 $(basename "$hsrc") 生成 hwid.h 桩头 (厂商未公开私有头)"
   done < <(grep -rIl --include='*.c' -E '^[[:space:]]*#include[[:space:]]*[<"]hwid\.h[>"]' drivers 2>/dev/null || true)
 }
 
