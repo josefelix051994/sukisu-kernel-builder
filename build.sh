@@ -697,6 +697,20 @@ compat_fixups() {
     info "兼容修复: qpnp-power-on.h 的 qpnp_pon_wd_config 定义加 static (多 TU 重复定义冲突)"
     sed -i -E 's/^int qpnp_pon_wd_config\(bool enable\)[[:space:]]*$/static int qpnp_pon_wd_config(bool enable)/' "$qpon"
   fi
+  # 厂商源码 #include "hwid.h" 而 hwid 目录从未公开 (marble/garnet/flourite 等 5.10+ 树):
+  # 实测这些 .c 只是 include、并不使用其中任何符号 → 在源文件同目录与 drivers/misc/ 写空桩头即可编译。
+  local hsrc hdir
+  while IFS= read -r hsrc; do
+    [ -n "$hsrc" ] || continue
+    hdir=$(dirname "$hsrc")
+    for hp2 in "$hdir/hwid.h" "drivers/misc/hwid.h"; do
+      if [ ! -e "$hp2" ]; then
+        mkdir -p "$(dirname "$hp2")" 2>/dev/null || true
+        printf '/* stub by sukisu-kernel-builder: 厂商未公开 hwid.h, 引用方未使用其符号 */\n' > "$hp2" 2>/dev/null || true
+      fi
+    done
+    info "兼容修复: 为 $(basename "$hsrc") 生成空 hwid.h 桩 (厂商未公开私有头)"
+  done < <(grep -rIl --include='*.c' -E '^[[:space:]]*#include[[:space:]]*[<"]hwid\.h[>"]' drivers 2>/dev/null || true)
 }
 
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
