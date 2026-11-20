@@ -541,6 +541,7 @@ ksu_compat_fixups() {
     # B1) kernel_includes.h 无守卫地 include <linux/static_call.h> (5.10+ 才有, 4.19 无此头; 全树仅此一处使用)
     local ki="$kd/kernel_includes.h"
     if [ -f "$ki" ] && grep -q '#include <linux/static_call.h>' "$ki" \
+       && ! grep -q 'KERNEL_VERSION(5, 10, 0)' "$ki" \
        && [ ! -f "$KERNEL_DIR/include/linux/static_call.h" ]; then
       info "兼容修复(builtin): kernel_includes.h 的 static_call.h include 加 ≥5.10 守卫 (目标内核无此头)"
       sed -i 's|#include <linux/static_call.h>|#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)\n#include <linux/static_call.h>\n#endif|' "$ki"

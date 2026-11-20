@@ -238,8 +238,14 @@ jobs:
           ls -lh output/ || echo "(无产物, 可能为 dry-run 或编译失败)"
           echo "=== 完成 ==="
 
-      - name: 上传调试日志(失败时排查用)
+      - name: ccache 命中统计
         if: always()
+        run: |
+          ccache --show-stats || echo "(ccache 不可用)"
+          echo "缓存目录: $(du -sh /home/runner/.ccache 2>/dev/null | cut -f1 || echo 0)"
+
+      - name: 上传调试日志(失败时排查用)
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: debug-log-${{ inputs.device }}
