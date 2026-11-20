@@ -228,8 +228,8 @@ sukisu-kernel-builder/
 | 6.1 / 6.6 | ✅ 通过 | SELinux 依赖链 + 片段配置按厂家顺序合并(gki_defconfig → `*_GKI.config` → `*_QGKI.config`) |
 | 5.15 / 5.10 | ✅ 通过 | `LLVM=1` 显式 `CROSS_COMPILE=aarch64-linux-gnu-`(否则 clang 按 x86 主机目标编译);预构建 `security/selinux` 生成 `flask.h` |
 | 5.4 | ✅ 通过(veux) | 同上 + 多片段合并(GKI + QGKI),避免 vmlinux 链接 `undefined reference to qcom_smem_get` 等 |
-| 4.19 | ✅ 通过(全类) | `dtc` 的 `yylloc` 重复定义、`KPROBES/EXT4_FS` 依赖、`-Wno-error`(厂商 `subdir-ccflags -Werror` 直接剥离) |
-| 4.14 | ✅ 通过(davinci/begonia) | GCC4.9 binutils 符号链接(`aarch64-linux-gnu-ld` 支持 `-pie -shared` 链接)、`kvcalloc`、vdso 宏前导逗号、`_shipped` dtc 源码补丁 |
+| 4.19 | ✅ 通过(全类) | `dtc` 的 `yylloc` 重复定义、`KPROBES/EXT4_FS` 依赖、`-Wno-error`(厂商 `subdir-ccflags -Werror` 直接剥离,扫描范围覆盖全树 Makefile/Kbuild + `mm/Makefile`) |
+| 4.14 | ✅ 通过(davinci/begonia/biloba 等) | GCC4.9 binutils 符号链接(`aarch64-linux-gnu-ld` 支持 `-pie -shared` 链接)、`kvcalloc`、vdso 宏前导逗号、`_shipped` dtc 源码补丁、宏形式闭源固件(`#define FTS_UPGRADE_FW_FILE "*.i"` + `#include 宏名`)写占位字节 |
 | 4.9 / 4.4 | ✅ 通过(jasmine/dandelion) | `sched/signal.h`→`sched.h`(4.11 前无拆分头)、KPM 自动关闭(4.14 以下不支持)、`fallthrough` 宏、`MIN/MAX` 头 |
 | 3.18 | ❌ 不支持 | SukiSU-Ultra builtin 最低要求 Linux 4.4+(3.x 会在预检阶段快速失败并给出明确提示);网页上这类版本标注「⚠ 不支持」,只能演练 |
 
@@ -237,12 +237,13 @@ sukisu-kernel-builder/
 
 | 类别 | 典型报错 | 代表机型 |
 |---|---|---|
-| 平台 HAL/符号未公开 | `undefined reference to 'mt_set_pwm_clk_hal'` 等 MTK 平台 HAL | 个别 MTK 4.14 树 |
-| 私有头文件缺失 | `fatal error: 'hwid.h' file not found` | flourite(6.1.68) |
-| 依赖驱动未启用 | `undefined reference to 'mi_disp_register_client'` | lisa(5.4.86) |
+| 平台 HAL/符号未公开 | `undefined reference to 'mt_set_pwm_clk_hal'` 等 MTK 平台 HAL | 个别 MTK 4.14 树(已由「obj-y 变量行不误注释」修复,ares/light 已验证通过) |
+| 私有头文件缺失 | `fatal error: 'hwid.h' file not found` | marble/garnet/flourite(已自动生成空桩头) |
+| 依赖驱动未启用 | `undefined reference to 'mi_disp_register_client'` | lisa/mona(5.4.86)、moonstone(5.4.191)、munch(4.19.157) |
 | 厂商源码自身 bug | `use of undeclared identifier 'curve_prime'`(crypto/ecc.c) | breeze(5.10.198) |
 | 重复符号定义 | `ld.lld: error: duplicate symbol: __SCK__tp_func_*` | erhu/fuxi(5.15) |
 | 老 Makefile 与 GNU make 4.x 不兼容 | `prerequisites cannot be defined in recipes` | dipper(4.9.112) |
+| MTK rpmb 私有头缺失 | `use of undeclared identifier 'mtk_mmc_host'`(rpmb-mtk.c) | daumier(5.10.81) |
 
 这类设备编译失败时,步骤日志末尾的「日志中的错误行(最后 8 条)」会直接给出失败原因;产物上传/发布步骤会被标记为「已跳过」。
 
