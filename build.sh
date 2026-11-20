@@ -1100,7 +1100,14 @@ make_config() {
   else
     warn "CONFIG_KSU 未在最终配置中生效! 常见原因: 依赖不满足 (main 分支需要 KPROBES/EXT4_FS, builtin 分支需要 SECURITY_SELINUX)。请检查 $OUT_DIR/.config"
   fi
-}
+  # 诊断: 核心配置项与树内改动 (排查 run #24 的 atomic64_t 未定义问题)
+  {
+    echo "--- 诊断: 核心 CONFIG 项 ($(date -u +%H:%M:%SZ)) ---"
+    grep -E '^CONFIG_(64BIT|ARM64|JUMP_LABEL|ARM64_LSE_ATOMICS|LTO_CLANG|SECURITY_SELINUX|KSU|KALLSYMS)=' "$OUT_DIR/.config" || echo "(以上配置项在 .config 中均不存在)"
+    echo "--- 诊断: .config 总行数: $(wc -l < "$OUT_DIR/.config") ---"
+    echo "--- 诊断: 内核树改动文件 ---"
+    (cd "$KERNEL_DIR" && git status --porcelain 2>/dev/null | head -30) || true
+  } >>"$LOG_FILE" 2>&1
 
 # --------------------------------- 编译 ------------------------------------
 build_kernel() {
@@ -1134,6 +1141,18 @@ build_kernel() {
   fi
   # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
   info "预检: 快速编译 drivers/kernelsu/ (尽早发现兼容错误)..."
+  # 诊断: 确认 autoconf.h 中的核心配置 (排查 run #24 的 atomic64_t 未定义)
+  {
+    echo "--- 诊断2: autoconf.h ($(date -u +%H:%M:%SZ)) ---"
+    if [ -f "$OUT_DIR/include/generated/autoconf.h" ]; then
+      ls -la "$OUT_DIR/include/generated/autoconf.h" 2>&1 | head -1
+      grep -E 'CONFIG_(64BIT|ARM64|AS_LSE|ARM64_LSE_ATOMICS|KASAN)' "$OUT_DIR/include/generated/autoconf.h" 2>/dev/null || echo "(autoconf.h 中未找到上述配置项)"
+    else
+      echo "(autoconf.h 不存在!)"
+    fi
+    echo "--- 诊断2: .config 中的 64BIT/ARM64 ---"
+    grep -nE '64BIT|^CONFIG_ARM64=' "$OUT_DIR/.config" 2>/dev/null | head -10 || echo "(无)"
+  } >>"$LOG_FILE" 2>&1
   # builtin 分支的 kernel_includes.h 包含 <generated/compile.h>, 它由 init/Makefile 里的规则
   # (scripts/mkcompile_h) 生成; 单编译 drivers/kernelsu 不会触达 init/, 故先编译一次 version.o 生成它
   if ! make "${args[@]}" init/version.o >>"$LOG_FILE" 2>&1; then
