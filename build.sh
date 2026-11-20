@@ -765,6 +765,21 @@ ksu_compat_fixups() {
 #endif /* dsh kvcalloc compat */
 KSUEOF
     fi
+    # B6) 上游 kernel_compat.h 认为 KPM 从 4.4 起可用, 但 kpm/compact.c 依赖 linux/set_memory.h
+    # 等 4.14+ 接口, kpm.c 还用了 5.0 前的 2 参 access_ok → 4.9/4.4 编译失败 (run #41/#42:
+    # dandelion/jasmine)。<4.14 时直接在 compat 头尾部 undef, 让 ksu_main.c 的 #ifdef 编译掉 KPM。
+    if [ -f "$comp" ] && [ -n "$maj" ] \
+       && { [ "$maj" -lt 4 ] 2>/dev/null || { [ "$maj" -eq 4 ] && [ "${min:-0}" -lt 14 ]; }; } \
+       && ! grep -q 'dsh: KPM disabled' "$comp"; then
+      info "兼容修复(builtin): <4.14 内核关闭 KPM (kpm/compact.c 依赖 4.14+ 的 set_memory 接口)"
+      cat >> "$comp" <<'KSUEOF'
+
+/* dsh: KPM disabled */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+#undef KSU_CAN_USE_KPM
+#endif
+KSUEOF
+    fi
     return 0
   fi
   # === main 分支: 以下 12 项修复仅对 main 执行 ===
@@ -1174,6 +1189,14 @@ toolchain_make_args() {
   # (如 drivers/gpu/drm/mediatek/mtk_dsi.c) 也报该警告并升格为错误, 而 gcc 不报 →
   # 厂商树用 gcc 能编、用 clang 编不过 (run #4: agate 4.19.191)。这里统一降级为警告。
   kc="${kc:+$kc }-Wno-error=strict-prototypes"
+  # 经典式 clang 上老厂商驱动普遍触发 -Werror=<各种 clang 专属告警>(如 mediatek eccci 的
+  # -Wpointer-to-int-cast, run #40: agate), gcc 下不报 → 全局把 -Werror 降级为警告。
+  # (GCC 模式不需要; LLVM=1 模式面向 5.10+ 的 GKI 树, 保持严格)
+  if [ "$USE_CLANG" = 1 ] && ! { [ "$SEL_GKI" = 1 ] \
+       || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
+       || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; }; then
+    kc="$kc -Wno-error"
+  fi
   if [ -n "$kc" ]; then
     a+=(KCFLAGS="$kc")
   fi
@@ -1356,7 +1379,7 @@ build_kernel() {
     else
       info "编译方式: Clang + GCC binutils 交叉前缀 (经典式)"
     fi
-    if grep -q "CONFIG_LTO_CLANG" "$OUT_DIR/.config" 2>/dev/null; then
+    if grep -q '^CONFIG_LTO_CLANG=y' "$OUT_DIR/.config" 2>/dev/null; then
       info "检测到 LTO, 追加 LLVM 链接工具"
       args+=(LD="$CLANG_DIR/bin/ld.lld" LLVM_AR="$CLANG_DIR/bin/llvm-ar" LLVM_NM="$CLANG_DIR/bin/llvm-nm" \
              LLVM_OBJCOPY="$CLANG_DIR/bin/llvm-objcopy" LLVM_STRIP="$CLANG_DIR/bin/llvm-strip")
@@ -1646,6 +1669,12 @@ main() {
   compat_fixups
   fix_missing_kconfig_sources
   detect_kver
+  # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
+  # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
+  local _kvmaj="${KVER%%.*}"
+  if [ -n "$_kvmaj" ] && [ "$_kvmaj" -lt 4 ]; then
+    die "内核 $KVER 太老: SukiSU-Ultra 仅支持 Linux 4.4+, 3.x 不受支持 (可用自定义源编译但不保证可用)"
+  fi
   integrate_sukisu
   KSU_VERSION="$(resolve_ksu_version)"
   info "SukiSU-Ultra 版本: $KSU_VERSION"
