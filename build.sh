@@ -1108,12 +1108,14 @@ package_output() {
   fi
   [ -n "$img" ] && [ -f "$img" ] || die "未找到内核镜像 Image.gz / Image"
   cp "$img" "$PKG_DIR/"
-  # DTB
+  # DTB: 只收集设备厂商目录 (dts/vendor) 的 dtb; 若公开源码不含厂商 dtb
+  # (如部分小米 sm8250 机型), 不打包任何 dtb, 由 AnyKernel3 保留原机 dtb,
+  # 绝不打包 dts/qcom 等上游参考板 dtb (会覆盖原机 dtb 导致无法开机)。
   local -a dtbs=()
   local f
   while IFS= read -r f; do
-    case "$f" in *overlay*) ;; *) dtbs+=("$f") ;; esac
-  done < <(find "$OUT_DIR/arch/arm64/boot/dts" -name "*.dtb" 2>/dev/null | sort)
+    case "$f" in *overlay*|*dtbo*) ;; *) dtbs+=("$f") ;; esac
+  done < <(find "$OUT_DIR/arch/arm64/boot/dts/vendor" -name "*.dtb" 2>/dev/null | sort)
   if (( ${#dtbs[@]} == 1 )); then
     cp "${dtbs[0]}" "$PKG_DIR/dtb"
     info "打包 DTB: $(basename "${dtbs[0]}")"
@@ -1121,6 +1123,8 @@ package_output() {
     mkdir -p "$PKG_DIR/dtb"
     cp "${dtbs[@]}" "$PKG_DIR/dtb/"
     info "打包 DTB: ${#dtbs[@]} 个 (dtb/ 目录)"
+  else
+    info "未找到厂商 DTB (dts/vendor): 不打包 dtb, AnyKernel3 将保留原机 dtb"
   fi
   # DTBO
   if [ -f "$OUT_DIR/arch/arm64/boot/dtbo.img" ]; then
