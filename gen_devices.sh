@@ -65,6 +65,10 @@ while IFS= read -r line || [ -n "$line" ]; do
   item+="\"android\": \"$(json_escape "$android")\", "
   item+="\"gki\": $gki, "
   item+="\"defconfig\": \"$(json_escape "$defcfg")\""
+  # SukiSU-Ultra 仅支持 Linux 4.4+; 3.x 内核标记为不支持(网页提示 + 构建脚本快速失败)
+  case "$kver" in
+    3.*) item+=", \"unsupported\": true, \"note\": \"Linux 3.x 实验性分支, SukiSU-Ultra 不支持\"" ;;
+  esac
   item+="}"
   if [ -z "${VERSIONS_OF[$did]+x}" ]; then
     VERSIONS_OF[$did]="$item"

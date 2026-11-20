@@ -52,6 +52,7 @@ async function init() {
   $('dry-run-btn').addEventListener('click', () => startBuild(true));
   $('cancel-btn').addEventListener('click', cancelRun);
   $('device').addEventListener('change', renderVersions);
+  $('version').addEventListener('change', updateActionButtons);
   $('custom-mode').addEventListener('change', toggleCustom);
   const logBox = $('log');
   logBox.addEventListener('scroll', () => {
@@ -106,15 +107,32 @@ function renderVersions() {
   dev.versions.forEach((v, i) => {
     const o = document.createElement('option');
     o.value = String(i + 1);
-    o.textContent = `${i + 1}. ${v.label}`;
+    o.textContent = `${i + 1}. ${v.label}${v.unsupported ? ' ⚠ 不支持' : ''}`;
     sel.appendChild(o);
   });
   const v = dev.versions[0];
   // 按设备类型预选集成分支: GKI → main, 传统内核 → builtin (用户仍可手动改)
   $('ksu-branch').value = v && v.gki == 1 ? 'main' : 'builtin';
   $('device-info').innerHTML = v
-    ? `仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''}`
+    ? `仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''}${v.unsupported ? ' · <b style="color:#f59e0b">⚠ 该内核版本不受支持(仅编译演练)</b>' : ''}`
     : '';
+  updateActionButtons();
+}
+
+function selectedVersion() {
+  const id = $('device').value;
+  const dev = state.devices.find((d) => d.id === id);
+  if (!dev) return null;
+  const idx = parseInt($('version').value, 10) - 1;
+  return dev.versions[idx] || dev.versions[0] || null;
+}
+
+function updateActionButtons() {
+  const v = $('custom-mode').checked ? null : selectedVersion();
+  const bad = !!(v && v.unsupported);
+  $('build-btn').disabled = bad;
+  $('dry-run-btn').disabled = false;
+  if (bad) setMsg('该设备/内核版本不受 SukiSU-Ultra 支持(Linux 3.x 仅可演练), 请改选其它版本。', true);
 }
 
 function toggleCustom() {
