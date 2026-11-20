@@ -135,6 +135,11 @@ check_deps() {
     if ! command -v "$bin" >/dev/null 2>&1; then missing+=("$bin"); fi
   done
   if [ ! -f /usr/include/openssl/ssl.h ]; then missing+=("libssl-dev"); fi
+  # libelf 仅 5.4+ 内核开启 CONFIG_DEBUG_INFO_BTF 时才会用到 (resolve_btfids), 缺失只告警
+  if [ ! -f /usr/include/libelf.h ] && [ ! -f /usr/include/gelf.h ]; then
+    warn "缺少 libelf 头文件 (libelf-dev): 5.4+ 内核若开启 CONFIG_DEBUG_INFO_BTF 会在 tools/bpf/resolve_btfids 处失败"
+    echo "    sudo apt install -y libelf-dev"
+  fi
   if (( ${#missing[@]} > 0 )); then
     warn "缺少依赖: ${missing[*]}"
     echo "  Debian/Ubuntu 安装命令:"
@@ -1443,6 +1448,13 @@ build_kernel() {
   # (scripts/mkcompile_h) 生成; 单编译 drivers/kernelsu 不会触达 init/, 故先编译一次 version.o 生成它
   if ! make "${args[@]}" init/version.o >>"$LOG_FILE" 2>&1; then
     die_log "$LOG_FILE" "预检失败: init/version.o 编译出错 (详见日志尾部)"
+  fi
+  # 5.4+ 内核开启 CONFIG_DEBUG_INFO_BTF 时, kbuild 会先构建 tools/bpf/resolve_btfids (依赖 libelf-dev);
+  # 提前单独构建, 缺库时几十秒即报错, 不必等完整编译数十分钟
+  if [ -d "$KERNEL_DIR/tools/bpf/resolve_btfids" ] && grep -q '^CONFIG_DEBUG_INFO_BTF=y' "$OUT_DIR/.config" 2>/dev/null; then
+    if ! make "${args[@]}" tools/bpf/resolve_btfids >>"$LOG_FILE" 2>&1; then
+      die_log "$LOG_FILE" "预检失败: tools/bpf/resolve_btfids 构建失败 (通常缺少 libelf-dev / libz-dev)"
+    fi
   fi
   # 4.19 等老内核: KSU 的 selinux 代码 include 内核 security/selinux 生成的 flask.h;
   # 完整构建时 security/ 先于 drivers/ 构建所以没问题, 单独预检则需先生成它
