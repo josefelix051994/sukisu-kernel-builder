@@ -416,6 +416,10 @@ compat_fixups() {
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
 # 导致 olddefconfig 直接报 "can't open file" (run #20/#21 marble)。把指向不存在
 # 路径的 source 行注释掉 (Kconfig source 路径相对内核树根)。
+# 注意 (run #24/#25 教训): 绝不能动带变量的引用, 如 source "arch/$(SRCARCH)/Kconfig"
+# —— 字面存在性检查必然失败, 误注释会断开整个 Kconfig 树 (arch/arm64/Kconfig 不被加载,
+# CONFIG_ARM64/CONFIG_64BIT 全部丢失, 表现为 atomic64_t 未定义)。同理只处理带 "/"
+# 的真实路径, 避免误伤 scripts/kconfig/tests 里的夹具。
 fix_missing_kconfig_sources() {
   cd "$KERNEL_DIR"
   local list_file missing_file cnt total
@@ -424,6 +428,13 @@ fix_missing_kconfig_sources() {
     | sed -E 's/^[[:space:]]*source[[:space:]]+"([^"]+)"/\1/' | sort -u > "$list_file" || true
   total=0; cnt=0
   while IFS= read -r p; do
+    case "$p" in
+      *'$'*|*'{'*|*'}'*|/*) continue ;;   # 变量/绝对路径: 无法用字面判断, 跳过
+    esac
+    case "$p" in
+      */*) ;;                             # 必须是带 "/" 的真实路径
+      *) continue ;;
+    esac
     total=$((total+1))
     [ -e "$p" ] || { printf '%s\n' "$p" >> "$missing_file"; cnt=$((cnt+1)); }
   done < "$list_file"
