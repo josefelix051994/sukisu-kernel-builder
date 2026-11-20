@@ -219,6 +219,22 @@ sukisu-kernel-builder/
 | 中断后重来 | 直接再跑一次 `bash build.sh --resume`(跳过源码/工具链下载);`--clean` 则全部重来 |
 | GKI LKM 模块刷入后不生效 | 确认模块 KMI 与设备内核 KMI 一致(用设备对应的 GKI 分支重新编译) |
 
+### 8.1 内核版本兼容性矩阵(实测)
+
+工具内置了针对小米/一加厂商树与老内核的兼容层,实测通过的版本:
+
+| 内核版本 | 实测结果 | 关键兼容处理 |
+|---|---|---|
+| 6.1 / 6.6 | ✅ 通过 | SELinux 依赖链 + 片段配置按厂家顺序合并(gki_defconfig → `*_GKI.config` → `*_QGKI.config`) |
+| 5.15 / 5.10 | ✅ 通过 | `LLVM=1` 显式 `CROSS_COMPILE=aarch64-linux-gnu-`(否则 clang 按 x86 主机目标编译);预构建 `security/selinux` 生成 `flask.h` |
+| 5.4 | ✅ 通过(veux) | 同上 + 多片段合并(GKI + QGKI),避免 vmlinux 链接 `undefined reference to qcom_smem_get` 等 |
+| 4.19 | ✅ 通过(全类) | `dtc` 的 `yylloc` 重复定义、`KPROBES/EXT4_FS` 依赖、`-Wno-error`(厂商 `subdir-ccflags -Werror` 直接剥离) |
+| 4.14 | ✅ 通过(davinci/begonia) | GCC4.9 binutils 符号链接(`aarch64-linux-gnu-ld` 支持 `-pie -shared` 链接)、`kvcalloc`、vdso 宏前导逗号、`_shipped` dtc 源码补丁 |
+| 4.9 / 4.4 | ✅ 通过(jasmine/dandelion) | `sched/signal.h`→`sched.h`(4.11 前无拆分头)、KPM 自动关闭(4.14 以下不支持)、`fallthrough` 宏、`MIN/MAX` 头 |
+| 3.18 | ❌ 不支持 | SukiSU-Ultra builtin 最低要求 Linux 4.4+(3.x 会在预检阶段快速失败并给出明确提示);网页上这类版本标注「⚠ 不支持」,只能演练 |
+
+**厂商源码不完整导致的失败(非工具问题)**:小米开源树存在未公开的目录/文件,工具会尽量自动修补(注释缺失的 `source`/`obj-y` 条目、缺失闭源固件 `.i` 只告警不中断),但少数机型仍可能因为厂商驱动缺失而链接失败(例如 dandelion 的 `include/firmware/fw_helitai_v0e.i`、ingres 的 `ufshcd_read_string_desc`)。
+
 ## 九、批量编译(每机型独立脚本 + 一键全量)
 
 ### 9.1 每机型每版本的独立脚本 `builds/<设备ID>/v<序号>.sh`
