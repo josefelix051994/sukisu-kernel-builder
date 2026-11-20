@@ -570,6 +570,16 @@ compat_fixups() {
     info "兼容修复: arch/arm64/kernel/vdso/gettimeofday.S 去掉宏调用前导逗号 (clang IAS 兼容)"
     sed -i 's/clock_gettime_return, shift=/clock_gettime_return shift=/g' "$vd"
   fi
+  # 厂商驱动的 Makefile 常自带 subdir-ccflags-y := -Werror (如 drivers/misc/mediatek/Makefile),
+  # 会把 clang 独有告警 (pointer-to-int-cast 等) 升格成错误, 而 gcc 构建不报 →
+  # 老厂商树用 clang 编不过 (run #40/#47: agate 的 mediatek eccci)。从 ccflags 行里剥掉 -Werror。
+  local mkvm mknum=0
+  while IFS= read -r mkvm; do
+    sed -i -E 's/^((subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=[^#]*)[[:space:]]-Werror/\1/g' "$mkvm" 2>/dev/null && mknum=$((mknum+1))
+  done < <(find drivers arch/arm64 -name 'Makefile' -exec grep -lE '^(subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=.*-Werror' {} + 2>/dev/null || true)
+  if [ "$mknum" -gt 0 ]; then
+    info "兼容修复: 移除 $mknum 个厂商 Makefile 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
+  fi
 }
 
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
@@ -779,6 +789,16 @@ KSUEOF
 #undef KSU_CAN_USE_KPM
 #endif
 KSUEOF
+    fi
+    # B7) linux/sched/signal.h、linux/sched/task.h 是 4.11 才从 linux/sched.h 拆出来的;
+    # 4.9/4.4 上没有这两个头 (run #45/#46: dandelion/jasmine symbol_resolver.c 直接 include)
+    # → <4.11 时整树改回 <linux/sched.h> (该头同时提供 task_pgrp/task_session 等)
+    if [ -n "$maj" ] && { [ "$maj" -lt 4 ] 2>/dev/null || { [ "$maj" -eq 4 ] && [ "${min:-0}" -lt 11 ]; }; }; then
+      local sf
+      while IFS= read -r sf; do
+        sed -i 's|#include <linux/sched/signal.h>|#include <linux/sched.h>|; s|#include <linux/sched/task.h>|#include <linux/sched.h>|' "$sf"
+      done < <(find -L "$kd" -type f \( -name '*.c' -o -name '*.h' \) -exec grep -lE '#include <linux/sched/(signal|task)\.h>' {} + 2>/dev/null || true)
+      info "兼容修复(builtin): <4.11 内核的 linux/sched/signal.h、sched/task.h 改回 linux/sched.h"
     fi
     return 0
   fi
