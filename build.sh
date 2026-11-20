@@ -1152,6 +1152,12 @@ toolchain_make_args() {
       a+=(CC="${CCW}$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
       a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
       a+=(CROSS_COMPILE_ARM32="$GCC32_DIR/bin/arm-linux-androideabi-")
+      # 老内核 (4.14 等) 的 vmlinux 用 $(LD) 链接, 且 arch/arm64 在 RELOCATABLE 时传 -pie -shared;
+      # 若 LD 落到主机 ld.lld 会报 "-shared and -pie may not be used together" (run #34)。
+      # 显式指定 GCC4.9 工具链里的 GNU bfd ld (binutils 2.27, 主线老内核同款配方)。
+      if [ -x "$GCC64_DIR/bin/aarch64-linux-android-ld.bfd" ]; then
+        a+=(LD="$GCC64_DIR/bin/aarch64-linux-android-ld.bfd")
+      fi
     fi
   else
     a+=(CC="${CCW}$GCC64_DIR/bin/aarch64-linux-android-gcc")
@@ -1200,6 +1206,16 @@ make_config() {
   if [ "$cfg_lines" -gt 0 ] && [ "$cfg_lines" -lt 200 ]; then
     is_fragment=1
   fi
+  # 部分厂商"片段"比较大 (如 blue_defconfig 321 个 CONFIG 行), 但缺少基础核心项
+  # (SELinux/ARM64/网络栈), 而树里带 gki_defconfig (厂家构建脚本的合并基线) —— 这类
+  # 必须按片段合并, 否则 make <name>_defconfig 会得到缺失 SELinux 的配置,
+  # 后续 KSU 的 sepolicy.h → security/selinux/include/security.h 链因 flask.h 未生成而断掉 (run #35/#36)。
+  if [ "$is_fragment" = 0 ] && [ "$cfg_lines" -ge 200 ] && [ "$cfg_lines" -lt 400 ] \
+     && [ -f arch/arm64/configs/gki_defconfig ] \
+     && ! grep -q '^CONFIG_SECURITY_SELINUX=y' "arch/arm64/configs/$DEFCONFIG" 2>/dev/null; then
+    is_fragment=1
+    info "该配置缺少基础核心项且树内带 gki_defconfig, 按片段配置合并处理: $DEFCONFIG"
+  fi
   mkdir -p "$OUT_DIR"
   if [ "$is_fragment" = 1 ]; then
     local base_cfg=""
@@ -1219,7 +1235,7 @@ make_config() {
       if ! "${MK[@]}" "$base_cfg" >>"$LOG_FILE" 2>&1; then
         die_log "$LOG_FILE" "基础配置生成失败: $base_cfg"
       fi
-      if KCONFIG_CONFIG="$OUT_DIR/.config" bash scripts/kconfig/merge_config.sh -m "arch/arm64/configs/$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
+      if KCONFIG_CONFIG="$OUT_DIR/.config" bash scripts/kconfig/merge_config.sh -m "$OUT_DIR/.config" "arch/arm64/configs/$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
         ok "片段配置合并完成"
       else
         warn "merge_config.sh 合并片段失败, 继续使用基础配置: $base_cfg"
@@ -1249,6 +1265,10 @@ make_config() {
     # builtin: KSU 是 bool (KSU_MODE 已被强制为 y); 依赖 SECURITY_SELINUX;
     # SUSFS 需要内核自带 fs/susfs.c 补丁, 默认显式关闭, 仅 --susfs 时开启
     $SC -e KSU || true
+    # SELinux 依赖链必须完整打开: CONFIG_SECURITY_SELINUX 关闭时 security/selinux 不产生对象,
+    # genheaders 不会生成 flask.h, KSU 的 sepolicy.h→security.h 立刻报 "flask.h: file not found"。
+    $SC -e SECURITY || true
+    $SC -e SECURITY_NETWORK || true
     $SC -e SECURITY_SELINUX || true
     if [ "$OPT_SUSFS" = 1 ]; then
       $SC -e KSU_SUSFS || true
@@ -1295,6 +1315,10 @@ make_config() {
     ok "CONFIG_KSU 已生效: $(grep '^CONFIG_KSU=' "$OUT_DIR/.config" | tr -d '\n')"
   else
     warn "CONFIG_KSU 未在最终配置中生效! 常见原因: 依赖不满足 (main 分支需要 KPROBES/EXT4_FS, builtin 分支需要 SECURITY_SELINUX)。请检查 $OUT_DIR/.config"
+  fi
+  # builtin 依赖 SELinux 内部头文件与 genheaders 产物 (flask.h), SELinux 关闭必然编译失败
+  if [ "$KSU_BRANCH" = builtin ] && ! grep -q '^CONFIG_SECURITY_SELINUX=y' "$OUT_DIR/.config"; then
+    warn "CONFIG_SECURITY_SELINUX 未生效! builtin 分支必须有 SELinux (否则 flask.h 无法生成, security.h 链断)。请检查基础配置/依赖链"
   fi
   # 诊断: 核心配置项与树内改动 (排查 run #24 的 atomic64_t 未定义问题)
   {
