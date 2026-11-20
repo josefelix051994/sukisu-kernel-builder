@@ -934,6 +934,18 @@ make_config() {
   mapfile -t TCA < <(toolchain_make_args)
   local -a MK=(make O="$OUT_DIR" ARCH=arm64 "${TCA[@]}")
   local SC="scripts/config --file $OUT_DIR/.config"
+  # LLVM=1 模式下 olddefconfig 的 Kconfig.include 会检查 ld.lld 是否在 PATH
+  # (run #20: 5.10+ 内核 "linker 'ld.lld' not found" 在配置阶段即失败)
+  if [ "$USE_CLANG" = 1 ]; then
+    local kmaj kmin kv
+    kv="$(echo "$KVER" | grep -oE '[0-9]+\.[0-9]+' | head -n1 || true)"
+    kmaj="${kv%%.*}"; kmin="${kv##*.}"
+    if [ "$SEL_GKI" = 1 ] \
+       || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
+       || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; then
+      export PATH="$CLANG_DIR/bin:$PATH"
+    fi
+  fi
   info "生成内核配置 ($DEFCONFIG) ..."
   if [[ "$DEFCONFIG" == *defconfig ]]; then
     if ! "${MK[@]}" "$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
