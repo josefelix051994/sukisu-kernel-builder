@@ -597,18 +597,28 @@ compat_fixups() {
   # 这类 .i 只被当作 `u8 fw_file[] = { #include "x.i" };` 的字节初始化表用, 编译期内容多为
   # "失效样本"(厂商注释原话 the sample one is invalid), 运行时由 request_firmware 加载真实固件
   # → 写入占位字节即可让驱动编译通过。
-  local hit hf hp blobn=0
+  local hit hf hcontent trimmed hp blobn=0 hrel
+  # 只认"行内容本身以 #include 开头"的真引用; 注释里的 #include (如 `* *#include "x.i"`,
+  # `// #include "x.i"`) 一律跳过 —— run #72/73/76 的教训: 直接把 grep 原始行当路径,
+  # 拼出 `…/68:/* #include "ft5x0x_fw_6127_ht.i" */` 这种目录名 → printf 报 Is a directory
+  # → build.sh 直接 exit 1, 设备在 fixup 阶段秒退。
   while IFS= read -r hit; do
-    hf="${hit%%:*}"; hrel="${hit#*:}"
+    hf="${hit%%:*}"
+    hcontent="${hit#*:}"; hcontent="${hcontent#*:}"   # 丢掉 grep -n 的行号
+    trimmed="${hcontent#"${hcontent%%[![:space:]]*}"}"
+    [[ "$trimmed" == '#include'* ]] || continue
+    [[ "$trimmed" == *'.i"'* ]] || continue
+    hrel="${trimmed#*\"}"; hrel="${hrel%%\"*}"
+    [[ "$hrel" == *.i ]] || continue
     hp="$(dirname "$hf")/$hrel"
+    if [ -d "$hp" ]; then continue; fi
     if [ ! -e "$hp" ] && [ ! -e "$hrel" ]; then
       mkdir -p "$(dirname "$hp")"
       printf '0x00, 0x00, 0x00, 0x00\n' > "$hp"
       warn "厂商源码缺失闭源固件: ${hf#$KERNEL_DIR/} → $hrel —— 已写入占位字节 (仅用于编译通过, 运行时由 firmware 加载真实固件)"
       blobn=$((blobn+1))
     fi
-  done < <(grep -rIn --include='*.c' --include='*.h' -E '#include[[:space:]]+"[^"]+\.i"' drivers 2>/dev/null \
-             | sed -E 's/^([^:]+):[0-9]+:[[:space:]]*#include[[:space:]]+"([^"]+)".*/\1:\2/' || true)
+  done < <(grep -rIn --include='*.c' --include='*.h' -E '^[[:space:]]*#include[[:space:]]*"[^"]+\.i"' drivers 2>/dev/null || true)
   if [ "$blobn" -gt 0 ]; then
     warn "以上闭源固件缺失共 $blobn 处, 已用占位字节兜底 (厂商源码不完整)"
   fi
@@ -619,14 +629,18 @@ compat_fixups() {
   # firmware 目录加载真实固件, 编译期内嵌样本只是兜底 → 写入占位字节让驱动能编译。
   local fcfg=drivers/input/touchscreen/focaltech_spi/focaltech_config.h
   if [ -f "$fcfg" ]; then
-    local fw
+    local fw fw2
     while IFS= read -r fw; do
       [ -n "$fw" ] || continue
-      if [ ! -e "$fw" ]; then
-        mkdir -p "$(dirname "$fw")"
-        printf '0x00, 0x00, 0x00, 0x00\n' > "$fw"
-        warn "厂商源码缺失闭源固件样本: $fw -> 已写入占位字节 (驱动可编译, 运行时由 firmware 加载真实固件)"
-      fi
+      # 引号 include 先按"源文件所在目录"解析 → 驱动目录下那份是编译时真正要的;
+      # 同时补一份相对内核树根的路径 (部分厂商代码用 -I 根目录写法)。
+      for fw2 in "drivers/input/touchscreen/focaltech_spi/$fw" "$fw"; do
+        if [ ! -e "$fw2" ]; then
+          mkdir -p "$(dirname "$fw2")"
+          printf '0x00, 0x00, 0x00, 0x00\n' > "$fw2"
+          warn "厂商源码缺失闭源固件样本: $fw2 -> 已写入占位字节 (驱动可编译, 运行时由 firmware 加载真实固件)"
+        fi
+      done
     done < <(grep -E '^#define[[:space:]]+FTS_UPGRADE_FW[0-9]*_FILE[[:space:]]+"[^"]+"' "$fcfg" \
                | sed -E 's/.*"([^"]+)".*/\1/' | sort -u 2>/dev/null || true)
   fi
