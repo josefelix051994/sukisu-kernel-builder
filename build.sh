@@ -587,9 +587,9 @@ compat_fixups() {
   local mkvm mknum=0
   while IFS= read -r mkvm; do
     sed -i -E 's/^((subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=[^#]*)[[:space:]]-Werror/\1/g' "$mkvm" 2>/dev/null && mknum=$((mknum+1))
-  done < <(find drivers arch/arm64 -name 'Makefile' -exec grep -lE '^(subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=.*-Werror' {} + 2>/dev/null || true)
+  done < <(find . \( -name '.git' -o -name '.tmp_*' \) -prune -o \( -name 'Makefile' -o -name 'Kbuild' \) -exec grep -lE '^(subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=.*-Werror' {} + 2>/dev/null || true)
   if [ "$mknum" -gt 0 ]; then
-    info "兼容修复: 移除 $mknum 个厂商 Makefile 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
+    info "兼容修复: 移除 $mknum 个厂商 Makefile/Kbuild 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
   fi
   # 顶层 Makefile 也可能在 KBUILD_CFLAGS 里追加 -Werror, 且位置在 $(KCFLAGS) 之后 →
   # KCFLAGS 里的 -Wno-error 会被覆盖, clang 专属告警仍变错误 (begonia-q 4.14: mm/rmap.c
