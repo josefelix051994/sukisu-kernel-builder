@@ -758,6 +758,34 @@ compat_fixups() {
     done < <(grep -rlE '^[[:space:]]*#include <linux/sched_assist/' include/linux 2>/dev/null || true)
     [ "$sasnum" -gt 0 ] && info "兼容修复: 注释 $sasnum 处 include/linux/sched_assist/... (公开树缺该私有目录)"
   fi
+  # OnePlus 公开树的 OplusKernelEnvConfig.mk 会把一批 OPLUS_FEATURE_* 直接 -D 上去,
+  # 其中部分特性源码未公开 (如 sched_assist 头、oplus_phoenix 驱动), 导致引用处 fatal error
+  # (op8t 4.19: init/main.c 里的 ../drivers/soc/oplus/system/oplus_phoenix/oplus_phoenix.h)。
+  # 无害做法: 对确认缺源码的特性, 把 ALLOWED_MCROS 里的宏名改成 *_DISABLED (不追加注释,
+  # 行尾续行反斜杠一旦被破坏 make 会报 missing separator —— run #97 的教训)。
+  local omk=OplusKernelEnvConfig.mk
+  if [ -f "$omk" ]; then
+    if [ ! -d include/linux/sched_assist ]; then
+      sed -i -E 's/(^|[^A-Za-z0-9_])OPLUS_FEATURE_SCHED_ASSIST([^A-Za-z0-9_]|$)/\1OPLUS_FEATURE_SCHED_ASSIST_DISABLED\2/g' "$omk"
+    fi
+    if [ ! -d drivers/soc/oplus/system/oplus_phoenix ]; then
+      sed -i -E 's/(^|[^A-Za-z0-9_])OPLUS_FEATURE_PHOENIX([^A-Za-z0-9_]|$)/\1OPLUS_FEATURE_PHOENIX_DISABLED\2/g' "$omk"
+    fi
+  fi
+  # GKI(android14+/6.x) 上用 main 分支编 LKM 时, kernelsu.ko 需要 vmlinux 导出
+  # path_umount / __arm64_sys_close (modpost: undefined!), 而 AOSP 上游树默认不导出 →
+  # 直接在对应源文件末尾补 EXPORT_SYMBOL (只在内核树里加, 不影响 ko 与刷机使用)。
+  if [ "$KSU_MODE" = m ] && [ "$SEL_GKI" = 1 ]; then
+    local nsx=fs/namespace.c ocf=fs/open.c
+    if [ -f "$nsx" ] && grep -q '^int path_umount(' "$nsx" && ! grep -q 'EXPORT_SYMBOL(path_umount)' "$nsx"; then
+      printf '\n/* suki-builder: export for KernelSU LKM */\nEXPORT_SYMBOL(path_umount);\n' >> "$nsx"
+      info "兼容修复(GKI): fs/namespace.c 导出 path_umount (kernelsu.ko modpost 需要)"
+    fi
+    if [ -f "$ocf" ] && grep -q 'SYSCALL_DEFINE1(close' "$ocf" && ! grep -q 'EXPORT_SYMBOL(__arm64_sys_close)' "$ocf"; then
+      printf '\n/* suki-builder: export for KernelSU LKM */\nEXPORT_SYMBOL(__arm64_sys_close);\n' >> "$ocf"
+      info "兼容修复(GKI): fs/open.c 导出 __arm64_sys_close (kernelsu.ko modpost 需要)"
+    fi
+  fi
   # 厂商源码 #include "hwid.h" 而 hwid 目录从未公开 (marble/garnet/flourite 等 5.10+ 树):
   # 桩头提供 gpio-testing-mode.c 用到的两个符号 (get_hw_country_version / CountryCN),
   # 其余引用方通常只 include 不使用符号 → 桩头足够编译通过。
