@@ -195,10 +195,24 @@ sanitize_name() {
 }
 
 # 解析 SukiSU 版本 (best-effort): git describe > 短提交 > unknown
+# setup.sh 的浅克隆常常没有 tag (describe 只回落到提交号), 此时补拉一次 tag 再描述,
+# 让产物名/发布说明里带上语义版本, 例如 v3.0.0_4bec532
 resolve_ksu_version() {
-  local d="$KERNEL_DIR/KernelSU" v=""
+  local d="$KERNEL_DIR/KernelSU" v="" v2=""
   if [ -d "$d/.git" ]; then
     v="$(git -C "$d" describe --tags --always 2>/dev/null || true)"
+    case "$v" in
+      ""|*-g*) : ;;               # 空 或 已带 -g<hash> (说明有 tag)
+      *)                            # 纯提交号 => 浅克隆缺 tag, 补拉后重试
+         git -C "$d" fetch --tags --depth=1 origin >/dev/null 2>&1 || true
+         v2="$(git -C "$d" describe --tags --always 2>/dev/null || true)"
+         [ -n "$v2" ] && v="$v2" ;;
+    esac
+    case "$v" in
+      *-g[0-9a-f]*-g*) : ;;
+      *-g[0-9a-f]*)                 # v3.0.0-12-g4bec532 => v3.0.0_4bec532
+         v="$(printf '%s' "$v" | sed -E 's/-[0-9]+-g([0-9a-f]+)$/_\1/')" ;;
+    esac
     [ -n "$v" ] || v="$(git -C "$d" rev-parse --short HEAD 2>/dev/null || true)"
   fi
   [ -n "$v" ] || v="unknown"
