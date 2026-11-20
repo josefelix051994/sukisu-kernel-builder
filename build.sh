@@ -599,6 +599,16 @@ compat_fixups() {
     info "兼容修复: 顶层 Makefile 的 KBUILD_CFLAGS -Werror 降级为 -Wno-error (厂商追加, 会让 clang 专属告警升格成错误)"
     sed -i -E '/^[[:space:]]*KBUILD_(CFLAGS|AFLAGS)/{ s/-Werror=/-Wno-error=/g; s/-Werror([[:space:]]|$)/-Wno-error\1/g }' "$topmk"
   fi
+  # 兜底: 在顶层 Makefile 末尾追加 -Wno-error。部分厂商树把 -Werror 藏在 include/其它 Makefile
+  # 或 cc-option 里 (begonia-q 4.14: mm/rmap.c 的 -Wvoid-pointer-to-enum-cast 仍被 -Werror 升格),
+  # 追加到文件末尾可确保位于所有 KBUILD_CFLAGS += 之后, 后出现的 -Wno-error 覆盖 -Werror。
+  if [ -f "$topmk" ] && ! grep -q 'sukisu-builder: demote -Werror' "$topmk"; then
+    {
+      printf '\n# suki-builder: demote -Werror to warning (vendor trees 混入 -Werror, 会让 clang 专属告警变错误)\n'
+      printf 'KBUILD_CFLAGS += -Wno-error\n'
+    } >> "$topmk"
+    info "兼容修复: 顶层 Makefile 末尾追加 KBUILD_CFLAGS += -Wno-error (兜底抑制 -Werror)"
+  fi
   # 部分厂商树直接 #include 未公开的闭源固件数组 (*.i, 如 focaltech 触摸的 fw_sample.i、
   # himax 的 HX83100_Firmware_Version_*.i、dandelion 的 fw_helitai_v0e.i), 公开源码里没有该
   # 文件 → fatal error: 'xxx.i' file not found, 整台设备编译失败 (批跑: 4.14.186 十台全挂在这)。
