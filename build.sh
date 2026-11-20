@@ -640,6 +640,33 @@ compat_fixups() {
   if [ "$blobn" -gt 0 ]; then
     warn "以上闭源固件缺失共 $blobn 处, 已用占位字节兜底 (厂商源码不完整)"
   fi
+  # 宏形式的固件数组: `#define XXX_FW_FILE "include/firmware/xyz.i"` + 源码里 `#include XXX_FW_FILE`
+  # (focaltech_spi / fts8719 / 其它触摸驱动的通病; 宏值路径不会出现在 include 行字面里,
+  # 上面的字面扫描抓不到, 表现为 begonia-q 的 'include/firmware/focal_g7_01.i' not found)。
+  # 处理方式: 取宏值路径, 在树根与"每个 #include 该宏的源文件所在目录"下各写一份占位字节
+  # (引号 include 优先相对源文件目录解析, 同时兼容 -I 根目录写法)。
+  local md mname mpath csrc cdir
+  while IFS= read -r md; do
+    [ -n "$md" ] || continue
+    mname=$(printf '%s\n' "$md" | sed -E 's/^[[:space:]]*#define[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/')
+    mpath=$(printf '%s\n' "$md" | sed -E 's/^[^"]*"([^"]+\.i)".*/\1/')
+    [ -n "$mname" ] && [ -n "$mpath" ] || continue
+    if [ ! -e "$mpath" ]; then
+      mkdir -p "$(dirname "$mpath")"
+      printf '0x00, 0x00, 0x00, 0x00\n' > "$mpath"
+      warn "厂商源码缺失闭源固件(宏 $mname): $mpath -> 已写入占位字节"
+      blobn=$((blobn+1))
+    fi
+    while IFS= read -r csrc; do
+      [ -n "$csrc" ] || continue
+      cdir=$(dirname "$csrc")
+      if [ ! -e "$cdir/$mpath" ]; then
+        mkdir -p "$(dirname "$cdir/$mpath")"
+        printf '0x00, 0x00, 0x00, 0x00\n' > "$cdir/$mpath"
+        blobn=$((blobn+1))
+      fi
+    done < <(grep -rIl --include='*.c' --include='*.h' -E "^[[:space:]]*#include[[:space:]]+${mname}([[:space:]]*|[[:space:]]*//.*)$" drivers 2>/dev/null || true)
+  done < <(grep -rIh --include='*.c' --include='*.h' -E '^[[:space:]]*#define[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]+"[^"]+\.i"' drivers 2>/dev/null | sort -u || true)
   # focaltech_spi 触摸驱动把 FTS_UPGRADE_FW_FILE 指向 include/firmware/fw_sample.i,
   # 而 Xiaomi 从未公开该样本 (focaltech_config.h 注释: "the sample one to be replaced is invalid"),
   # 厂商构建时用自家固件替换; 公开树直接编会 fatal error: 'include/firmware/fw_sample.i' not found
