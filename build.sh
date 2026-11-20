@@ -591,6 +591,14 @@ compat_fixups() {
   if [ "$mknum" -gt 0 ]; then
     info "兼容修复: 移除 $mknum 个厂商 Makefile 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
   fi
+  # 顶层 Makefile 也可能在 KBUILD_CFLAGS 里追加 -Werror, 且位置在 $(KCFLAGS) 之后 →
+  # KCFLAGS 里的 -Wno-error 会被覆盖, clang 专属告警仍变错误 (begonia-q 4.14: mm/rmap.c
+  # 的 -Wvoid-pointer-to-enum-cast)。直接从顶层 Makefile 的 KBUILD_CFLAGS/AFLAGS 行里摘掉 -Werror。
+  local topmk=Makefile
+  if [ -f "$topmk" ] && grep -qE '^[[:space:]]*KBUILD_(CFLAGS|AFLAGS)[^#]*-Werror' "$topmk"; then
+    info "兼容修复: 顶层 Makefile 的 KBUILD_CFLAGS -Werror 降级为 -Wno-error (厂商追加, 会让 clang 专属告警升格成错误)"
+    sed -i -E '/^[[:space:]]*KBUILD_(CFLAGS|AFLAGS)/{ s/-Werror=/-Wno-error=/g; s/-Werror([[:space:]]|$)/-Wno-error\1/g }' "$topmk"
+  fi
   # 部分厂商树直接 #include 未公开的闭源固件数组 (*.i, 如 focaltech 触摸的 fw_sample.i、
   # himax 的 HX83100_Firmware_Version_*.i、dandelion 的 fw_helitai_v0e.i), 公开源码里没有该
   # 文件 → fatal error: 'xxx.i' file not found, 整台设备编译失败 (批跑: 4.14.186 十台全挂在这)。
