@@ -521,6 +521,22 @@ setup_toolchain() {
     fi
     mv "$GCC32_DIR.tmp" "$GCC32_DIR"
   fi
+
+  # 把 Android GCC 的 binutils 暴露成 aarch64-linux-gnu-* / arm-linux-gnueabi-* 前缀链接:
+  # 老内核 (如 4.14) 的 vdso 用 $(CC) 直接链接, clang 会按 triple 前缀去找 GNU ld,
+  # 找不到时回退主机 x86 ld.bfd → "unrecognised emulation mode: aarch64linux";
+  # LLVM=1 模式下 kbuild 也需要从 CROSS_COMPILE 推导 --target, 统一用 gnu triples 最稳。
+  local LINKBIN="$TOOLCHAIN_DIR/bin" t
+  mkdir -p "$LINKBIN"
+  for t in ld as ar nm objcopy objdump ranlib readelf strip; do
+    if [ -x "$GCC64_DIR/bin/aarch64-linux-android-$t" ]; then
+      ln -sf "$GCC64_DIR/bin/aarch64-linux-android-$t" "$LINKBIN/aarch64-linux-gnu-$t"
+    fi
+    if [ -x "$GCC32_DIR/bin/arm-linux-androideabi-$t" ]; then
+      ln -sf "$GCC32_DIR/bin/arm-linux-androideabi-$t" "$LINKBIN/arm-linux-gnueabi-$t"
+    fi
+  done
+  export PATH="$LINKBIN:$PATH"
 }
 
 # -------------------------------- 内核源码 --------------------------------
@@ -1131,7 +1147,7 @@ toolchain_make_args() {
     if [ "$SEL_GKI" = 1 ] \
        || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
        || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; then
-      a+=(LLVM=1 CC="${CCW}$CLANG_DIR/bin/clang")
+      a+=(LLVM=1 CROSS_COMPILE=aarch64-linux-gnu- CC="${CCW}$CLANG_DIR/bin/clang")
     else
       a+=(CC="${CCW}$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
       a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
