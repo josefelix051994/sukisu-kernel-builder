@@ -748,20 +748,15 @@ compat_fixups() {
   # OnePlus(sm8250/sm8350) 公开树缺 include/linux/sched_assist/ (厂商私有调度增强头),
   # 但 OplusKernelEnvConfig.mk 的 ALLOWED_MCROS 会自动 -DOPLUS_FEATURE_SCHED_ASSIST →
   # include/linux/mutex.h 里的 #include <linux/sched_assist/sched_assist_mutex.h> 直接
-  # fatal error (op8t 4.19 实测)。该特性在公开树不完整: 从宏列表里划掉,
-  # 并把包含处守卫改成 #if 0, 让这些私有增强整体编译掉 (其余内核功能不受影响)。
-  local omk=OplusKernelEnvConfig.mk
-  if [ -f "$omk" ] && [ ! -d include/linux/sched_assist ] && grep -q 'OPLUS_FEATURE_SCHED_ASSIST' "$omk"; then
-    if ! grep -q 'suki-builder: drop sched_assist' "$omk"; then
-      sed -i -E 's/^(OPLUS_FEATURE_SCHED_ASSIST)[[:space:]]*(\\?)[[:space:]]*$/\1_DISABLED \2  # suki-builder: drop sched_assist (公开树缺头文件)/' "$omk"
-      info "兼容修复: OplusKernelEnvConfig.mk 划掉 OPLUS_FEATURE_SCHED_ASSIST (公开树缺 include/linux/sched_assist)"
-    fi
-    local hh
-    for hh in include/linux/mutex.h include/linux/rwsem.h include/linux/semaphore.h; do
-      if [ -f "$hh" ] && grep -q 'include/linux/sched_assist/' "$hh"; then
-        sed -i -E 's@^([[:space:]]*)#include <linux/sched_assist/[^>]+>@\1/* suki-builder: sched_assist header not published */@' "$hh"
-      fi
-    done
+  # fatal error (op8t 4.19 实测)。公开树里该特性不完整, 安全做法=只注释包含行
+  # (绝不能改 OplusKernelEnvConfig.mk 列表行, 行尾 \ 续行被破坏会报 missing separator)。
+  if [ ! -d include/linux/sched_assist ]; then
+    local sasnum=0 sasf
+    while IFS= read -r sasf; do
+      sed -i -E 's@^([[:space:]]*)#include <linux/sched_assist/[^>]+>@\1/* suki-builder: sched_assist header not published */@' "$sasf"
+      sasnum=$((sasnum+1))
+    done < <(grep -rlE '^[[:space:]]*#include <linux/sched_assist/' include/linux 2>/dev/null || true)
+    [ "$sasnum" -gt 0 ] && info "兼容修复: 注释 $sasnum 处 include/linux/sched_assist/... (公开树缺该私有目录)"
   fi
   # 厂商源码 #include "hwid.h" 而 hwid 目录从未公开 (marble/garnet/flourite 等 5.10+ 树):
   # 桩头提供 gpio-testing-mode.c 用到的两个符号 (get_hw_country_version / CountryCN),
