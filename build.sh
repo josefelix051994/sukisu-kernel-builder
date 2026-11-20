@@ -413,6 +413,41 @@ compat_fixups() {
   fi
 }
 
+# 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
+# 导致 olddefconfig 直接报 "can't open file" (run #20/#21 marble)。把指向不存在
+# 路径的 source 行注释掉 (Kconfig source 路径相对内核树根)。
+fix_missing_kconfig_sources() {
+  cd "$KERNEL_DIR"
+  local list_file missing_file cnt total
+  list_file="$(mktemp)"; missing_file="$(mktemp)"
+  grep -rhoE '^[[:space:]]*source[[:space:]]+"[^"]+"' --include='Kconfig*' . 2>/dev/null \
+    | sed -E 's/^[[:space:]]*source[[:space:]]+"([^"]+)"/\1/' | sort -u > "$list_file" || true
+  total=0; cnt=0
+  while IFS= read -r p; do
+    total=$((total+1))
+    [ -e "$p" ] || { printf '%s\n' "$p" >> "$missing_file"; cnt=$((cnt+1)); }
+  done < "$list_file"
+  if [ "$cnt" -eq 0 ]; then
+    rm -f "$list_file" "$missing_file"
+    return 0
+  fi
+  warn "内核树引用了 $cnt 个不存在的 Kconfig 目录 (厂家未公开 vendor 驱动), 将注释对应 source 行: $(head -n3 "$missing_file" | tr '\n' ' ')"
+  while IFS= read -r f; do
+    awk -v miss="$missing_file" '
+      BEGIN { while ((getline l < miss) > 0) M[l] = 1 }
+      {
+        if (match($0, /source[[:space:]]+"[^"]+"/)) {
+          p = substr($0, RSTART, RLENGTH)
+          sub(/^[^"]*"/, "", p); sub(/".*$/, "", p)
+          if (p in M) { print "# " $0; next }
+        }
+        print
+      }' "$f" > "$f.dsh.tmp" && mv "$f.dsh.tmp" "$f"
+  done < <(grep -rlE '^[[:space:]]*source[[:space:]]+"' --include='Kconfig*' . 2>/dev/null)
+  rm -f "$list_file" "$missing_file"
+  ok "已注释 $cnt 处缺失 Kconfig 引用"
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -1292,6 +1327,7 @@ main() {
   setup_toolchain
   fetch_kernel
   compat_fixups
+  fix_missing_kconfig_sources
   detect_kver
   integrate_sukisu
   ksu_compat_fixups
