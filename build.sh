@@ -640,6 +640,23 @@ compat_fixups() {
     } >> "$topmk"
     info "兼容修复: 顶层 Makefile 末尾追加 KBUILD_CFLAGS += -Wno-error (兜底抑制 -Werror)"
   fi
+  # 厂商改过的 scripts/mkcompile_h (如 OnePlus sm8250 4.19 的 L57) 会写 bash 专属展开
+  # `${CURRENT_RELEASE//\//\\\\}`, 而 kbuild 用 CONFIG_SHELL(/bin/sh=dash) 调用它 →
+  # "mkcompile_h: 57: Bad substitution" → include/generated/compile.h 生成失败 (op9 5.4/op8t 4.19)。
+  # 在最前面插入一段 dash 兼容的 bash 重执行守卫, 让脚本用 bash 跑完 (不改原逻辑)。
+  local mkc=scripts/mkcompile_h
+  if [ -f "$mkc" ] && grep -qE '\$\{[A-Za-z_][A-Za-z0-9_]*//' "$mkc" \
+     && ! grep -q 'suki-builder: ensure bash' "$mkc"; then
+    if awk '
+      NR == 1 { print; print "# suki-builder: ensure bash (脚本含 bash 专属参数展开, dash 会 Bad substitution)"; print "[ -z \"${BASH_VERSION}\" ] && [ -x /bin/bash ] && exec /bin/bash \"$0\" \"$@\""; next }
+      { print }
+    ' "$mkc" > "$mkc.tmp_sh" 2>/dev/null && mv "$mkc.tmp_sh" "$mkc"; then
+      chmod +x "$mkc" 2>/dev/null || true
+      info "兼容修复: scripts/mkcompile_h 加 bash 重执行守卫 (厂商脚本含 dash 不支持的 \${var//} 展开)"
+    else
+      rm -f "$mkc.tmp_sh"
+    fi
+  fi
   # 部分厂商树直接 #include 未公开的闭源固件数组 (*.i, 如 focaltech 触摸的 fw_sample.i、
   # himax 的 HX83100_Firmware_Version_*.i、dandelion 的 fw_helitai_v0e.i), 公开源码里没有该
   # 文件 → fatal error: 'xxx.i' file not found, 整台设备编译失败 (批跑: 4.14.186 十台全挂在这)。
@@ -748,7 +765,9 @@ compat_fixups() {
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
 # 导致 olddefconfig 直接报 "can't open file" (run #20/#21 marble)。把指向不存在
 # 路径的 source 行注释掉 (Kconfig source 路径相对内核树根)。
-# 注意 (run #24/#25 教训): 绝不能动带变量的引用, 如 source "arch/$(SRCARCH)/Kconfig"
+# 注意1: 厂商树常写成不带引号的形式, 例如 OnePlus 的 `source block/uxio_first/Kconfig`
+#        (还包在 #ifdef OPLUS_FEATURE_xxx 里) —— 必须同时匹配 "path" 与 path 两种写法。
+# 注意2 (run #24/#25 教训): 绝不能动带变量的引用, 如 source "arch/$(SRCARCH)/Kconfig"
 # —— 字面存在性检查必然失败, 误注释会断开整个 Kconfig 树 (arch/arm64/Kconfig 不被加载,
 # CONFIG_ARM64/CONFIG_64BIT 全部丢失, 表现为 atomic64_t 未定义)。同理只处理带 "/"
 # 的真实路径, 避免误伤 scripts/kconfig/tests 里的夹具。
@@ -756,8 +775,8 @@ fix_missing_kconfig_sources() {
   cd "$KERNEL_DIR"
   local list_file missing_file cnt total
   list_file="$(mktemp)"; missing_file="$(mktemp)"
-  grep -rhoE '^[[:space:]]*source[[:space:]]+"[^"]+"' --include='Kconfig*' . 2>/dev/null \
-    | sed -E 's/^[[:space:]]*source[[:space:]]+"([^"]+)"/\1/' | sort -u > "$list_file" || true
+  grep -rhoE '^[[:space:]]*source[[:space:]]+"?[^"[:space:]]+"?' --include='Kconfig*' . 2>/dev/null \
+    | sed -E 's/^[[:space:]]*source[[:space:]]+"?([^"[:space:]]+)"?/\1/' | sort -u > "$list_file" || true
   total=0; cnt=0
   while IFS= read -r p; do
     case "$p" in
@@ -779,14 +798,15 @@ fix_missing_kconfig_sources() {
     awk -v miss="$missing_file" '
       BEGIN { while ((getline l < miss) > 0) M[l] = 1 }
       {
-        if (match($0, /source[[:space:]]+"[^"]+"/)) {
+        if (match($0, /source[[:space:]]+"?[^"[:space:]]+"?/)) {
           p = substr($0, RSTART, RLENGTH)
-          sub(/^[^"]*"/, "", p); sub(/".*$/, "", p)
+          sub(/^source[[:space:]]+/, "", p)
+          gsub(/"/, "", p)
           if (p in M) { print "# " $0; next }
         }
         print
       }' "$f" > "$f.dsh.tmp" && mv "$f.dsh.tmp" "$f"
-  done < <(grep -rlE '^[[:space:]]*source[[:space:]]+"' --include='Kconfig*' . 2>/dev/null)
+  done < <(grep -rlE '^[[:space:]]*source[[:space:]]+"?[^"[:space:]]+' --include='Kconfig*' . 2>/dev/null)
   rm -f "$list_file" "$missing_file"
   ok "已注释 $cnt 处缺失 Kconfig 引用"
 }
@@ -1621,6 +1641,12 @@ make_config() {
     if [ "$OPT_KSU_DEBUG" = 1 ]; then
       $SC -e KSU_DEBUG || true
     fi
+    # GKI(main) 树同样关 BTF: android1x-5.15/6.6 的 gki_defconfig 默认开 CONFIG_DEBUG_INFO_BTF,
+    # kbuild 会先构建 tools/bpf/resolve_btfids + libbpf, 新版 clang 下 libbpf 的 const 丢弃告警被
+    # -Werror 升级成错误 (run #9 批跑: gki-a15 6.6 "assigning to 'char *' from 'const char *'" 失败)。
+    # KSU 不需要 BTF, 直接关闭; LKM 模式只产出 kernelsu.ko, 不影响 GKI 模块加载 (vermagic 才是校验项)。
+    $SC -d DEBUG_INFO_BTF >/dev/null 2>&1 || true
+    $SC -d DEBUG_INFO_BTF_MODULES >/dev/null 2>&1 || true
   fi
   if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
     die_log "$LOG_FILE" "olddefconfig 失败"
