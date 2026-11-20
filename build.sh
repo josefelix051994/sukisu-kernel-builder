@@ -591,7 +591,9 @@ compat_fixups() {
     fi
   done < <(grep -rIn --include='*.c' --include='*.h' -E '#include[[:space:]]+"[^"]+\.i"' drivers 2>/dev/null \
              | sed -E 's/^([^:]+):[0-9]+:[[:space:]]*#include[[:space:]]+"([^"]+)".*/\1:\2/' || true)
-  [ "$blobwarn" -gt 0 ] && warn "以上闭源固件缺失共 $blobwarn 处 (厂商源码不完整)"
+  if [ "$blobwarn" -gt 0 ]; then
+    warn "以上闭源固件缺失共 $blobwarn 处 (厂商源码不完整)"
+  fi
 }
 
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
