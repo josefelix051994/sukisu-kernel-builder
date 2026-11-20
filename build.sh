@@ -745,6 +745,24 @@ compat_fixups() {
     info "兼容修复: qpnp-power-on.h 的 qpnp_pon_wd_config 定义加 static (多 TU 重复定义冲突)"
     sed -i -E 's/^int qpnp_pon_wd_config\(bool enable\)[[:space:]]*$/static int qpnp_pon_wd_config(bool enable)/' "$qpon"
   fi
+  # OnePlus(sm8250/sm8350) 公开树缺 include/linux/sched_assist/ (厂商私有调度增强头),
+  # 但 OplusKernelEnvConfig.mk 的 ALLOWED_MCROS 会自动 -DOPLUS_FEATURE_SCHED_ASSIST →
+  # include/linux/mutex.h 里的 #include <linux/sched_assist/sched_assist_mutex.h> 直接
+  # fatal error (op8t 4.19 实测)。该特性在公开树不完整: 从宏列表里划掉,
+  # 并把包含处守卫改成 #if 0, 让这些私有增强整体编译掉 (其余内核功能不受影响)。
+  local omk=OplusKernelEnvConfig.mk
+  if [ -f "$omk" ] && [ ! -d include/linux/sched_assist ] && grep -q 'OPLUS_FEATURE_SCHED_ASSIST' "$omk"; then
+    if ! grep -q 'suki-builder: drop sched_assist' "$omk"; then
+      sed -i -E 's/^(OPLUS_FEATURE_SCHED_ASSIST)[[:space:]]*(\\?)[[:space:]]*$/\1_DISABLED \2  # suki-builder: drop sched_assist (公开树缺头文件)/' "$omk"
+      info "兼容修复: OplusKernelEnvConfig.mk 划掉 OPLUS_FEATURE_SCHED_ASSIST (公开树缺 include/linux/sched_assist)"
+    fi
+    local hh
+    for hh in include/linux/mutex.h include/linux/rwsem.h include/linux/semaphore.h; do
+      if [ -f "$hh" ] && grep -q 'include/linux/sched_assist/' "$hh"; then
+        sed -i -E 's@^([[:space:]]*)#include <linux/sched_assist/[^>]+>@\1/* suki-builder: sched_assist header not published */@' "$hh"
+      fi
+    done
+  fi
   # 厂商源码 #include "hwid.h" 而 hwid 目录从未公开 (marble/garnet/flourite 等 5.10+ 树):
   # 桩头提供 gpio-testing-mode.c 用到的两个符号 (get_hw_country_version / CountryCN),
   # 其余引用方通常只 include 不使用符号 → 桩头足够编译通过。
@@ -1648,6 +1666,10 @@ make_config() {
     $SC -d DEBUG_INFO_BTF >/dev/null 2>&1 || true
     $SC -d DEBUG_INFO_BTF_MODULES >/dev/null 2>&1 || true
   fi
+  # 厂商 defconfig 常打开 CONFIG_HEADERS_INSTALL=y: 构建期会跑 usr/include 的 hdrtest
+  # (厂商自加的头文件测试), 用新 glibc 会报 "field has incomplete type 'struct timespec'"
+  # 直接中断整次编译 (op9 5.4 OnePlus SM8350 实测)。我们只需要 Image, 关掉头文件导出。
+  $SC -d HEADERS_INSTALL >/dev/null 2>&1 || true
   if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
     die_log "$LOG_FILE" "olddefconfig 失败"
   fi
