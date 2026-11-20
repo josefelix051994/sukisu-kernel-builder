@@ -1392,18 +1392,6 @@ make_config() {
       done
       $SC -e LTO_NONE >/dev/null 2>&1 || true
       $SC -e DEBUG_INFO_NONE >/dev/null 2>&1 || true
-      # 厂商 QGKI 片段会把大批驱动标成 =m (厂家构建会单独打包模块), 但本工具只产出
-      # Image/zImage 单一镜像, 不含模块包; 若保留 =m, 这些驱动不参与 vmlinux 链接,
-      # 内核里对它们符号的引用就会 undefined reference (run #67 veux: qpnp_pon_*, qcom_smem_get)。
-      # 因此 builtin 非 GKI 时把所有 =m 驱动转成 =y 内置 (业界常见的单镜像做法)。
-      if [ "$KSU_BRANCH" = builtin ] && [ "$SEL_GKI" != 1 ]; then
-        local m2y
-        m2y="$(grep -cE '^CONFIG_[A-Za-z0-9_]+=m$' "$OUT_DIR/.config" 2>/dev/null || true)"
-        if [ "${m2y:-0}" -gt 0 ]; then
-          sed -i -E 's/^(CONFIG_[A-Za-z0-9_]+)=m$/\1=y/' "$OUT_DIR/.config"
-          info "片段配置中有 $m2y 个 =m 驱动, 已转为 =y 内置 (本工具不打包内核模块)"
-        fi
-      fi
       info "已裁剪 LTO/KASAN/DWARF 等调试选项以控制编译时间"
     fi
   elif [[ "$DEFCONFIG" == *defconfig ]]; then
@@ -1557,7 +1545,24 @@ build_kernel() {
   fi
   info "开始编译内核 (make -j$JOBS, 通常需要 10~60 分钟; 日志: $LOG_FILE) ..."
   if ! make "${args[@]}" Image.gz 2>&1 | tee -a "$LOG_FILE"; then
-    die_log "$LOG_FILE" "内核编译失败 (Image.gz)"
+    # 部分厂商 QGKI 片段把驱动标成 =m(厂家构建会单独打包模块), 而本工具只产出 Image;
+    # 这类树首次链接会因引用模块符号 undefined reference(veux 的 qpnp_pon_*/qcom_smem_get)。
+    # 仅当确实出现 undefined reference 时, 把 =m 全部转 =y 内置后重试一次(自适应, 避免
+    # 影响原本能正常编的 5.10/5.15/6.x 树 —— 盲目全转可能触发重复符号/厂商源码结构问题)。
+    if [ "$KSU_BRANCH" = builtin ] && [ "$SEL_GKI" != 1 ] \
+       && grep -q 'undefined reference' "$LOG_FILE" \
+       && grep -qE '^CONFIG_[A-Za-z0-9_]+=m$' "$OUT_DIR/.config"; then
+      local m2n
+      m2n="$(grep -cE '^CONFIG_[A-Za-z0-9_]+=m$' "$OUT_DIR/.config" || true)"
+      warn "首次链接出现模块符号缺失: 片段把 ${m2n:-0} 个驱动标为 =m, 本工具不打包模块 → 转为 =y 内置后重试"
+      sed -i -E 's/^(CONFIG_[A-Za-z0-9_]+)=m$/\1=y/' "$OUT_DIR/.config"
+      make "${args[@]}" olddefconfig >>"$LOG_FILE" 2>&1 || true
+      if ! make "${args[@]}" Image.gz 2>&1 | tee -a "$LOG_FILE"; then
+        die_log "$LOG_FILE" "内核编译失败 (Image.gz, =m 转 =y 重试后仍失败)"
+      fi
+    else
+      die_log "$LOG_FILE" "内核编译失败 (Image.gz)"
+    fi
   fi
   if [ ! -f "$OUT_DIR/arch/arm64/boot/Image.gz" ]; then
     if [ -f "$OUT_DIR/arch/arm64/boot/Image" ]; then
