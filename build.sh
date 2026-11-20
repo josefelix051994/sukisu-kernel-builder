@@ -1166,8 +1166,16 @@ toolchain_make_args() {
   fi
   # 老内核 (lib/string.c 无 stpcpy, 5.10 前) 上, clang/gcc 会把 sprintf(p,"%s",s) 优化成 stpcpy 调用
   # (tty_io.c 的 tty_line_name 即中招: undefined reference to `stpcpy' — run #16), 禁用该内置优化
+  local kc=""
   if [ -n "$kmaj" ] && { [ "$kmaj" -lt 5 ] || { [ "$kmaj" -eq 5 ] && [ "$kmin" -lt 10 ]; }; }; then
-    a+=(KCFLAGS="-fno-builtin-sprintf -fno-builtin-stpcpy")
+    kc="-fno-builtin-sprintf -fno-builtin-stpcpy"
+  fi
+  # 4.19 等老树的 KBUILD_CFLAGS 自带 -Werror=strict-prototypes; clang 对"无原型的老式函数定义"
+  # (如 drivers/gpu/drm/mediatek/mtk_dsi.c) 也报该警告并升格为错误, 而 gcc 不报 →
+  # 厂商树用 gcc 能编、用 clang 编不过 (run #4: agate 4.19.191)。这里统一降级为警告。
+  kc="${kc:+$kc }-Wno-error=strict-prototypes"
+  if [ -n "$kc" ]; then
+    a+=(KCFLAGS="$kc")
   fi
   printf '%s\n' "${a[@]}"
 }
