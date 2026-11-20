@@ -1,4 +1,4 @@
-# SukiSU-Ultra 内核编译工具
+﻿# SukiSU-Ultra 内核编译工具
 
 依据官方集成教程 [sukisu.org/zh/guide/how-to-integrate](https://sukisu.org/zh/guide/how-to-integrate) 编写的一键式内核编译工具。
 
@@ -85,9 +85,9 @@ bash build.sh
 | `--repo <url>` | 自定义内核仓库(绕过设备库,配合 `--branch`) |
 | `--defconfig <路径>` | 指定 defconfig(如 `vendor/alioth_user_defconfig`) |
 | `--kver <x.y>` / `--android <n>` | 自定义源时声明内核/Android 版本(用于选编译器) |
-| `--gki` | 标记为 GKI 通用内核(默认 LKM 模式) |
+| `--gki` | 标记为 GKI 通用内核(默认内置模式, 需要 LKM 加 `--ksu-mode m`) |
 | `--ksu <main\|builtin>` | SukiSU 集成分支(默认: GKI 设备=main, 传统内核=builtin) |
-| `--ksu-mode <y\|m>` | `y`=内置(非 GKI 默认),`m`=LKM 模块(GKI 默认;builtin 分支只支持 y) |
+| `--ksu-mode <y\|m>` | `y`=内置(默认),`m`=LKM 模块(需要目标树导出 kernelsu.ko 依赖符号;builtin 分支只支持 y) |
 | `--kpm` | 启用 KPM(`CONFIG_KPM=y`) |
 | `--debug-ksu` | 启用 `CONFIG_KSU_DEBUG` |
 | `--susfs` | 启用 `CONFIG_KSU_SUSFS`(要求内核已集成 susfs4ksu 补丁) |
@@ -127,7 +127,7 @@ bash build.sh --repo https://github.com/xxx/kernel --branch main \
 alioth|Android 11 · Linux 4.19|Redmi K40 / POCO F3|https://github.com/MiCode/Xiaomi_Kernel_OpenSource|alioth-r-oss|4.19|11|0|vendor/alioth_user_defconfig
 ```
 
-- `GKI标志`:`1` = GKI 通用内核(默认 LKM 模式),`0` = 非 GKI(默认内置模式)
+- `GKI标志`:`1` = GKI 通用内核(默认内置模式),`0` = 非 GKI(默认内置模式)
 - `defconfig提示` 可留空(自动按设备 ID 探测),支持 glob(如 `vendor/kona*`)
 - **片段配置**(`vendor/*_consolidate.config`、`*_GKI.config` 等不足 200 行的文件):工具会自动以 `gki_defconfig` 为基础合并片段,并裁掉 FULL LTO / KASAN / DWARF 等调试选项(否则 2 核 runner 极易超时)
 - 改完 `devices.conf` 后请重新生成两份派生文件:
@@ -151,7 +151,7 @@ bash tools/gen_build_scripts.sh         # 每机型每版本的独立编译脚�
 | 模式 | 产物 | 用法 |
 |---|---|---|
 | 内置(`CONFIG_KSU=y`,非 GKI 默认) | 如 `Redmi_K40+POCO_F3_alioth_4.19.113_SukiSU-v3.0.0_20261120-2003.zip` | TWRP 等 Recovery 刷入(AnyKernel3 格式) |
-| LKM(`CONFIG_KSU=m`,GKI 默认) | 如 `Google_Android_15_gki-a15_6.6_SukiSU-v3.0.0_20261120-2003.ko` | SukiSU 管理器 → 安装 → **使用本地 LKM 文件**(仅支持 `.ko`) |
+| LKM(`CONFIG_KSU=m`,`--ksu-mode m` 时) | 如 `Google_Android_15_gki-a15_6.6_SukiSU-v3.0.0_20261120-2003.ko` | SukiSU 管理器 → 安装 → **使用本地 LKM 文件**(仅支持 `.ko`) |
 
 - 品牌/机型来自 `devices.conf` 第 3 列(显示名),例如 `Redmi K40 / POCO F3` → `Redmi_K40+POCO_F3`;
   自动枚举的设备(显示名等于代码)按仓库归属推断品牌(小米内核 → `Xiaomi`),机型字段省略,代码只出现一次;

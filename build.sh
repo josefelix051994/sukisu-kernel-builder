@@ -421,7 +421,15 @@ choose_ksu_branch() {
   fi
   case "$KSU_BRANCH" in main|builtin) ;; *) die "--ksu 只能是 main 或 builtin" ;; esac
   if [ -z "$KSU_MODE" ]; then
-    if [ "$SEL_GKI" = 1 ]; then KSU_MODE=m; else KSU_MODE=y; fi
+    # LKM 模式 (CONFIG_KSU=m) 需要目标内核树导出 kernelsu.ko 依赖的全部符号
+    # (path_umount / init_mm / __arm64_sys_setns ...)。上游 AOSP 镜像树导出不全,
+    # modpost 会 undefined; 真机 GKI 内核的 KMI 符号表才是完整的。
+    # 因此默认两种设备都编内置 (KSU=y, main 分支用 kprobes): 产物是 AnyKernel3 zip,
+    # 刷入后由管理器接管。需要 LKM 时显式 --ksu-mode m。
+    KSU_MODE=y
+    if [ "$SEL_GKI" = 1 ]; then
+      info "KSU 模式(自动): 内置 (GKI 也默认内置; 上游镜像树 LKM 符号导出不全, 需要 LKM 请加 --ksu-mode m)"
+    fi
   fi
   case "$KSU_MODE" in y|m) ;; *) die "--ksu-mode 只能是 y(内置) 或 m(LKM 模块)" ;; esac
   if [ "$KSU_BRANCH" = builtin ] && [ "$KSU_MODE" = m ]; then
