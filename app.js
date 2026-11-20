@@ -263,15 +263,24 @@ function renderSteps(jobs) {
   tb.innerHTML = '';
   for (const s of steps) {
     const tr = document.createElement('tr');
-    const cls = s.status === 'completed'
-      ? (s.conclusion === 'success' ? 'ok' : 'fail')
-      : s.status === 'in_progress' ? 'run' : 'queued';
-    const txt = s.status === 'completed'
-      ? (s.conclusion === 'success' ? '完成' : `失败(${s.conclusion})`)
-      : s.status === 'in_progress' ? '进行中' : '等待中';
+    // GitHub 步骤状态: completed+success / completed+skipped / completed+failure /
+    // in_progress / queued。skipped 表示前序步骤失败被跳过, 不是本步骤出错。
+    let cls, txt;
+    if (s.status === 'completed') {
+      if (s.conclusion === 'success') { cls = 'ok'; txt = '完成'; }
+      else if (s.conclusion === 'skipped') { cls = 'skip'; txt = '已跳过'; }
+      else { cls = 'fail'; txt = `失败(${s.conclusion})`; }
+    } else if (s.status === 'in_progress') { cls = 'run'; txt = '进行中'; }
+    else { cls = 'queued'; txt = '等待中'; }
     tr.innerHTML = `<td>${esc(s.name)}</td>
       <td><span class="step-status"><span class="dot ${cls}"></span>${esc(txt)}</span></td>
       <td>${esc(duration(s.started_at, s.completed_at))}</td>`;
+    tb.appendChild(tr);
+  }
+  const failed = steps.find((s) => s.status === 'completed' && s.conclusion === 'failure');
+  if (failed) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="3" class="step-note">步骤「${esc(failed.name)}」失败, 其后步骤已自动跳过(非上传/打包本身出错)。</td>`;
     tb.appendChild(tr);
   }
 }

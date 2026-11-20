@@ -64,6 +64,8 @@ table.steps th { color: var(--dim); font-weight: 500; }
 .dot.fail { background: var(--red); }
 .dot.run { background: var(--accent); animation: pulse 1s infinite; }
 .dot.queued { background: var(--yellow); }
+.dot.skip { background: var(--dim); opacity: .55; }
+.step-note { color: var(--dim); font-size: 12.5px; padding-top: 6px; }
 @keyframes pulse { 50% { opacity: .3; } }
 .log-head { display: flex; justify-content: space-between; font-size: 13px; margin: 4px 0 6px; }
 pre.log {
