@@ -233,7 +233,18 @@ sukisu-kernel-builder/
 | 4.9 / 4.4 | ✅ 通过(jasmine/dandelion) | `sched/signal.h`→`sched.h`(4.11 前无拆分头)、KPM 自动关闭(4.14 以下不支持)、`fallthrough` 宏、`MIN/MAX` 头 |
 | 3.18 | ❌ 不支持 | SukiSU-Ultra builtin 最低要求 Linux 4.4+(3.x 会在预检阶段快速失败并给出明确提示);网页上这类版本标注「⚠ 不支持」,只能演练 |
 
-**厂商源码不完整导致的失败(非工具问题)**:小米开源树存在未公开的目录/文件,工具会尽量自动修补(注释缺失的 `source`/`obj-y` 条目、缺失闭源固件 `.i` 只告警不中断),但少数机型仍可能因为厂商驱动缺失而链接失败(例如 dandelion 的 `include/firmware/fw_helitai_v0e.i`、ingres 的 `ufshcd_read_string_desc`)。
+**厂商源码不完整导致的失败(非工具问题)**:小米开源树存在未公开的目录/文件,工具会尽量自动修补(注释缺失的 `source`/`obj-y` 条目、缺失闭源固件 `.i` 自动写占位字节、平台 HAL 目录按 `CONFIG_MTK_PLATFORM` 正确下钻),但少数机型仍可能因为厂商驱动缺失而链接失败。常见类别与代表机型:
+
+| 类别 | 典型报错 | 代表机型 |
+|---|---|---|
+| 平台 HAL/符号未公开 | `undefined reference to 'mt_set_pwm_clk_hal'` 等 MTK 平台 HAL | 个别 MTK 4.14 树 |
+| 私有头文件缺失 | `fatal error: 'hwid.h' file not found` | flourite(6.1.68) |
+| 依赖驱动未启用 | `undefined reference to 'mi_disp_register_client'` | lisa(5.4.86) |
+| 厂商源码自身 bug | `use of undeclared identifier 'curve_prime'`(crypto/ecc.c) | breeze(5.10.198) |
+| 重复符号定义 | `ld.lld: error: duplicate symbol: __SCK__tp_func_*` | erhu/fuxi(5.15) |
+| 老 Makefile 与 GNU make 4.x 不兼容 | `prerequisites cannot be defined in recipes` | dipper(4.9.112) |
+
+这类设备编译失败时,步骤日志末尾的「日志中的错误行(最后 8 条)」会直接给出失败原因;产物上传/发布步骤会被标记为「已跳过」。
 
 ## 九、批量编译(每机型独立脚本 + 一键全量)
 
