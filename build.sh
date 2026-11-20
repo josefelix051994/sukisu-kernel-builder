@@ -1358,8 +1358,30 @@ make_config() {
       if ! "${MK[@]}" "$base_cfg" >>"$LOG_FILE" 2>&1; then
         die_log "$LOG_FILE" "基础配置生成失败: $base_cfg"
       fi
-      if KCONFIG_CONFIG="$OUT_DIR/.config" bash scripts/kconfig/merge_config.sh -m "$OUT_DIR/.config" "arch/arm64/configs/$DEFCONFIG" >>"$LOG_FILE" 2>&1; then
-        ok "片段配置合并完成"
+      # 高通 GKI 系厂商构建会**依次合并多个片段**: <机型>_GKI.config → <机型>_QGKI.config
+      # (调试构建再加 _debug.config)。若只合 QGKI 一个片段, 会漏掉 GKI 片段里的一批 vendor
+      # 驱动/依赖开关, 最终 vmlinux 链接报 undefined reference to qcom_smem_get 等 (run #62 veux)。
+      local -a frag_list=()
+      local ddir dbase stem sib
+      ddir="$(dirname "$DEFCONFIG")"
+      dbase="$(basename "$DEFCONFIG")"
+      case "$dbase" in
+        *_QGKI.config)     stem="${dbase%_QGKI.config}" ;;
+        *_GKI.config)      stem="${dbase%_GKI.config}" ;;
+        *_consolidate.config) stem="${dbase%_consolidate.config}" ;;
+        *_debug.config)    stem="${dbase%_debug.config}" ;;
+        *)                 stem="" ;;
+      esac
+      if [ -n "$stem" ]; then
+        sib="$ddir/${stem}_GKI.config"
+        if [ -f "arch/arm64/configs/$sib" ] && [ "$sib" != "$DEFCONFIG" ]; then
+          frag_list+=("arch/arm64/configs/$sib")
+          info "  追加同机型基础片段: $sib"
+        fi
+      fi
+      frag_list+=("arch/arm64/configs/$DEFCONFIG")
+      if KCONFIG_CONFIG="$OUT_DIR/.config" bash scripts/kconfig/merge_config.sh -m "$OUT_DIR/.config" "${frag_list[@]}" >>"$LOG_FILE" 2>&1; then
+        ok "片段配置合并完成 (${#frag_list[@]} 个片段)"
       else
         warn "merge_config.sh 合并片段失败, 继续使用基础配置: $base_cfg"
       fi
