@@ -599,6 +599,14 @@ compat_fixups() {
   if [ "$blobwarn" -gt 0 ]; then
     warn "以上闭源固件缺失共 $blobwarn 处 (厂商源码不完整)"
   fi
+  # include/linux/input/qpnp-power-on.h 的 #else 分支 (CONFIG_INPUT_QPNP_POWER_ON 未开) 里
+  # qpnp_pon_wd_config 是非 static 定义 → 每个包含该头的 .c 各生成一份 → vmlinux 链接重复定义
+  # (run #56: veux 5.4 的 panic.o 与 arch/arm64/kernel/bootinfo.o)。声明行带分号不受影响, 只改定义行。
+  local qpon=include/linux/input/qpnp-power-on.h
+  if [ -f "$qpon" ] && grep -qE '^int qpnp_pon_wd_config\(bool enable\)[[:space:]]*$' "$qpon"; then
+    info "兼容修复: qpnp-power-on.h 的 qpnp_pon_wd_config 定义加 static (多 TU 重复定义冲突)"
+    sed -i -E 's/^int qpnp_pon_wd_config\(bool enable\)[[:space:]]*$/static int qpnp_pon_wd_config(bool enable)/' "$qpon"
+  fi
 }
 
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
@@ -645,6 +653,52 @@ fix_missing_kconfig_sources() {
   done < <(grep -rlE '^[[:space:]]*source[[:space:]]+"' --include='Kconfig*' . 2>/dev/null)
   rm -f "$list_file" "$missing_file"
   ok "已注释 $cnt 处缺失 Kconfig 引用"
+}
+
+# 厂商私有子树未公开时, 除了 Kconfig 的 source 行, Makefile 里的
+# `obj-y += hwid/` 之类子目录也会导致 "No rule to make target .../hwid/Makefile"
+# (run: ingres 5.10.43)。这里把指向不存在目录的 obj-/subdir- 行注释掉。
+# 只处理 drivers/ 与 arch/arm64/ 下的 Makefile, 含变量的条目跳过。
+fix_missing_makefile_objs() {
+  cd "$KERNEL_DIR"
+  local files f cnt=0
+  files="$(grep -rlE '^[[:space:]]*(obj|subdir)-[A-Za-z0-9_$()]*[[:space:]]*[:+]?=[^#]*/' \
+    --include='Makefile' --include='Makefile.*' drivers arch/arm64 2>/dev/null || true)"
+  [ -n "$files" ] || return 0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    awk -v dir="$(dirname "$f")" '
+      BEGIN { bad = 0 }
+      {
+        line = $0
+        if (line ~ /^[[:space:]]*#/) { print line; next }
+        if (match(line, /^[[:space:]]*(obj|subdir)-[A-Za-z0-9_$()]*[[:space:]]*[:+]?=[[:space:]]*/)) {
+          rhs = substr(line, RLENGTH + 1)
+          if (rhs ~ /[[:space:]]*$/) {
+            n = split(rhs, w, /[[:space:]]+/)
+            hit = 0
+            for (i = 1; i <= n; i++) {
+              p = w[i]
+              if (p == "" || p ~ /^#/) break
+              sub(/\\$/, "", p)
+              if (p !~ /\/$/ || p ~ /\$/) continue
+              if (system("test -d \"" dir "/" p "\"") != 0) hit = 1
+            }
+            if (hit) { print "# " line; bad = 1; next }
+          }
+        }
+        print line
+      }
+      END { exit bad ? 3 : 0 }' "$f" > "$f.dsh.tmp"
+    if [ -s "$f.dsh.tmp" ] && ! cmp -s "$f" "$f.dsh.tmp"; then
+      mv "$f.dsh.tmp" "$f"
+      cnt=$((cnt+1))
+    else
+      rm -f "$f.dsh.tmp"
+    fi
+  done <<< "$files"
+  [ "$cnt" -gt 0 ] && ok "已注释 $cnt 个 Makefile 中指向缺失目录的 obj-/subdir- 条目"
+  return 0
 }
 
 fetch_kernel() {
@@ -1356,6 +1410,10 @@ make_config() {
     if [ "$OPT_KSU_DEBUG" = 1 ]; then
       $SC -e KSU_DEBUG || true
     fi
+    # 厂商树的 BTF 由 tools/bpf/resolve_btfids 生成, 依赖主机 libelf; 老树/厂商树常在此处因
+    # clang -Werror(libbpf const 丢弃) 或缺失 libefl.h 失败。KSU 不需要 BTF → 直接关闭。
+    $SC -d DEBUG_INFO_BTF >/dev/null 2>&1 || true
+    $SC -d DEBUG_INFO_BTF_MODULES >/dev/null 2>&1 || true
   else
     # main: tristate KSU; Kconfig 依赖 KPROBES + EXT4_FS
     if [ "$KSU_MODE" = m ]; then
@@ -1714,6 +1772,7 @@ main() {
   fetch_kernel
   compat_fixups
   fix_missing_kconfig_sources
+  fix_missing_makefile_objs
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
