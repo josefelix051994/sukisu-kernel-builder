@@ -550,12 +550,19 @@ ksu_compat_fixups() {
   # === builtin 分支: 自带 kernel_compat.h 兼容层, 只需 3 处修复 (2026-11 全树扫描结论) ===
   if [ "$KSU_BRANCH" = builtin ]; then
     # B1) kernel_includes.h 无守卫地 include <linux/static_call.h> (5.10+ 才有, 4.19 无此头; 全树仅此一处使用)
+    #     注意: 不能粗暴 grep 整个文件是否含 KERNEL_VERSION(5, 10, 0) —— 该文件其他地方本来就有这句,
+    #     那样会永远判定"已加守卫"而跳过修复 (run #26 踩过)。只检查 include 行的前一行。
     local ki="$kd/kernel_includes.h"
-    if [ -f "$ki" ] && grep -q '#include <linux/static_call.h>' "$ki" \
-       && ! grep -q 'KERNEL_VERSION(5, 10, 0)' "$ki" \
+    if [ -f "$ki" ] && grep -q '^#include <linux/static_call.h>' "$ki" \
        && [ ! -f "$KERNEL_DIR/include/linux/static_call.h" ]; then
-      info "兼容修复(builtin): kernel_includes.h 的 static_call.h include 加 ≥5.10 守卫 (目标内核无此头)"
-      sed -i 's|#include <linux/static_call.h>|#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)\n#include <linux/static_call.h>\n#endif|' "$ki"
+      local guarded=0
+      if awk '/^#include <linux\/static_call.h>/{if (prev ~ /KERNEL_VERSION\(5, 10, 0\)/) g=1} {prev=$0} END{exit !g}' "$ki"; then
+        guarded=1
+      fi
+      if [ "$guarded" = 0 ]; then
+        info "兼容修复(builtin): kernel_includes.h 的 static_call.h include 加 ≥5.10 守卫 (目标内核无此头)"
+        sed -i 's|^#include <linux/static_call.h>|#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)\n#include <linux/static_call.h>\n#endif|' "$ki"
+      fi
     fi
     # B2) app_profile.c 使用 clear_syscall_work(SECCOMP) (5.4+ 的 syscall_work 机制, 4.19 无);
     #     下一行已有 clear_thread_flag(TIF_SECCOMP) (4.19 及更老的等价操作) → 删除该行
