@@ -684,12 +684,11 @@ fix_missing_makefile_objs() {
               if (p !~ /\/$/ || p ~ /\$/) continue
               if (system("test -d \"" dir "/" p "\"") != 0) hit = 1
             }
-            if (hit) { print "# " line; bad = 1; next }
+            if (hit) { print "# " line; next }
           }
         }
         print line
-      }
-      END { exit bad ? 3 : 0 }' "$f" > "$f.dsh.tmp"
+      }' "$f" > "$f.dsh.tmp"
     if [ -s "$f.dsh.tmp" ] && ! cmp -s "$f" "$f.dsh.tmp"; then
       mv "$f.dsh.tmp" "$f"
       cnt=$((cnt+1))
