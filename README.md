@@ -229,7 +229,7 @@ sukisu-kernel-builder/
 | 5.15 / 5.10 | ✅ 通过 | `LLVM=1` 显式 `CROSS_COMPILE=aarch64-linux-gnu-`(否则 clang 按 x86 主机目标编译);预构建 `security/selinux` 生成 `flask.h` |
 | 5.4 | ✅ 通过(veux) | 同上 + 多片段合并(GKI + QGKI),避免 vmlinux 链接 `undefined reference to qcom_smem_get` 等 |
 | 4.19 | ✅ 通过(全类) | `dtc` 的 `yylloc` 重复定义、`KPROBES/EXT4_FS` 依赖、`-Wno-error`(厂商 `subdir-ccflags -Werror` 直接剥离,扫描范围覆盖全树 Makefile/Kbuild + `mm/Makefile`) |
-| 4.14 | ✅ 通过(davinci/begonia/biloba 等) | GCC4.9 binutils 符号链接(`aarch64-linux-gnu-ld` 支持 `-pie -shared` 链接)、`kvcalloc`、vdso 宏前导逗号、`_shipped` dtc 源码补丁、宏形式闭源固件(`#define FTS_UPGRADE_FW_FILE "*.i"` + `#include 宏名`)写占位字节 |
+| 4.14 | ✅ 通过(davinci/begonia/biloba/fleur 等) | GCC4.9 binutils 符号链接(`aarch64-linux-gnu-ld` 支持 `-pie -shared` 链接)、`kvcalloc`、vdso 宏前导逗号、`_shipped` dtc 源码补丁、宏形式闭源固件(`#define FTS_UPGRADE_FW_FILE "*.i"` + `#include 宏名`)写占位字节、`-fno-builtin-memcmp/bcmp`(厂商树删了 bcmp)、`.builtin_fw` 段 `ALIGN(8)`(clang LDST64 重定位截断) |
 | 4.9 / 4.4 | ✅ 通过(jasmine/dandelion) | `sched/signal.h`→`sched.h`(4.11 前无拆分头)、KPM 自动关闭(4.14 以下不支持)、`fallthrough` 宏、`MIN/MAX` 头 |
 | 3.18 | ❌ 不支持 | SukiSU-Ultra builtin 最低要求 Linux 4.4+(3.x 会在预检阶段快速失败并给出明确提示);网页上这类版本标注「⚠ 不支持」,只能演练 |
 
