@@ -1392,6 +1392,18 @@ make_config() {
       done
       $SC -e LTO_NONE >/dev/null 2>&1 || true
       $SC -e DEBUG_INFO_NONE >/dev/null 2>&1 || true
+      # 厂商 QGKI 片段会把大批驱动标成 =m (厂家构建会单独打包模块), 但本工具只产出
+      # Image/zImage 单一镜像, 不含模块包; 若保留 =m, 这些驱动不参与 vmlinux 链接,
+      # 内核里对它们符号的引用就会 undefined reference (run #67 veux: qpnp_pon_*, qcom_smem_get)。
+      # 因此 builtin 非 GKI 时把所有 =m 驱动转成 =y 内置 (业界常见的单镜像做法)。
+      if [ "$KSU_BRANCH" = builtin ] && [ "$SEL_GKI" != 1 ]; then
+        local m2y
+        m2y="$(grep -cE '^CONFIG_[A-Za-z0-9_]+=m$' "$OUT_DIR/.config" 2>/dev/null || true)"
+        if [ "${m2y:-0}" -gt 0 ]; then
+          sed -i -E 's/^(CONFIG_[A-Za-z0-9_]+)=m$/\1=y/' "$OUT_DIR/.config"
+          info "片段配置中有 $m2y 个 =m 驱动, 已转为 =y 内置 (本工具不打包内核模块)"
+        fi
+      fi
       info "已裁剪 LTO/KASAN/DWARF 等调试选项以控制编译时间"
     fi
   elif [[ "$DEFCONFIG" == *defconfig ]]; then
