@@ -580,6 +580,18 @@ compat_fixups() {
   if [ "$mknum" -gt 0 ]; then
     info "兼容修复: 移除 $mknum 个厂商 Makefile 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
   fi
+  # 部分厂商树直接 #include 未公开的闭源固件 (run #48: dandelion 4.9 的 fw_helitai_v0e.i),
+  # 公开源码里没有该文件 → 该驱动编不过; 提前在日志里给出清晰原因 (驱动被配置启用时才会真的编到它)
+  local hit hf hrel blobwarn=0
+  while IFS= read -r hit; do
+    hf="${hit%%:*}"; hrel="${hit#*:}"
+    if [ ! -e "$(dirname "$hf")/$hrel" ]; then
+      warn "厂商源码缺失闭源固件: ${hf#$KERNEL_DIR/} → $hrel —— Xiaomi 未公开该文件, 若该驱动被配置启用将编译失败"
+      blobwarn=$((blobwarn+1))
+    fi
+  done < <(grep -rIn --include='*.c' --include='*.h' -E '#include[[:space:]]+"[^"]+\.i"' drivers 2>/dev/null \
+             | sed -E 's/^([^:]+):[0-9]+:[[:space:]]*#include[[:space:]]+"([^"]+)".*/\1:\2/' || true)
+  [ "$blobwarn" -gt 0 ] && warn "以上闭源固件缺失共 $blobwarn 处 (厂商源码不完整)"
 }
 
 # 小米公开源码树常引用未公开的 vendor 驱动 Kconfig (如 drivers/misc/hwid/Kconfig),
