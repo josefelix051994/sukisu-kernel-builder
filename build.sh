@@ -719,6 +719,11 @@ fix_missing_makefile_objs() {
         if (line ~ /^[[:space:]]*#/) { print line; next }
         if (match(line, /^[[:space:]]*(obj|subdir)-[A-Za-z0-9_$()]*[[:space:]]*[:+]?=[[:space:]]*/)) {
           rhs = substr(line, RLENGTH + 1)
+          # 含 make 变量/函数/引号的行无法按字面路径判断, 整行跳过。
+          # 教训 (ares 等 MTK 4.14): `obj-y += $(subst ",,mt6885)/` 按空格拆成
+          # `$(subst` 与 `",,mt6885)/` 两块, 后者不含 $ 却像目录 → 被误注释 →
+          # 平台 HAL 目录不再编译 → vmlinux 链接缺 mt_*_hal 等符号。
+          if (rhs ~ /[$"()]/) { print line; next }
           if (rhs ~ /[[:space:]]*$/) {
             n = split(rhs, w, /[[:space:]]+/)
             hit = 0
