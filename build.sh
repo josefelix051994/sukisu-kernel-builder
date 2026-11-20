@@ -86,6 +86,12 @@ die()  { echo -e "\033[1;31m[错误]\033[0m $*" >&2; exit 1; }
 die_log() {
   local f="$1"; shift
   if [ -f "$f" ]; then
+    # 先单独摘出错误行, 避免错误被淹没在 60 行编译进度里
+    if grep -nE 'error:|fatal error|Error [0-9]|undefined reference|cannot be defined|No space left|prerequisites|internal compiler error' "$f" >/dev/null 2>&1; then
+      echo -e "\033[1;33m[警告]\033[0m 日志中的错误行 (最后 8 条):" >&2
+      grep -nE 'error:|fatal error|Error [0-9]|undefined reference|cannot be defined|No space left|prerequisites|internal compiler error' "$f" \
+        | tail -n 8 | cut -c1-300 >&2 || true
+    fi
     echo -e "\033[1;33m[警告]\033[0m 日志末尾 ($f, 最后 60 行):" >&2
     tail -n 60 "$f" >&2 || true
   fi
@@ -585,19 +591,44 @@ compat_fixups() {
   if [ "$mknum" -gt 0 ]; then
     info "兼容修复: 移除 $mknum 个厂商 Makefile 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
   fi
-  # 部分厂商树直接 #include 未公开的闭源固件 (run #48: dandelion 4.9 的 fw_helitai_v0e.i),
-  # 公开源码里没有该文件 → 该驱动编不过; 提前在日志里给出清晰原因 (驱动被配置启用时才会真的编到它)
-  local hit hf hrel blobwarn=0
+  # 部分厂商树直接 #include 未公开的闭源固件数组 (*.i, 如 focaltech 触摸的 fw_sample.i、
+  # himax 的 HX83100_Firmware_Version_*.i、dandelion 的 fw_helitai_v0e.i), 公开源码里没有该
+  # 文件 → fatal error: 'xxx.i' file not found, 整台设备编译失败 (批跑: 4.14.186 十台全挂在这)。
+  # 这类 .i 只被当作 `u8 fw_file[] = { #include "x.i" };` 的字节初始化表用, 编译期内容多为
+  # "失效样本"(厂商注释原话 the sample one is invalid), 运行时由 request_firmware 加载真实固件
+  # → 写入占位字节即可让驱动编译通过。
+  local hit hf hp blobn=0
   while IFS= read -r hit; do
     hf="${hit%%:*}"; hrel="${hit#*:}"
-    if [ ! -e "$(dirname "$hf")/$hrel" ]; then
-      warn "厂商源码缺失闭源固件: ${hf#$KERNEL_DIR/} → $hrel —— Xiaomi 未公开该文件, 若该驱动被配置启用将编译失败"
-      blobwarn=$((blobwarn+1))
+    hp="$(dirname "$hf")/$hrel"
+    if [ ! -e "$hp" ] && [ ! -e "$hrel" ]; then
+      mkdir -p "$(dirname "$hp")"
+      printf '0x00, 0x00, 0x00, 0x00\n' > "$hp"
+      warn "厂商源码缺失闭源固件: ${hf#$KERNEL_DIR/} → $hrel —— 已写入占位字节 (仅用于编译通过, 运行时由 firmware 加载真实固件)"
+      blobn=$((blobn+1))
     fi
   done < <(grep -rIn --include='*.c' --include='*.h' -E '#include[[:space:]]+"[^"]+\.i"' drivers 2>/dev/null \
              | sed -E 's/^([^:]+):[0-9]+:[[:space:]]*#include[[:space:]]+"([^"]+)".*/\1:\2/' || true)
-  if [ "$blobwarn" -gt 0 ]; then
-    warn "以上闭源固件缺失共 $blobwarn 处 (厂商源码不完整)"
+  if [ "$blobn" -gt 0 ]; then
+    warn "以上闭源固件缺失共 $blobn 处, 已用占位字节兜底 (厂商源码不完整)"
+  fi
+  # focaltech_spi 触摸驱动把 FTS_UPGRADE_FW_FILE 指向 include/firmware/fw_sample.i,
+  # 而 Xiaomi 从未公开该样本 (focaltech_config.h 注释: "the sample one to be replaced is invalid"),
+  # 厂商构建时用自家固件替换; 公开树直接编会 fatal error: 'include/firmware/fw_sample.i' not found
+  # (批跑: ares 等 4.14.186 十台设备全挂在这)。FTS_FW_REQUEST_SUPPORT=1 时运行时会从
+  # firmware 目录加载真实固件, 编译期内嵌样本只是兜底 → 写入占位字节让驱动能编译。
+  local fcfg=drivers/input/touchscreen/focaltech_spi/focaltech_config.h
+  if [ -f "$fcfg" ]; then
+    local fw
+    while IFS= read -r fw; do
+      [ -n "$fw" ] || continue
+      if [ ! -e "$fw" ]; then
+        mkdir -p "$(dirname "$fw")"
+        printf '0x00, 0x00, 0x00, 0x00\n' > "$fw"
+        warn "厂商源码缺失闭源固件样本: $fw -> 已写入占位字节 (驱动可编译, 运行时由 firmware 加载真实固件)"
+      fi
+    done < <(grep -E '^#define[[:space:]]+FTS_UPGRADE_FW[0-9]*_FILE[[:space:]]+"[^"]+"' "$fcfg" \
+               | sed -E 's/.*"([^"]+)".*/\1/' | sort -u 2>/dev/null || true)
   fi
   # include/linux/input/qpnp-power-on.h 的 #else 分支 (CONFIG_INPUT_QPNP_POWER_ON 未开) 里
   # qpnp_pon_wd_config 是非 static 定义 → 每个包含该头的 .c 各生成一份 → vmlinux 链接重复定义
@@ -871,6 +902,22 @@ KSUEOF
         sed -i 's|#include <linux/sched/signal.h>|#include <linux/sched.h>|; s|#include <linux/sched/task.h>|#include <linux/sched.h>|' "$sf"
       done < <(find -L "$kd" -type f \( -name '*.c' -o -name '*.h' \) -exec grep -lE '#include <linux/sched/(signal|task)\.h>' {} + 2>/dev/null || true)
       info "兼容修复(builtin): <4.11 内核的 linux/sched/signal.h、sched/task.h 改回 linux/sched.h"
+    fi
+    # B8) DECLARE_STATIC_KEY_FALSE / static_branch_enable 是 4.5+ 的 API, 4.4 上只有
+    # static_key_false; 而 kernel_compat.h 里 KSU_COMPAT_USE_STATIC_KEY 是按版本
+    # (>=4.3) 判定的 → 4.4 树选用了静态键分支, 编译报 "type defaults to 'int' in
+    # declaration of DECLARE_STATIC_KEY_FALSE" (run #63: jasmine 4.4.153)。
+    # 以目标内核 jump_label.h 是否真的提供该宏为准, 缺则 undef, 让代码走 bool 开关回退路径。
+    if [ -f "$comp" ] && ! grep -q 'DECLARE_STATIC_KEY_FALSE' "$KERNEL_DIR/include/linux/jump_label.h" 2>/dev/null \
+       && ! grep -q 'dsh: static key fallback' "$comp"; then
+      info "兼容修复(builtin): 目标内核无 DECLARE_STATIC_KEY_FALSE → 关闭 KSU 静态键分支 (走 bool 开关)"
+      cat >> "$comp" <<'KSUEOF'
+
+/* dsh: static key fallback */
+#if !defined(DECLARE_STATIC_KEY_FALSE)
+#undef KSU_COMPAT_USE_STATIC_KEY
+#endif /* dsh static key fallback */
+KSUEOF
     fi
     return 0
   fi
@@ -1415,6 +1462,12 @@ make_config() {
     $SC -e SECURITY || true
     $SC -e SECURITY_NETWORK || true
     $SC -e SECURITY_SELINUX || true
+    # security/selinux/Kconfig: select AUDIT, depends on SECURITY_NETWORK && AUDIT && NET && INET
+    # 只开 SELINUX 而缺 AUDIT/NET 时, olddefconfig 会把它依赖不满足地关掉 → flask.h 不生成
+    # (run #63 批跑: daumier 5.10.81 报 "CONFIG_SECURITY_SELINUX 未生效!")
+    $SC -e AUDIT || true
+    $SC -e NET || true
+    $SC -e INET || true
     if [ "$OPT_SUSFS" = 1 ]; then
       $SC -e KSU_SUSFS || true
       warn "已启用 KSU_SUSFS: 要求目标内核已集成 susfs4ksu 补丁 (fs/susfs.c), 否则编译/链接将失败"
