@@ -205,11 +205,11 @@ sanitize_name() {
           -e 's/__*/_/g' -e 's/^_//' -e 's/_$//'
 }
 
-# 解析 SukiSU 版本 (best-effort): git describe > 短提交 > unknown
-# setup.sh 的浅克隆常常没有 tag (describe 只回落到提交号), 此时补拉一次 tag 再描述,
-# 让产物名/发布说明里带上语义版本, 例如 v3.0.0_4bec532
+# 解析 SukiSU 版本 (best-effort): git describe > 远端 tag 列表 + 短提交 > 短提交 > unknown
+# setup.sh 的浅克隆 (--depth 1) 没有 tag 历史, describe 只会回落到提交号;
+# 这里用 ls-remote 取最新语义 tag 再拼上短提交, 例如 v3.0.0_4bec532
 resolve_ksu_version() {
-  local d="$KERNEL_DIR/KernelSU" v="" v2=""
+  local d="$KERNEL_DIR/KernelSU" v="" v2="" short="" lt=""
   if [ -d "$d/.git" ]; then
     v="$(git -C "$d" describe --tags --always 2>/dev/null || true)"
     case "$v" in
@@ -223,6 +223,17 @@ resolve_ksu_version() {
       *-g[0-9a-f]*-g*) : ;;
       *-g[0-9a-f]*)                 # v3.0.0-12-g4bec532 => v3.0.0_4bec532
          v="$(printf '%s' "$v" | sed -E 's/-[0-9]+-g([0-9a-f]+)$/_\1/')" ;;
+    esac
+    case "$v" in
+      ""|*[!0-9a-f]*) : ;;          # 空 或 真的带了 tag 名/版本号, 直接用
+      *)                            # 纯提交号: 取远端最新语义 tag 拼短提交
+         short="$v"
+         lt="$(git -C "$d" ls-remote --tags origin 2>/dev/null |
+               awk -F/ '{print $NF}' | grep -v '\^{}' |
+               grep -E '^v?[0-9]+\.[0-9]+' | sort -V | tail -1 || true)"
+         if [ -n "$lt" ]; then
+           v="${lt}_${short}"
+         fi ;;
     esac
     [ -n "$v" ] || v="$(git -C "$d" rev-parse --short HEAD 2>/dev/null || true)"
   fi
