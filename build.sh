@@ -599,6 +599,26 @@ compat_fixups() {
     info "兼容修复: 顶层 Makefile 的 KBUILD_CFLAGS -Werror 降级为 -Wno-error (厂商追加, 会让 clang 专属告警升格成错误)"
     sed -i -E '/^[[:space:]]*KBUILD_(CFLAGS|AFLAGS)/{ s/-Werror=/-Wno-error=/g; s/-Werror([[:space:]]|$)/-Wno-error\1/g }' "$topmk"
   fi
+  # __start_builtin_fw 若未 8 字节对齐, clang 生成的 adrp+ldr 会触发
+  # "relocation truncated to fit: R_AARCH64_LDST64_ABS_LO12_NC against __start_builtin_fw"
+  # (biloba/camellian 4.14.186 实测, firmware_class.c:58)。在 .builtin_fw 里插入 ALIGN(8)。
+  local vl=include/asm-generic/vmlinux.lds.h
+  if [ -f "$vl" ] && grep -q 'VMLINUX_SYMBOL(__start_builtin_fw)' "$vl" \
+     && ! grep -q 'suki-builder: align builtin_fw' "$vl"; then
+    if awk '
+      /VMLINUX_SYMBOL\(__start_builtin_fw\)/ && !done {
+        if (prev !~ /ALIGN\(8\)/) {
+          print "\t\t. = ALIGN(8); /* suki-builder: align builtin_fw */\t\\"
+          done = 1
+        }
+      }
+      { print; prev = $0 }
+    ' "$vl" > "$vl.tmp_bfw" 2>/dev/null && mv "$vl.tmp_bfw" "$vl"; then
+      info "兼容修复: vmlinux.lds.h 的 __start_builtin_fw 前加 ALIGN(8) (clang LDST64 重定位截断)"
+    else
+      rm -f "$vl.tmp_bfw"
+    fi
+  fi
   # 兜底: 在顶层 Makefile 末尾追加 -Wno-error。部分厂商树把 -Werror 藏在 include/其它 Makefile
   # 或 cc-option 里 (begonia-q 4.14: mm/rmap.c 的 -Wvoid-pointer-to-enum-cast 仍被 -Werror 升格),
   # 追加到文件末尾可确保位于所有 KBUILD_CFLAGS += 之后, 后出现的 -Wno-error 覆盖 -Werror。
@@ -1400,7 +1420,9 @@ toolchain_make_args() {
   # (tty_io.c 的 tty_line_name 即中招: undefined reference to `stpcpy' — run #16), 禁用该内置优化
   local kc=""
   if [ -n "$kmaj" ] && { [ "$kmaj" -lt 5 ] || { [ "$kmaj" -eq 5 ] && [ "$kmin" -lt 10 ]; }; }; then
-    kc="-fno-builtin-sprintf -fno-builtin-stpcpy"
+    # -fno-builtin-memcmp/-bcmp: 部分厂商老树删掉了 lib/string.c 的 bcmp, 而 clang 会把
+    # memcmp(a,b,n)==0 优化成 bcmp 调用 (begonia 4.14.94: undefined reference to `bcmp')
+    kc="-fno-builtin-sprintf -fno-builtin-stpcpy -fno-builtin-memcmp -fno-builtin-bcmp"
   fi
   # 4.19 等老树的 KBUILD_CFLAGS 自带 -Werror=strict-prototypes; clang 对"无原型的老式函数定义"
   # (如 drivers/gpu/drm/mediatek/mtk_dsi.c) 也报该警告并升格为错误, 而 gcc 不报 →
