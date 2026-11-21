@@ -1953,7 +1953,7 @@ make_config() {
   fi
   # gold-s-oss 已知 crypto/ecdsasignature.asn1.h 规则损坏;按设备 ID 兜底关闭 ECDSA。
   # 其它树仅在 Makefile 明确没有 %.asn1.h 规则时关闭，避免误伤正常内核。
-  if [ "$SEL_DEVICE_ID" = gold ] || { [ -f crypto/Makefile ] && ! grep -qE '(^|[[:space:]])[^#]*%\.asn1\.h[[:space:]]*:' crypto/Makefile; }; then
+  if [ "$SEL_DEVICE_ID" = gold ] || { [ -f crypto/Makefile ] && ! grep -qE 'asn1_compiler|%\.asn1\.h' crypto/Makefile; }; then
     $SC -d CRYPTO_ECDSA >/dev/null 2>&1 || true
     info "兼容设置: crypto/Makefile 的 ECDSA ASN.1 头规则不可用, 关闭 CONFIG_CRYPTO_ECDSA"
   fi
