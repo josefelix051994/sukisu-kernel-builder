@@ -2331,9 +2331,9 @@ main() {
   fetch_kernel
   compat_fixups
   fix_missing_kconfig_sources
-  fix_missing_makefile_objs
-  fix_vendor_api_compat
-  fix_mtk_disp_arr_stub
+  fix_missing_makefile_objs || warn "缺失 Makefile 条目修复出现非致命错误, 继续构建"
+  fix_vendor_api_compat || warn "vendor API 兼容修复出现非致命错误, 继续构建"
+  fix_mtk_disp_arr_stub || warn "MTK 显示桩修复出现非致命错误, 继续构建"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
