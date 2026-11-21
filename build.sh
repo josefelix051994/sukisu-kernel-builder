@@ -1089,8 +1089,9 @@ fix_vendor_api_compat() {
   # 清理兼容层旧头；对厂商自带 governor 头加一次性保护，避免重复包含导致函数重定义。
   rm -f include/linux/devfreq/governor.h 2>/dev/null || true
   for _gov in $(find -L drivers -type f -path '*/devfreq/governor.h' -print 2>/dev/null); do
-    if ! grep -q 'suki-builder: pragma-once' "$_gov"; then
-      sed -i '1i/* suki-builder: pragma-once */\n#pragma once' "$_gov" || true
+    # 该厂商头与 include/linux/devfreq/governor.h 同名但内容不同；UFS 只需兼容结构，禁用其重复实现。
+    if grep -q 'devfreq_update_stats' "$_gov"; then
+      sed -i '/^[[:space:]]*static[[:space:]]\+int[[:space:]]\+devfreq_update_stats[[:space:]]*(/,/^[[:space:]]*}/d' "$_gov" || true
     fi
   done
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
