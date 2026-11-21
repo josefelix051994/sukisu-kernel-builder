@@ -130,13 +130,17 @@ alioth|Android 11 · Linux 4.19|Redmi K40 / POCO F3|https://github.com/MiCode/Xi
 - `GKI标志`:`1` = GKI 通用内核(默认内置模式),`0` = 非 GKI(默认内置模式)
 - `defconfig提示` 可留空(自动按设备 ID 探测),支持 glob(如 `vendor/kona*`)
 - **片段配置**(`vendor/*_consolidate.config`、`*_GKI.config` 等不足 200 行的文件):工具会自动以 `gki_defconfig` 为基础合并片段,并裁掉 FULL LTO / KASAN / DWARF 等调试选项(否则 2 核 runner 极易超时)
-- **中文型号**:网页设备下拉显示的是中文名,来自 `tools/device_zh.tsv`(每行 `<机型代码>\t<中文型号>`,如 `alioth	红米K40 / POCO F3 / 小米10S`)。数据由 `node tools/gen_device_zh.js` 从 MiCode README 的机型表自动解析并翻译生成(覆盖全部 146 台);想改某个机型的显示名,直接编辑这个 TSV 或脚本里的 `OVERRIDE` 再重跑生成器与 `gen_devices.sh` 即可。英文名保留在选项的悬停提示里。
-- 改完 `devices.conf` 后请重新生成两份派生文件:
+- **中文型号**:网页设备下拉按**中文型号**排序显示,数据在 `tools/device_zh.tsv`(每行 `<机型代码>\t<中文型号>`,多地区同款用 ` / ` 分隔,如 `alioth	红米K40 / 小米11X / POCO F3`)。生成链:`tools/data/mi_devices.yml`(MIUI 机型表,含各地区的 codename→营销名)→ `node tools/gen_device_zh.js`(去地区后缀、翻译成中文、每台最多 3 个名字、中文名在前)→ `tools/device_zh.tsv`。想改某台的显示名,改脚本里的 `OVERRIDE` 或直接改 TSV,然后重跑生成器即可。
+- 改完 `devices.conf` 后请重新生成派生文件:
 
 ```bash
-bash gen_devices.sh > devices.json      # 网页用的设备清单
-bash tools/gen_build_scripts.sh         # 每机型每版本的独立编译脚本(builds/)
+bash gen_devices.sh > devices.json    # 网页用的设备清单(必须用 bash 重定向)
+node tools/normalize_devices.js        # 按中文名排序 + 中文名在前(展示层整理)
+node tools/gen_device_zh.js            # 如有机型改名/新增, 重生成中文映射后再跑上面两条
+bash tools/gen_build_scripts.sh        # 每机型每版本的独立编译脚本(builds/)
 ```
+
+> 网页第 2 步的设备下拉上方有搜索框,输入中文型号或机型代码(如 `K40`、`alioth`)即可过滤。
 
 > ⚠️ Windows 用户注意:`devices.json` 必须用 **bash 自己的重定向** 生成。PowerShell 的 `>` 会把文件写成 UTF-16LE(带 BOM),浏览器和 CI 都无法解析。在 PowerShell 里请这样调用:
 > `& 'C:\Program Files\Git\bin\bash.exe' -c 'bash gen_devices.sh > devices.json'`

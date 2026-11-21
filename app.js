@@ -142,17 +142,44 @@ function saveToken() {
 }
 
 /* ---------- 设备/版本 ---------- */
-function renderDevices() {
+function deviceLabel(d) {
+  const en = d.brand && d.model ? `${d.brand} ${d.model}` : d.display;
+  // 优先显示中文型号, 括号内是机型代码; 英文名放进 title 供悬停查看
+  return {
+    text: d.zh ? `${d.zh} (${d.id})` : `${en} (${d.id})`,
+    title: d.zh ? `${d.id} · ${en}` : `${d.id}`,
+  };
+}
+
+// 按搜索词重建设备下拉(顺序沿用 devices.json 里的中文名排序)
+function fillDeviceOptions(keyword) {
   const sel = $('device');
+  const keep = sel.value;
+  const kw = (keyword || '').trim().toLowerCase();
+  const list = state.devices.filter((d) => {
+    if (!kw) return true;
+    const hay = [d.zh, d.id, d.display, d.brand, d.model].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(kw);
+  });
   sel.innerHTML = '';
-  for (const d of state.devices) {
+  for (const d of list) {
+    const { text, title } = deviceLabel(d);
     const o = document.createElement('option');
     o.value = d.id;
-    const en = d.brand && d.model ? `${d.brand} ${d.model}` : d.display;
-    // 优先显示中文型号, 括号内是机型代码; 英文名放进 title 供悬停查看
-    o.textContent = d.zh ? `${d.zh} (${d.id})` : `${en} (${d.id})`;
-    o.title = d.zh ? `${d.id} · ${en}` : `${d.id}`;
+    o.textContent = text;
+    o.title = title;
     sel.appendChild(o);
+  }
+  if (keep && list.some((d) => d.id === keep)) sel.value = keep;
+  else if (list.length) sel.value = list[0].id;
+  renderVersions();
+}
+
+function renderDevices() {
+  fillDeviceOptions('');
+  const filter = $('device-filter');
+  if (filter) {
+    filter.addEventListener('input', (e) => fillDeviceOptions(e.target.value));
   }
   renderVersions();
 }

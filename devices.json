@@ -1,359 +1,68 @@
 {
   "devices": [
     {
-      "id": "alioth",
-      "display": "Redmi K40 / POCO F3",
-      "brand": "Redmi",
-      "model": "K40 / POCO F3",
-      "zh": "红米K40 / POCO F3 / 小米10S",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "alioth-r-oss", "kver": "4.19", "android": "11", "gki": 0, "defconfig": "vendor/alioth_user_defconfig"}
-      ]
-    },
-    {
-      "id": "raphael",
-      "display": "Redmi K20 Pro / Mi 9T Pro",
-      "brand": "Redmi",
-      "model": "K20 Pro / Mi 9T Pro",
-      "zh": "红米K20 Pro / 小米9T Pro",
-      "versions": [
-          {"label": "Android 9 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "raphael-p-oss", "kver": "4.14", "android": "9", "gki": 0, "defconfig": "vendor/raphael_user_defconfig"}
-      ]
-    },
-    {
-      "id": "davinci",
-      "display": "Redmi K20 / Mi 9T",
-      "brand": "Redmi",
-      "model": "K20 / Mi 9T",
-      "zh": "红米K20 / 小米9T",
-      "versions": [
-          {"label": "Android 9 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "davinci-p-oss", "kver": "4.14", "android": "9", "gki": 0, "defconfig": "vendor/davinci_user_defconfig"}
-      ]
-    },
-    {
-      "id": "lmi",
-      "display": "Redmi K30 Pro / POCO F2 Pro",
-      "brand": "Redmi",
-      "model": "K30 Pro / POCO F2 Pro",
-      "zh": "红米K30 Pro / POCO F2 Pro",
-      "versions": [
-          {"label": "Android 10 · Linux 4.19", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lmi-q-oss", "kver": "4.19", "android": "10", "gki": 0, "defconfig": "vendor/lmi_user_defconfig"}
-      ]
-    },
-    {
-      "id": "umi",
-      "display": "Mi 10 / Mi 10 Pro",
-      "brand": "Xiaomi",
-      "model": "10 / Mi 10 Pro",
-      "zh": "小米10 / 小米10 Pro",
-      "versions": [
-          {"label": "Android 10 · Linux 4.19", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "umi-q-oss", "kver": "4.19", "android": "10", "gki": 0, "defconfig": "vendor/umi_user_defconfig"}
-      ]
-    },
-    {
-      "id": "sweet",
-      "display": "Redmi Note 10 Pro",
-      "brand": "Redmi",
-      "model": "Note 10 Pro",
-      "zh": "红米Note 10 Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sweet-r-oss", "kver": "4.14", "android": "11", "gki": 0, "defconfig": "vendor/sweet_user_defconfig"}
-      ]
-    },
-    {
-      "id": "ginkgo",
-      "display": "Redmi Note 8 / 8T",
-      "brand": "Redmi",
-      "model": "Note 8 / 8T",
-      "zh": "红米Note 8 / 红米Note 8T",
-      "versions": [
-          {"label": "Android 10 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ginkgo-q-oss", "kver": "4.14", "android": "10", "gki": 0, "defconfig": "vendor/ginkgo-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.14.98", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ginkgo-p-oss", "kver": "4.14.98", "android": "9", "gki": 0, "defconfig": "vendor/ginkgo-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "surya",
-      "display": "POCO X3 NFC",
-      "brand": "POCO",
-      "model": "X3 NFC",
-      "zh": "POCO X3 NFC",
-      "versions": [
-          {"label": "Android 10 · Linux 4.14", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "surya-q-oss", "kver": "4.14", "android": "10", "gki": 0, "defconfig": "vendor/sdmsteppe-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "haydn",
-      "display": "Redmi K40 Pro / K40 Pro+",
-      "brand": "Redmi",
-      "model": "K40 Pro / K40 Pro+",
-      "zh": "红米K40 Pro / 红米K40 Pro+",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "haydn-r-oss", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/haydn_QGKI.config"}
-      ]
-    },
-    {
-      "id": "venus",
-      "display": "Mi 11",
-      "brand": "Xiaomi",
-      "model": "11",
-      "zh": "小米11",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "venus-r-oss", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/venus_QGKI.config"}
-      ]
-    },
-    {
-      "id": "veux",
-      "display": "Redmi Note 11 Pro 5G / POCO X4 Pro 5G",
-      "brand": "Redmi",
-      "model": "Note 11 Pro 5G / POCO X4 Pro 5G",
-      "zh": "红米Note 11 Pro 5G / POCO X4 Pro 5G",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "veux-r-oss", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/veux_QGKI.config"}
-      ]
-    },
-    {
-      "id": "agate",
-      "display": "agate",
+      "id": "sakura",
+      "display": "sakura",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米11T",
+      "zh": "红米6 Pro",
       "versions": [
-          {"label": "Android 14 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "agate-u-oss", "kver": "4.19.191", "android": "14", "gki": 0, "defconfig": "agate_defconfig"}
+        {
+          "label": "Android 9 · Linux 3.18.120",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sakura-p-oss",
+          "kver": "3.18.120",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "sakura-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        }
       ]
     },
     {
-      "id": "annibale",
-      "display": "annibale",
+      "id": "olive",
+      "display": "olive",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米K90 / POCO F8 Pro",
+      "zh": "红米8",
       "versions": [
-          {"label": "Android 16 · Linux 6.6.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "annibale-w-oss", "kver": "6.6.57", "android": "16", "gki": 0, "defconfig": "vendor/annibale_consolidate.config"}
+        {
+          "label": "Android 10 · Linux 4.9.193",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "olive-q-oss",
+          "kver": "4.9.193",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "olive-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.9.112",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "olive-p-oss",
+          "kver": "4.9.112",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "olive-perf_defconfig"
+        }
       ]
     },
     {
-      "id": "apollo",
-      "display": "apollo",
+      "id": "lancelot",
+      "display": "lancelot",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米K30S Ultra",
+      "zh": "红米9 / 红米9 Prime",
       "versions": [
-          {"label": "Android 10 · Linux 4.19.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "apollo-q-oss", "kver": "4.19.81", "android": "10", "gki": 0, "defconfig": "vendor/apollo_user_defconfig"}
-      ]
-    },
-    {
-      "id": "ares",
-      "display": "ares",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K40 电竞版",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ares-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "ares_user_defconfig"}
-      ]
-    },
-    {
-      "id": "aurora",
-      "display": "aurora",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米14 Ultra",
-      "versions": [
-          {"label": "Android 14 · Linux 6.1.25", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "aurora-u-oss", "kver": "6.1.25", "android": "14", "gki": 0, "defconfig": "vendor/aurora_consolidate.config"}
-      ]
-    },
-    {
-      "id": "begonia",
-      "display": "begonia",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 8 Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "begonia-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "begonia_user_defconfig"},
-          {"label": "Android 10 · Linux 4.14.141", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "begonia-q-oss", "kver": "4.14.141", "android": "10", "gki": 0, "defconfig": "begonia_user_defconfig"},
-          {"label": "Android 9 · Linux 4.14.94", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "begonia-p-oss", "kver": "4.14.94", "android": "9", "gki": 0, "defconfig": "begonia_user_defconfig"}
-      ]
-    },
-    {
-      "id": "biloba",
-      "display": "biloba",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 8",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "biloba-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "biloba_defconfig"}
-      ]
-    },
-    {
-      "id": "bixi",
-      "display": "bixi",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米小米MIX Flip 2",
-      "versions": [
-          {"label": "Android 15 · Linux 6.6.56", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "bixi-v-oss", "kver": "6.6.56", "android": "15", "gki": 0, "defconfig": "vendor/bixi_consolidate.config"}
-      ]
-    },
-    {
-      "id": "blue",
-      "display": "blue",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "POCO C61 / 红米A3",
-      "versions": [
-          {"label": "Android 14 · Linux 5.10.177", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "blue-u-oss", "kver": "5.10.177", "android": "14", "gki": 0, "defconfig": "blue_defconfig"}
-      ]
-    },
-    {
-      "id": "bomb",
-      "display": "bomb",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米10X / 红米10X Pro",
-      "versions": [
-          {"label": "Android 10 · Linux 4.14.141", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "bomb-q-oss", "kver": "4.14.141", "android": "10", "gki": 0, "defconfig": "bomb_user_defconfig"}
-      ]
-    },
-    {
-      "id": "breeze",
-      "display": "breeze",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 13R",
-      "versions": [
-          {"label": "Android 14 · Linux 5.10.198", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "breeze-u-oss", "kver": "5.10.198", "android": "14", "gki": 0, "defconfig": "vendor/breeze_consolidate.config"}
-      ]
-    },
-    {
-      "id": "camellia",
-      "display": "camellia",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 10",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "camellia-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "camellia_defconfig"}
-      ]
-    },
-    {
-      "id": "camellian",
-      "display": "camellian",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "POCO M3 Pro 5G / 红米Note 10 5G / 红米Note 10T",
-      "versions": [
-          {"label": "Android 13 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "camellian-t-oss", "kver": "4.14.186", "android": "13", "gki": 0, "defconfig": "camellian_defconfig"}
-      ]
-    },
-    {
-      "id": "cannon",
-      "display": "cannon",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 9",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "cannon-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "cannon_user_defconfig"},
-          {"label": "Android 10 · Linux 4.14.141", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "cannon-q-oss", "kver": "4.14.141", "android": "10", "gki": 0, "defconfig": "cannon_user_defconfig"}
-      ]
-    },
-    {
-      "id": "cas",
-      "display": "cas",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米10 Ultra / 小米10 Pro / 小米10 / 红米K30 Pro",
-      "versions": [
-          {"label": "Android 10 · Linux 4.19.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "cas-q-oss", "kver": "4.19.81", "android": "10", "gki": 0, "defconfig": "vendor/cas_user_defconfig"}
-      ]
-    },
-    {
-      "id": "cezanne",
-      "display": "cezanne",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K30 Ultra",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "cezanne-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "cezanne_user_defconfig"},
-          {"label": "Android 10 · Linux 4.14.141", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "cezanne-q-oss", "kver": "4.14.141", "android": "10", "gki": 0, "defconfig": "cezanne_user_defconfig"}
-      ]
-    },
-    {
-      "id": "chenfeng",
-      "display": "chenfeng",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Civi 4 pro",
-      "versions": [
-          {"label": "Android 14 · Linux 6.1.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "chenfeng-u-oss", "kver": "6.1.57", "android": "14", "gki": 0, "defconfig": "vendor/chenfeng_consolidate.config"}
-      ]
-    },
-    {
-      "id": "chopin",
-      "display": "chopin",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 10 Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "chopin-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "chopin_user_defconfig"}
-      ]
-    },
-    {
-      "id": "cmi",
-      "display": "cmi",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K30S Ultra / 小米10 Ultra / 小米10 Pro / 红米K30 Pro / 小米10",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19.113", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "cmi-r-oss", "kver": "4.19.113", "android": "11", "gki": 0, "defconfig": "vendor/cmi_user_defconfig"}
-      ]
-    },
-    {
-      "id": "courbet",
-      "display": "courbet",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米11 Lite",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.180", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "courbet-r-oss", "kver": "4.14.180", "android": "11", "gki": 0, "defconfig": "vendor/courbet_user_defconfig"}
-      ]
-    },
-    {
-      "id": "creek",
-      "display": "creek",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "POCO M7 / 红米15",
-      "versions": [
-          {"label": "Android 15 · Linux 5.15.167", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "creek-v-oss", "kver": "5.15.167", "android": "15", "gki": 0, "defconfig": "vendor/creek_consolidate.config"}
-      ]
-    },
-    {
-      "id": "dada",
-      "display": "dada",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米15 / 小米15 Pro",
-      "versions": [
-          {"label": "Android 15 · Linux 6.6.30", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "dada-v-oss", "kver": "6.6.30", "android": "15", "gki": 0, "defconfig": "vendor/dada_consolidate.config"}
-      ]
-    },
-    {
-      "id": "dagu",
-      "display": "dagu",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 5 pro 12.4",
-      "versions": [
-          {"label": "Android 12 · Linux 4.19.157", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "dagu-s-oss", "kver": "4.19.157", "android": "12", "gki": 0, "defconfig": "vendor/dagu_user_defconfig"}
-      ]
-    },
-    {
-      "id": "daisy",
-      "display": "daisy",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米A2 Lite / 红米6pro",
-      "versions": [
-          {"label": "Android 10 · Linux 3.18.124", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "daisy-q-oss", "kver": "3.18.124", "android": "10", "gki": 0, "defconfig": "daisy-perf_defconfig", "unsupported": true, "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"},
-          {"label": "Android 9 · Linux 3.18.120", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "daisy-p-oss", "kver": "3.18.120", "android": "9", "gki": 0, "defconfig": "daisy-perf_defconfig", "unsupported": true, "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"}
+        {
+          "label": "Android 10 · Linux 4.14.141",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "lancelot-q-oss",
+          "kver": "4.14.141",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "lancelot_defconfig"
+        }
       ]
     },
     {
@@ -361,80 +70,71 @@
       "display": "dandelion",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米9C / POCO C3 / 红米9A",
+      "zh": "红米9A / 9i / 9A Sport",
       "versions": [
-          {"label": "Android 10 · Linux 4.9.190", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "dandelion-q-oss", "kver": "4.9.190", "android": "10", "gki": 0, "defconfig": "dandelion_defconfig"}
+        {
+          "label": "Android 10 · Linux 4.9.190",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "dandelion-q-oss",
+          "kver": "4.9.190",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "dandelion_defconfig"
+        }
       ]
     },
     {
-      "id": "darwin",
-      "display": "darwin",
+      "id": "selene",
+      "display": "selene",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "POCO X8s",
+      "zh": "红米10 / 红米10 2022 / 红米10 Prime",
       "versions": [
-          {"label": "Android 16 · Linux 6.6.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "darwin-w-oss", "kver": "6.6.57", "android": "16", "gki": 0, "defconfig": "vendor/darwin_consolidate.config"}
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "selene-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "selene_defconfig"
+        }
       ]
     },
     {
-      "id": "daumier",
-      "display": "daumier",
+      "id": "merlin",
+      "display": "merlin",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米12 Pro",
+      "zh": "红米10X 4G / 红米Note 9",
       "versions": [
-          {"label": "Android 12 · Linux 5.10.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "daumier-s-oss", "kver": "5.10.81", "android": "12", "gki": 0, "defconfig": "daumier_defconfig"}
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "merlin-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "merlin_defconfig"
+        }
       ]
     },
     {
-      "id": "dipper",
-      "display": "dipper",
+      "id": "bomb",
+      "display": "bomb",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米8 / 小米8 Explorer Edition / POCO F1",
+      "zh": "红米10X Pro",
       "versions": [
-          {"label": "Android 10 · Linux 4.9.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "dipper-q-oss", "kver": "4.9.186", "android": "10", "gki": 0, "defconfig": "dipper_user_defconfig"},
-          {"label": "Android 9 · Linux 4.9.112", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "dipper-p-oss", "kver": "4.9.112", "android": "9", "gki": 0, "defconfig": "dipper_user_defconfig"}
-      ]
-    },
-    {
-      "id": "earth",
-      "display": "earth",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米12C / POCO C55",
-      "versions": [
-          {"label": "Android 12 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "earth-s-oss", "kver": "4.19.191", "android": "12", "gki": 0, "defconfig": "earth_defconfig"}
-      ]
-    },
-    {
-      "id": "elish",
-      "display": "elish",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 5 Pro / 小米Pad 5 Pro 5G",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19.113", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "elish-r-oss", "kver": "4.19.113", "android": "11", "gki": 0, "defconfig": "vendor/elish_user_defconfig"}
-      ]
-    },
-    {
-      "id": "erhu",
-      "display": "erhu",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Pad 2 SE 4G",
-      "versions": [
-          {"label": "Android 16 · Linux 5.15.185", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "erhu-w-oss", "kver": "5.15.185", "android": "16", "gki": 0, "defconfig": "vendor/erhu_consolidate.config"}
-      ]
-    },
-    {
-      "id": "evergo",
-      "display": "evergo",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 11T 5G",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "evergo-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "evergo_defconfig"}
+        {
+          "label": "Android 10 · Linux 4.14.141",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "bomb-q-oss",
+          "kver": "4.14.141",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "bomb_user_defconfig"
+        }
       ]
     },
     {
@@ -444,302 +144,33 @@
       "model": "",
       "zh": "红米12",
       "versions": [
-          {"label": "Android 13 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "fire-t-oss", "kver": "4.19.191", "android": "13", "gki": 0, "defconfig": "fire_defconfig"}
+        {
+          "label": "Android 13 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "fire-t-oss",
+          "kver": "4.19.191",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "fire_defconfig"
+        }
       ]
     },
     {
-      "id": "flame",
-      "display": "flame",
+      "id": "earth",
+      "display": "earth",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米14R 5G / POCO M7 5G / 红米14C 5G",
+      "zh": "红米12C / POCO C55",
       "versions": [
-          {"label": "Android 14 · Linux 5.10.198", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "flame-u-oss", "kver": "5.10.198", "android": "14", "gki": 0, "defconfig": "vendor/flame_consolidate.config"}
-      ]
-    },
-    {
-      "id": "fleur",
-      "display": "fleur",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 11S / POCO M4 Pro",
-      "versions": [
-          {"label": "Android 12 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "fleur-s-oss", "kver": "4.14.186", "android": "12", "gki": 0, "defconfig": "fleur_defconfig"}
-      ]
-    },
-    {
-      "id": "flourite",
-      "display": "flourite",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "POCO M8 Pro 5G / 红米Note 15 Pro+ / 红米Note 15 Pro+ 5G Pro",
-      "versions": [
-          {"label": "Android 15 · Linux 6.1.68", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "flourite-v-oss", "kver": "6.1.68", "android": "15", "gki": 0, "defconfig": "vendor/flourite_consolidate.config"}
-      ]
-    },
-    {
-      "id": "fuxi",
-      "display": "fuxi",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米13 / 小米13 Pro",
-      "versions": [
-          {"label": "Android 13 · Linux 5.15.41", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "fuxi-t-oss", "kver": "5.15.41", "android": "13", "gki": 0, "defconfig": "vendor/fuxi_consolidate.config"}
-      ]
-    },
-    {
-      "id": "gale",
-      "display": "gale",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米13C �POCO C65",
-      "versions": [
-          {"label": "Android 12 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "gale-s-oss", "kver": "4.19.191", "android": "12", "gki": 0, "defconfig": "gale_defconfig"}
-      ]
-    },
-    {
-      "id": "garnet",
-      "display": "garnet",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 13 Pro",
-      "versions": [
-          {"label": "Android 13 · Linux 5.10.160", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "garnet-t-oss", "kver": "5.10.160", "android": "13", "gki": 0, "defconfig": "vendor/garnet_consolidate.config"}
-      ]
-    },
-    {
-      "id": "gauguin",
-      "display": "gauguin",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 9 Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19.113", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "gauguin-r-oss", "kver": "4.19.113", "android": "11", "gki": 0, "defconfig": "vendor/gauguin_user_defconfig"},
-          {"label": "Android 10 · Linux 4.19.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "gauguin-q-oss", "kver": "4.19.81", "android": "10", "gki": 0, "defconfig": "vendor/gauguin_user_defconfig"}
-      ]
-    },
-    {
-      "id": "gold",
-      "display": "gold",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 13 5G",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.168", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "gold-s-oss", "kver": "5.10.168", "android": "12", "gki": 0, "defconfig": "gold_defconfig"}
-      ]
-    },
-    {
-      "id": "grus",
-      "display": "grus",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米8SE / 小米9SE",
-      "versions": [
-          {"label": "Android 9 · Linux 4.9.112", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "grus-p-oss", "kver": "4.9.112", "android": "9", "gki": 0, "defconfig": "grus_user_defconfig"}
-      ]
-    },
-    {
-      "id": "guitar",
-      "display": "guitar",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Pad 2 SE",
-      "versions": [
-          {"label": "Android 16 · Linux 5.15.185", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "guitar-w-oss", "kver": "5.15.185", "android": "16", "gki": 0, "defconfig": "vendor/guitar_consolidate.config"}
-      ]
-    },
-    {
-      "id": "ingres",
-      "display": "ingres",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K50 电竞版 / POCO F4 GT",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.43", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ingres-s-oss", "kver": "5.10.43", "android": "12", "gki": 0, "defconfig": "vendor/ingres_consolidate.config"}
-      ]
-    },
-    {
-      "id": "ishtar",
-      "display": "ishtar",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米13 Ultra",
-      "versions": [
-          {"label": "Android 13 · Linux 5.15.41", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ishtar-t-oss", "kver": "5.15.41", "android": "13", "gki": 0, "defconfig": "vendor/ishtar_consolidate.config"}
-      ]
-    },
-    {
-      "id": "jasmine",
-      "display": "jasmine",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米A2",
-      "versions": [
-          {"label": "Android 10 · Linux 4.4.192", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "jasmine-q-oss", "kver": "4.4.192", "android": "10", "gki": 0, "defconfig": "jasmine-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.4.153", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "jasmine-p-oss", "kver": "4.4.153", "android": "9", "gki": 0, "defconfig": "jasmine-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "jason",
-      "display": "jason",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Note 3",
-      "versions": [
-          {"label": "Android 9 · Linux 4.4.153", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "jason-p-oss", "kver": "4.4.153", "android": "9", "gki": 0, "defconfig": "jason_user_defconfig"}
-      ]
-    },
-    {
-      "id": "kunzite",
-      "display": "kunzite",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 15 SE 5G / 红米Note 15",
-      "versions": [
-          {"label": "Android 15 · Linux 6.6.56", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "kunzite-v-oss", "kver": "6.6.56", "android": "15", "gki": 0, "defconfig": "vendor/kunzite_consolidate.config"}
-      ]
-    },
-    {
-      "id": "lancelot",
-      "display": "lancelot",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米10X 4G / 红米9 / POCO M2",
-      "versions": [
-          {"label": "Android 10 · Linux 4.14.141", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lancelot-q-oss", "kver": "4.14.141", "android": "10", "gki": 0, "defconfig": "lancelot_defconfig"}
-      ]
-    },
-    {
-      "id": "laurel",
-      "display": "laurel",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米A3",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.180", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "laurel-r-oss", "kver": "4.14.180", "android": "11", "gki": 0, "defconfig": "vendor/laurel_sprout-perf_defconfig"},
-          {"label": "Android 10 · Linux 4.14.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "laurel-q-oss", "kver": "4.14.117", "android": "10", "gki": 0, "defconfig": "vendor/laurel_sprout-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "laurus",
-      "display": "laurus",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米CC9e / 小米A3",
-      "versions": [
-          {"label": "Android 10 · Linux 4.14.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "laurus-q-oss", "kver": "4.14.117", "android": "10", "gki": 0, "defconfig": "vendor/laurus-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.14.98", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "laurus-p-oss", "kver": "4.14.98", "android": "9", "gki": 0, "defconfig": "vendor/laurus-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "lavender",
-      "display": "lavender",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 7",
-      "versions": [
-          {"label": "Android 10 · Linux 4.4.192", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lavender-q-oss", "kver": "4.4.192", "android": "10", "gki": 0, "defconfig": "lavender-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.4.153", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lavender-p-oss", "kver": "4.4.153", "android": "9", "gki": 0, "defconfig": "lavender-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "light",
-      "display": "light",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "POCO M4 5G / 红米10 5G / 红米11 Prime 5G / 红米Note 11E",
-      "versions": [
-          {"label": "Android 14 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "light-u-oss", "kver": "4.19.191", "android": "14", "gki": 0, "defconfig": "light_defconfig"}
-      ]
-    },
-    {
-      "id": "lime",
-      "display": "lime",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 9 4G / POCO M3",
-      "versions": [
-          {"label": "Android 10 · Linux 4.19.95", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lime-q-oss", "kver": "4.19.95", "android": "10", "gki": 0, "defconfig": "vendor/lime-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "lisa",
-      "display": "lisa",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米11 LE",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4.86", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "lisa-r-oss", "kver": "5.4.86", "android": "11", "gki": 0, "defconfig": "vendor/lisa_QGKI.config"}
-      ]
-    },
-    {
-      "id": "liuqin",
-      "display": "liuqin",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 6 Pro",
-      "versions": [
-          {"label": "Android 13 · Linux 5.10.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "liuqin-t-oss", "kver": "5.10.81", "android": "13", "gki": 0, "defconfig": "vendor/liuqin_consolidate.config"}
-      ]
-    },
-    {
-      "id": "marble",
-      "display": "marble",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 12 Turbo / POCO F5",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "marble-s-oss", "kver": "5.10.117", "android": "12", "gki": 0, "defconfig": "vendor/marble_consolidate.config"}
-      ]
-    },
-    {
-      "id": "mayfly",
-      "display": "mayfly",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米12S",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "mayfly-s-oss", "kver": "5.10.81", "android": "12", "gki": 0, "defconfig": "vendor/mayfly_GKI.config"}
-      ]
-    },
-    {
-      "id": "merlin",
-      "display": "merlin",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米10X 4G / 红米9 and POCO M2",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "merlin-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "merlin_defconfig"}
-      ]
-    },
-    {
-      "id": "mist",
-      "display": "mist",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 17 5G / 红米Note 17 / POCO M8 Power 5G",
-      "versions": [
-          {"label": "Android 16 · Linux 6.6.118", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "mist-w-oss", "kver": "6.6.118", "android": "16", "gki": 0, "defconfig": "vendor/mist_consolidate.config"}
-      ]
-    },
-    {
-      "id": "mona",
-      "display": "mona",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米小米Civi",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4.86", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "mona-r-oss", "kver": "5.4.86", "android": "11", "gki": 0, "defconfig": "vendor/mona_QGKI.config"}
-      ]
-    },
-    {
-      "id": "mondrian",
-      "display": "mondrian",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K60",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "mondrian-s-oss", "kver": "5.10.81", "android": "12", "gki": 0, "defconfig": "vendor/mondrian_consolidate.config"}
+        {
+          "label": "Android 12 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "earth-s-oss",
+          "kver": "4.19.191",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "earth_defconfig"
+        }
       ]
     },
     {
@@ -747,355 +178,71 @@
       "display": "moon",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "POCO M6 / 红米13",
+      "zh": "红米13 / POCO M6",
       "versions": [
-          {"label": "Android 14 · Linux 5.10.198", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "moon-u-oss", "kver": "5.10.198", "android": "14", "gki": 0, "defconfig": "moon_defconfig"}
+        {
+          "label": "Android 14 · Linux 5.10.198",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "moon-u-oss",
+          "kver": "5.10.198",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "moon_defconfig"
+        }
       ]
     },
     {
-      "id": "moonstone",
-      "display": "moonstone",
+      "id": "gale",
+      "display": "gale",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "POCO X5 5G",
+      "zh": "红米13C / POCO C65",
       "versions": [
-          {"label": "Android 12 · Linux 5.4.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "moonstone-s-oss", "kver": "5.4.191", "android": "12", "gki": 0, "defconfig": "vendor/moonstone_QGKI.config"}
+        {
+          "label": "Android 12 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "gale-s-oss",
+          "kver": "4.19.191",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "gale_defconfig"
+        }
       ]
     },
     {
-      "id": "munch",
-      "display": "munch",
+      "id": "flame",
+      "display": "flame",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米K40S / POCO F4",
+      "zh": "红米14R 5G / 红米14C 5G / POCO M7 5G",
       "versions": [
-          {"label": "Android 12 · Linux 4.19.157", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "munch-s-oss", "kver": "4.19.157", "android": "12", "gki": 0, "defconfig": "vendor/munch_user_defconfig"}
+        {
+          "label": "Android 14 · Linux 5.10.198",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "flame-u-oss",
+          "kver": "5.10.198",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/flame_consolidate.config"
+        }
       ]
     },
     {
-      "id": "muyu",
-      "display": "muyu",
+      "id": "creek",
+      "display": "creek",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米Pad 7 Pro",
+      "zh": "红米15 / POCO M7",
       "versions": [
-          {"label": "Android 15 · Linux 6.1.68", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "muyu-v-oss", "kver": "6.1.68", "android": "15", "gki": 0, "defconfig": "vendor/muyu_consolidate.config"}
-      ]
-    },
-    {
-      "id": "nitrogen",
-      "display": "nitrogen",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米MAX3 / 小米8 Lite",
-      "versions": [
-          {"label": "Android 10 · Linux 4.4.192", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "nitrogen-q-oss", "kver": "4.4.192", "android": "10", "gki": 0, "defconfig": "nitrogen_user_defconfig"},
-          {"label": "Android 9 · Linux 4.4.153", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "nitrogen-p-oss", "kver": "4.4.153", "android": "9", "gki": 0, "defconfig": "nitrogen_user_defconfig"}
-      ]
-    },
-    {
-      "id": "odin",
-      "display": "odin",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米MIX 4",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4.86", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "odin-r-oss", "kver": "5.4.86", "android": "11", "gki": 0, "defconfig": "vendor/odin_QGKI.config"}
-      ]
-    },
-    {
-      "id": "olive",
-      "display": "olive",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米8 / 红米8A",
-      "versions": [
-          {"label": "Android 10 · Linux 4.9.193", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "olive-q-oss", "kver": "4.9.193", "android": "10", "gki": 0, "defconfig": "olive-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.9.112", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "olive-p-oss", "kver": "4.9.112", "android": "9", "gki": 0, "defconfig": "olive-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "onc",
-      "display": "onc",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米7 / 红米Y3",
-      "versions": [
-          {"label": "Android 10 · Linux 4.9.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "onc-q-oss", "kver": "4.9.186", "android": "10", "gki": 0, "defconfig": "onc-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.9.112", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "onc-p-oss", "kver": "4.9.112", "android": "9", "gki": 0, "defconfig": "onc-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "onyx",
-      "display": "onyx",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Turbo 4 Pro",
-      "versions": [
-          {"label": "Android 15 · Linux 6.6.56", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "onyx-v-oss", "kver": "6.6.56", "android": "15", "gki": 0, "defconfig": "vendor/onyx_consolidate.config"}
-      ]
-    },
-    {
-      "id": "pearl",
-      "display": "pearl",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 12T Pro",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.136", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "pearl-s-oss", "kver": "5.10.136", "android": "12", "gki": 0, "defconfig": "pearl_defconfig"}
-      ]
-    },
-    {
-      "id": "peridot",
-      "display": "peridot",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Turbo 3",
-      "versions": [
-          {"label": "Android 14 · Linux 6.1.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "peridot-u-oss", "kver": "6.1.57", "android": "14", "gki": 0, "defconfig": "vendor/peridot_consolidate.config"}
-      ]
-    },
-    {
-      "id": "perseus",
-      "display": "perseus",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米MIX 2S",
-      "versions": [
-          {"label": "Android 9 · Linux 4.9.112", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "perseus-p-oss", "kver": "4.9.112", "android": "9", "gki": 0, "defconfig": "perseus_user_defconfig"}
-      ]
-    },
-    {
-      "id": "phoenix",
-      "display": "phoenix",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K20 / 红米K30 / 小米Note 10 Lite / 小米CC9 Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.180", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "phoenix-r-oss", "kver": "4.14.180", "android": "11", "gki": 0, "defconfig": "vendor/phoenix_user_defconfig"},
-          {"label": "Android 10 · Linux 4.14.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "phoenix-q-oss", "kver": "4.14.117", "android": "10", "gki": 0, "defconfig": "vendor/phoenix_user_defconfig"}
-      ]
-    },
-    {
-      "id": "piano",
-      "display": "piano",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 8 Pro",
-      "versions": [
-          {"label": "Android 16 · Linux 6.6.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "piano-w-oss", "kver": "6.6.57", "android": "16", "gki": 0, "defconfig": "vendor/piano_consolidate.config"}
-      ]
-    },
-    {
-      "id": "picasso",
-      "display": "picasso",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米10 Lite 5G / 红米K30 5G / 小米10 Lite Zoom",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19.113", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "picasso-r-oss", "kver": "4.19.113", "android": "11", "gki": 0, "defconfig": "vendor/picasso_user_defconfig"},
-          {"label": "Android 10 · Linux 4.19.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "picasso-q-oss", "kver": "4.19.81", "android": "10", "gki": 0, "defconfig": "vendor/picasso_user_defconfig"}
-      ]
-    },
-    {
-      "id": "pipa",
-      "display": "pipa",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 6",
-      "versions": [
-          {"label": "Android 13 · Linux 4.19.157", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "pipa-t-oss", "kver": "4.19.157", "android": "13", "gki": 0, "defconfig": "vendor/pipa_user_defconfig"}
-      ]
-    },
-    {
-      "id": "pissarro",
-      "display": "pissarro",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 11 Pro / 红米Note 11 Pro+",
-      "versions": [
-          {"label": "Android 12 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "pissarro-s-oss", "kver": "4.14.186", "android": "12", "gki": 0, "defconfig": "pissarro_user_defconfig"},
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "pissarro-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "pissarro_user_defconfig"}
-      ]
-    },
-    {
-      "id": "psyche",
-      "display": "psyche",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米12X",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19.113", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "psyche-r-oss", "kver": "4.19.113", "android": "11", "gki": 0, "defconfig": "vendor/psyche_user_defconfig"}
-      ]
-    },
-    {
-      "id": "pyxis",
-      "display": "pyxis",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米CC9 / 小米CC9 Meitu Edition",
-      "versions": [
-          {"label": "Android 9 · Linux 4.9.112", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "pyxis-p-oss", "kver": "4.9.112", "android": "9", "gki": 0, "defconfig": "pyxis_user_defconfig"}
-      ]
-    },
-    {
-      "id": "redwood",
-      "display": "redwood",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 12 Pro 极速版 / POCO X5 Pro 5G",
-      "versions": [
-          {"label": "Android 12 · Linux 5.4.147", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "redwood-s-oss", "kver": "5.4.147", "android": "12", "gki": 0, "defconfig": "vendor/redwood_QGKI.config"}
-      ]
-    },
-    {
-      "id": "rosemary",
-      "display": "rosemary",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 10S",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "rosemary-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "rosemary_defconfig"}
-      ]
-    },
-    {
-      "id": "ruan",
-      "display": "ruan",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "POCO Pad 5G / 红米Pad Pro 5G",
-      "versions": [
-          {"label": "Android 14 · Linux 5.10.198", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ruan-u-oss", "kver": "5.10.198", "android": "14", "gki": 0, "defconfig": "vendor/ruan_consolidate.config"}
-      ]
-    },
-    {
-      "id": "rubens",
-      "display": "rubens",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K50",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.66", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "rubens-s-oss", "kver": "5.10.66", "android": "12", "gki": 0, "defconfig": "rubens_defconfig"}
-      ]
-    },
-    {
-      "id": "ruby",
-      "display": "ruby",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note12 Pro",
-      "versions": [
-          {"label": "Android 12 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ruby-s-oss", "kver": "4.19.191", "android": "12", "gki": 0, "defconfig": "ruby_user_defconfig"}
-      ]
-    },
-    {
-      "id": "sagit",
-      "display": "sagit",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米6 / 小米小米MIX 2",
-      "versions": [
-          {"label": "Android 9 · Linux 4.4.153", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sagit-p-oss", "kver": "4.4.153", "android": "9", "gki": 0, "defconfig": "sagit_user_defconfig"}
-      ]
-    },
-    {
-      "id": "sakura",
-      "display": "sakura",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米6Pro / 红米5Plus / 小米5X",
-      "versions": [
-          {"label": "Android 9 · Linux 3.18.120", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sakura-p-oss", "kver": "3.18.120", "android": "9", "gki": 0, "defconfig": "sakura-perf_defconfig", "unsupported": true, "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"}
-      ]
-    },
-    {
-      "id": "sea",
-      "display": "sea",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 12S",
-      "versions": [
-          {"label": "Android 13 · Linux 4.19.191", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sea-t-oss", "kver": "4.19.191", "android": "13", "gki": 0, "defconfig": "sea_defconfig"}
-      ]
-    },
-    {
-      "id": "selene",
-      "display": "selene",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米10 Prime",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "selene-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "selene_defconfig"}
-      ]
-    },
-    {
-      "id": "sheng",
-      "display": "sheng",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 6S Pro 12.4",
-      "versions": [
-          {"label": "Android 14 · Linux 5.15.78", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sheng-u-oss", "kver": "5.15.78", "android": "14", "gki": 0, "defconfig": "vendor/sheng_consolidate.config"}
-      ]
-    },
-    {
-      "id": "shennong",
-      "display": "shennong",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米14 / 小米14 Pro",
-      "versions": [
-          {"label": "Android 14 · Linux 6.1.25", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "shennong-u-oss", "kver": "6.1.25", "android": "14", "gki": 0, "defconfig": "vendor/shennong_consolidate.config"}
-      ]
-    },
-    {
-      "id": "sirius",
-      "display": "sirius",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米8 SE",
-      "versions": [
-          {"label": "Android 10 · Linux 4.9.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sirius-q-oss", "kver": "4.9.186", "android": "10", "gki": 0, "defconfig": "sirius_user_defconfig"}
-      ]
-    },
-    {
-      "id": "sky",
-      "display": "sky",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 12R",
-      "versions": [
-          {"label": "Android 13 · Linux 5.10.160", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sky-t-oss", "kver": "5.10.160", "android": "13", "gki": 0, "defconfig": "vendor/sky_consolidate.config"}
-      ]
-    },
-    {
-      "id": "socrates",
-      "display": "socrates",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米K60 Pro",
-      "versions": [
-          {"label": "Android 13 · Linux 5.15.41", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "socrates-t-oss", "kver": "5.15.41", "android": "13", "gki": 0, "defconfig": "vendor/socrates_consolidate.config"}
-      ]
-    },
-    {
-      "id": "spark",
-      "display": "spark",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Pad SE 4G / 红米Pad SE 8.7 4G",
-      "versions": [
-          {"label": "Android 12 · Linux 5.10.198", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "spark-s-oss", "kver": "5.10.198", "android": "12", "gki": 0, "defconfig": "spark_defconfig"}
-      ]
-    },
-    {
-      "id": "spes",
-      "display": "spes",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米note 11",
-      "versions": [
-          {"label": "Android 11 · Linux 4.19.157", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "spes-r-oss", "kver": "4.19.157", "android": "11", "gki": 0, "defconfig": "vendor/spes-perf_defconfig"}
+        {
+          "label": "Android 15 · Linux 5.15.167",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "creek-v-oss",
+          "kver": "5.15.167",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/creek_consolidate.config"
+        }
       ]
     },
     {
@@ -1103,141 +250,143 @@
       "display": "spring",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米15 5G / 红米Note 15R / POCO M7 Plus 5G",
+      "zh": "红米15R 5G / 红米15 5G / M7 Plus",
       "versions": [
-          {"label": "Android 15 · Linux 6.1.93", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "spring-v-oss", "kver": "6.1.93", "android": "15", "gki": 0, "defconfig": "vendor/spring_consolidate.config"}
+        {
+          "label": "Android 15 · Linux 6.1.93",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "spring-v-oss",
+          "kver": "6.1.93",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/spring_consolidate.config"
+        }
       ]
     },
     {
-      "id": "star",
-      "display": "star",
+      "id": "yunluo",
+      "display": "yunluo",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米11 Lite 5G / 小米11 Pro / 小米11 Ultra / 小米小米MIX FOLD",
+      "zh": "红米平板",
       "versions": [
-          {"label": "Android 11 · Linux 5.4.61", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "star-r-oss", "kver": "5.4.61", "android": "11", "gki": 0, "defconfig": "vendor/star_QGKI.config"}
+        {
+          "label": "Android 12 · Linux 5.10.101",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "yunluo-s-oss",
+          "kver": "5.10.101",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "yunluo_defconfig"
+        }
       ]
     },
     {
-      "id": "sunstone",
-      "display": "sunstone",
+      "id": "guitar",
+      "display": "guitar",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米Note 12 5G / 红米Note 12R",
+      "zh": "红米平板2 SE / Pad 2 9.7 / POCO Pad C1",
       "versions": [
-          {"label": "Android 14 · Linux 5.4.289", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "sunstone-u-oss", "kver": "5.4.289", "android": "14", "gki": 0, "defconfig": "vendor/sunstone_QGKI.config"}
+        {
+          "label": "Android 16 · Linux 5.15.185",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "guitar-w-oss",
+          "kver": "5.15.185",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/guitar_consolidate.config"
+        }
       ]
     },
     {
-      "id": "taoyao",
-      "display": "taoyao",
+      "id": "erhu",
+      "display": "erhu",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米12 Lite",
+      "zh": "红米平板2 SE 4G",
       "versions": [
-          {"label": "Android 12 · Linux 5.4.86", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "taoyao-s-oss", "kver": "5.4.86", "android": "12", "gki": 0, "defconfig": "vendor/taoyao_QGKI.config"}
+        {
+          "label": "Android 16 · Linux 5.15.185",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "erhu-w-oss",
+          "kver": "5.15.185",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/erhu_consolidate.config"
+        }
       ]
     },
     {
-      "id": "tissot",
-      "display": "tissot",
+      "id": "ruan",
+      "display": "ruan",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米A1",
+      "zh": "红米平板Pro 5G / POCO Pad 5G",
       "versions": [
-          {"label": "Android 9 · Linux 3.18.120", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "tissot-p-oss", "kver": "3.18.120", "android": "9", "gki": 0, "defconfig": "tissot-perf_defconfig", "unsupported": true, "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"}
+        {
+          "label": "Android 14 · Linux 5.10.198",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ruan-u-oss",
+          "kver": "5.10.198",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/ruan_consolidate.config"
+        }
       ]
     },
     {
-      "id": "toco",
-      "display": "toco",
+      "id": "xun",
+      "display": "xun",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米Note 10",
+      "zh": "红米平板SE",
       "versions": [
-          {"label": "Android 10 · Linux 4.14.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "toco-q-oss", "kver": "4.14.117", "android": "10", "gki": 0, "defconfig": "vendor/toco_user_defconfig"}
+        {
+          "label": "Android 13 · Linux 5.15.74",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "xun-t-oss",
+          "kver": "5.15.74",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/xun_consolidate.config"
+        }
       ]
     },
     {
-      "id": "topaz",
-      "display": "topaz",
+      "id": "spark",
+      "display": "spark",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米Note 12",
+      "zh": "红米平板SE 8.7 4G",
       "versions": [
-          {"label": "Android 13 · Linux 5.15.41", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "topaz-t-oss", "kver": "5.15.41", "android": "13", "gki": 0, "defconfig": "vendor/topaz_consolidate.config"}
+        {
+          "label": "Android 12 · Linux 5.10.198",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "spark-s-oss",
+          "kver": "5.10.198",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "spark_defconfig"
+        }
       ]
     },
     {
-      "id": "tucana",
-      "display": "tucana",
+      "id": "blue",
+      "display": "blue",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米CC9 Pro",
+      "zh": "红米A3 / POCO C61",
       "versions": [
-          {"label": "Android 10 · Linux 4.14.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "tucana-q-oss", "kver": "4.14.117", "android": "10", "gki": 0, "defconfig": "vendor/tucana_user_defconfig"},
-          {"label": "Android 9 · Linux 4.14.83", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "tucana-p-oss", "kver": "4.14.83", "android": "9", "gki": 0, "defconfig": "vendor/tucana_user_defconfig"}
-      ]
-    },
-    {
-      "id": "tulip",
-      "display": "tulip",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 5 / 红米Note6 Pro / 小米6X",
-      "versions": [
-          {"label": "Android 9 · Linux 4.4.153", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "tulip-p-oss", "kver": "4.4.153", "android": "9", "gki": 0, "defconfig": "tulip-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "uke",
-      "display": "uke",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米Pad 7",
-      "versions": [
-          {"label": "Android 15 · Linux 6.1.68", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "uke-v-oss", "kver": "6.1.68", "android": "15", "gki": 0, "defconfig": "vendor/uke_consolidate.config"}
-      ]
-    },
-    {
-      "id": "vangogh",
-      "display": "vangogh",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米10T Lite / 红米Note 9 Pro 5G",
-      "versions": [
-          {"label": "Android 10 · Linux 4.19.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "vangogh-q-oss", "kver": "4.19.81", "android": "10", "gki": 0, "defconfig": "vendor/vangogh_user_defconfig"}
-      ]
-    },
-    {
-      "id": "vili",
-      "display": "vili",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米11T Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 5.4.86", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "vili-r-oss", "kver": "5.4.86", "android": "11", "gki": 0, "defconfig": "vendor/vili_QGKI.config"}
-      ]
-    },
-    {
-      "id": "violet",
-      "display": "violet",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 7Pro",
-      "versions": [
-          {"label": "Android 10 · Linux 4.14.117", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "violet-q-oss", "kver": "4.14.117", "android": "10", "gki": 0, "defconfig": "vendor/violet-perf_defconfig"},
-          {"label": "Android 9 · Linux 4.14.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "violet-p-oss", "kver": "4.14.81", "android": "9", "gki": 0, "defconfig": "vendor/violet-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "viva",
-      "display": "viva",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米Note 11 Pro",
-      "versions": [
-          {"label": "Android 11 · Linux 4.14.186", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "viva-r-oss", "kver": "4.14.186", "android": "11", "gki": 0, "defconfig": "viva_defconfig"}
+        {
+          "label": "Android 14 · Linux 5.10.177",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "blue-u-oss",
+          "kver": "5.10.177",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "blue_defconfig"
+        }
       ]
     },
     {
@@ -1247,7 +396,330 @@
       "model": "",
       "zh": "红米A4 5G / POCO C75 5G",
       "versions": [
-          {"label": "Android 14 · Linux 6.1.68", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "warm-u-oss", "kver": "6.1.68", "android": "14", "gki": 0, "defconfig": "vendor/warm_consolidate.config"}
+        {
+          "label": "Android 14 · Linux 6.1.68",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "warm-u-oss",
+          "kver": "6.1.68",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/warm_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "davinci",
+      "display": "Redmi K20 / Mi 9T",
+      "brand": "Redmi",
+      "model": "K20 / Mi 9T",
+      "zh": "红米K20 / 小米9T",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.14",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "davinci-p-oss",
+          "kver": "4.14",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/davinci_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "raphael",
+      "display": "Redmi K20 Pro / Mi 9T Pro",
+      "brand": "Redmi",
+      "model": "K20 Pro / Mi 9T Pro",
+      "zh": "红米K20 Pro / 小米9T Pro",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.14",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "raphael-p-oss",
+          "kver": "4.14",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/raphael_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "phoenix",
+      "display": "phoenix",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K30 4G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.180",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "phoenix-r-oss",
+          "kver": "4.14.180",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/phoenix_user_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.14.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "phoenix-q-oss",
+          "kver": "4.14.117",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/phoenix_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "picasso",
+      "display": "picasso",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K30 5G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19.113",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "picasso-r-oss",
+          "kver": "4.19.113",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/picasso_user_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.19.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "picasso-q-oss",
+          "kver": "4.19.81",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/picasso_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "lmi",
+      "display": "Redmi K30 Pro / POCO F2 Pro",
+      "brand": "Redmi",
+      "model": "K30 Pro / POCO F2 Pro",
+      "zh": "红米K30 Pro / POCO F2 Pro",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.19",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "lmi-q-oss",
+          "kver": "4.19",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/lmi_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "cezanne",
+      "display": "cezanne",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K30 Ultra",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "cezanne-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "cezanne_user_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.14.141",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "cezanne-q-oss",
+          "kver": "4.14.141",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "cezanne_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "apollo",
+      "display": "apollo",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K30S Ultra / 小米10T / 小米10T Pro",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.19.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "apollo-q-oss",
+          "kver": "4.19.81",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/apollo_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "alioth",
+      "display": "Redmi K40 / POCO F3",
+      "brand": "Redmi",
+      "model": "K40 / POCO F3",
+      "zh": "红米K40 / 小米11X / POCO F3",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "alioth-r-oss",
+          "kver": "4.19",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/alioth_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "ares",
+      "display": "ares",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K40 电竞版 / POCO F3 GT",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ares-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "ares_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "haydn",
+      "display": "Redmi K40 Pro / K40 Pro+",
+      "brand": "Redmi",
+      "model": "K40 Pro / K40 Pro+",
+      "zh": "红米K40 Pro / 红米K40 Pro+ / 小米11i",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "haydn-r-oss",
+          "kver": "5.4",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/haydn_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "munch",
+      "display": "munch",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K40S / POCO F4",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 4.19.157",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "munch-s-oss",
+          "kver": "4.19.157",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/munch_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "rubens",
+      "display": "rubens",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K50",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.66",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "rubens-s-oss",
+          "kver": "5.10.66",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "rubens_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "ingres",
+      "display": "ingres",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K50G / POCO F4 GT",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.43",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ingres-s-oss",
+          "kver": "5.10.43",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/ingres_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "mondrian",
+      "display": "mondrian",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K60 / POCO F5 Pro",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "mondrian-s-oss",
+          "kver": "5.10.81",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/mondrian_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "socrates",
+      "display": "socrates",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K60 Pro",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.15.41",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "socrates-t-oss",
+          "kver": "5.15.41",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/socrates_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "annibale",
+      "display": "annibale",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米K90 / POCO F8 Pro",
+      "versions": [
+        {
+          "label": "Android 16 · Linux 6.6.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "annibale-w-oss",
+          "kver": "6.6.57",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/annibale_consolidate.config"
+        }
       ]
     },
     {
@@ -1257,7 +729,168 @@
       "model": "",
       "zh": "红米K90 Ultra",
       "versions": [
-          {"label": "Android 16 · Linux 6.6.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "warsaw-w-oss", "kver": "6.6.57", "android": "16", "gki": 0, "defconfig": "vendor/warsaw_consolidate.config"}
+        {
+          "label": "Android 16 · Linux 6.6.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "warsaw-w-oss",
+          "kver": "6.6.57",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/warsaw_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "tulip",
+      "display": "tulip",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 6 Pro",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.4.153",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "tulip-p-oss",
+          "kver": "4.4.153",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "tulip-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "lavender",
+      "display": "lavender",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 7 / 7S",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.4.192",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "lavender-q-oss",
+          "kver": "4.4.192",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "lavender-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.4.153",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "lavender-p-oss",
+          "kver": "4.4.153",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "lavender-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "violet",
+      "display": "violet",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 7 Pro",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.14.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "violet-q-oss",
+          "kver": "4.14.117",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/violet-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.14.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "violet-p-oss",
+          "kver": "4.14.81",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/violet-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "ginkgo",
+      "display": "Redmi Note 8 / 8T",
+      "brand": "Redmi",
+      "model": "Note 8 / 8T",
+      "zh": "红米Note 8",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.14",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ginkgo-q-oss",
+          "kver": "4.14",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/ginkgo-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.14.98",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ginkgo-p-oss",
+          "kver": "4.14.98",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/ginkgo-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "biloba",
+      "display": "biloba",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 8 (2021)",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "biloba-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "biloba_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "begonia",
+      "display": "begonia",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 8 Pro",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "begonia-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "begonia_user_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.14.141",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "begonia-q-oss",
+          "kver": "4.14.141",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "begonia_user_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.14.94",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "begonia-p-oss",
+          "kver": "4.14.94",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "begonia_user_defconfig"
+        }
       ]
     },
     {
@@ -1267,7 +900,312 @@
       "model": "",
       "zh": "红米Note 8T",
       "versions": [
-          {"label": "Android 9 · Linux 4.14.98", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "willow-p-oss", "kver": "4.14.98", "android": "9", "gki": 0, "defconfig": "vendor/willow-perf_defconfig"}
+        {
+          "label": "Android 9 · Linux 4.14.98",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "willow-p-oss",
+          "kver": "4.14.98",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/willow-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "lime",
+      "display": "lime",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 9 4G / 红米9T / 红米9 Power",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.19.95",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "lime-q-oss",
+          "kver": "4.19.95",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/lime-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "cannon",
+      "display": "cannon",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 9 5G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "cannon-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "cannon_user_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.14.141",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "cannon-q-oss",
+          "kver": "4.14.141",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "cannon_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "gauguin",
+      "display": "gauguin",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 9 Pro 5G / 小米10T Lite / 小米10i",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19.113",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "gauguin-r-oss",
+          "kver": "4.19.113",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/gauguin_user_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.19.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "gauguin-q-oss",
+          "kver": "4.19.81",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/gauguin_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "camellian",
+      "display": "camellian",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 10 5G / 红米Note 10T / POCO M3 Pro",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "camellian-t-oss",
+          "kver": "4.14.186",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "camellian_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "camellia",
+      "display": "camellia",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 10 5G / 红米Note 11SE / 红米Note 10T 5G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "camellia-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "camellia_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "sweet",
+      "display": "Redmi Note 10 Pro",
+      "brand": "Redmi",
+      "model": "Note 10 Pro",
+      "zh": "红米Note 10 Pro",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sweet-r-oss",
+          "kver": "4.14",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/sweet_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "chopin",
+      "display": "chopin",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 10 Pro 5G / POCO X3 GT",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "chopin-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "chopin_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "rosemary",
+      "display": "rosemary",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 10S / 红米Note 11 SE",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "rosemary-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "rosemary_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "spes",
+      "display": "spes",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 11",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19.157",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "spes-r-oss",
+          "kver": "4.19.157",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/spes-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "evergo",
+      "display": "evergo",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 11 5G / 红米Note 11T 5G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "evergo-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "evergo_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "pissarro",
+      "display": "pissarro",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 11 Pro / 红米Note 11 Pro+ / 红米Note 11 Pro+ 5G",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "pissarro-s-oss",
+          "kver": "4.14.186",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "pissarro_user_defconfig"
+        },
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "pissarro-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "pissarro_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "viva",
+      "display": "viva",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 11 Pro 4G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "viva-r-oss",
+          "kver": "4.14.186",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "viva_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "display": "light",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 11E / 红米10 5G / POCO M4 5G",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "light-u-oss",
+          "kver": "4.19.191",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "light_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "veux",
+      "display": "Redmi Note 11 Pro 5G / POCO X4 Pro 5G",
+      "brand": "Redmi",
+      "model": "Note 11 Pro 5G / POCO X4 Pro 5G",
+      "zh": "红米Note 11E Pro / 红米Note 11 Pro 5G / POCO X4 Pro 5G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "veux-r-oss",
+          "kver": "5.4",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/veux_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "fleur",
+      "display": "fleur",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 11S 4G / POCO M4 Pro 4G",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 4.14.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "fleur-s-oss",
+          "kver": "4.14.186",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "fleur_defconfig"
+        }
       ]
     },
     {
@@ -1275,69 +1213,251 @@
       "display": "xaga",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米Note 11T Pro",
+      "zh": "红米Note 11T Pro / 红米Note 11T Pro+ / POCO X4 GT",
       "versions": [
-          {"label": "Android 12 · Linux 5.10.66", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "xaga-s-oss", "kver": "5.10.66", "android": "12", "gki": 0, "defconfig": "xaga_defconfig"}
+        {
+          "label": "Android 12 · Linux 5.10.66",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "xaga-s-oss",
+          "kver": "5.10.66",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "xaga_defconfig"
+        }
       ]
     },
     {
-      "id": "xuanyuan",
-      "display": "xuanyuan",
+      "id": "topaz",
+      "display": "topaz",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米15 Ultra",
+      "zh": "红米Note 12 4G NFC",
       "versions": [
-          {"label": "Android 15 · Linux 6.6.30", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "xuanyuan-v-oss", "kver": "6.6.30", "android": "15", "gki": 0, "defconfig": "vendor/xuanyuan_consolidate.config"}
+        {
+          "label": "Android 13 · Linux 5.15.41",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "topaz-t-oss",
+          "kver": "5.15.41",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/topaz_consolidate.config"
+        }
       ]
     },
     {
-      "id": "xun",
-      "display": "xun",
+      "id": "sunstone",
+      "display": "sunstone",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米Pad SE",
+      "zh": "红米Note 12 5G / Note 12R Pro",
       "versions": [
-          {"label": "Android 13 · Linux 5.15.74", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "xun-t-oss", "kver": "5.15.74", "android": "13", "gki": 0, "defconfig": "vendor/xun_consolidate.config"}
+        {
+          "label": "Android 14 · Linux 5.4.289",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sunstone-u-oss",
+          "kver": "5.4.289",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/sunstone_QGKI.config"
+        }
       ]
     },
     {
-      "id": "yudi",
-      "display": "yudi",
+      "id": "ruby",
+      "display": "ruby",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米Pad 6 Max 14",
+      "zh": "红米Note 12 Pro / 红米Note 12 Pro+ / 红米Note 12 Discovery 5G",
       "versions": [
-          {"label": "Android 13 · Linux 5.10.160", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "yudi-t-oss", "kver": "5.10.160", "android": "13", "gki": 0, "defconfig": "vendor/yudi_consolidate.config"}
+        {
+          "label": "Android 12 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ruby-s-oss",
+          "kver": "4.19.191",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "ruby_user_defconfig"
+        }
       ]
     },
     {
-      "id": "yuechu",
-      "display": "yuechu",
+      "id": "redwood",
+      "display": "redwood",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米Civi3",
+      "zh": "红米Note 12 Pro 极速版 / POCO X5 Pro 5G",
       "versions": [
-          {"label": "Android 13 · Linux 5.10.136", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "yuechu-t-oss", "kver": "5.10.136", "android": "13", "gki": 0, "defconfig": "yuechu_defconfig"}
+        {
+          "label": "Android 12 · Linux 5.4.147",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "redwood-s-oss",
+          "kver": "5.4.147",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/redwood_QGKI.config"
+        }
       ]
     },
     {
-      "id": "yunluo",
-      "display": "yunluo",
+      "id": "marble",
+      "display": "marble",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米Pad",
+      "zh": "红米Note 12 Turbo / POCO F5",
       "versions": [
-          {"label": "Android 12 · Linux 5.10.101", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "yunluo-s-oss", "kver": "5.10.101", "android": "12", "gki": 0, "defconfig": "yunluo_defconfig"}
+        {
+          "label": "Android 12 · Linux 5.10.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "marble-s-oss",
+          "kver": "5.10.117",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/marble_consolidate.config"
+        }
       ]
     },
     {
-      "id": "yupei",
-      "display": "yupei",
+      "id": "sky",
+      "display": "sky",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米Pad 8",
+      "zh": "红米Note 12R / 红米12 5G / POCO M6 Pro 5G",
       "versions": [
-          {"label": "Android 16 · Linux 6.6.57", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "yupei-w-oss", "kver": "6.6.57", "android": "16", "gki": 0, "defconfig": "vendor/yupei_consolidate.config"}
+        {
+          "label": "Android 13 · Linux 5.10.160",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sky-t-oss",
+          "kver": "5.10.160",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/sky_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "sea",
+      "display": "sea",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 12S",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sea-t-oss",
+          "kver": "4.19.191",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "sea_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "pearl",
+      "display": "pearl",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 12T Pro",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.136",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "pearl-s-oss",
+          "kver": "5.10.136",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "pearl_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "gold",
+      "display": "gold",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 13 5G / 13R Pro / POCO X6 Neo 5G",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.168",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "gold-s-oss",
+          "kver": "5.10.168",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "gold_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "garnet",
+      "display": "garnet",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 13 Pro 5G / POCO X6 5G",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.10.160",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "garnet-t-oss",
+          "kver": "5.10.160",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/garnet_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "breeze",
+      "display": "breeze",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 13R / 红米13 5G / POCO M6 Plus 5G",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 5.10.198",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "breeze-u-oss",
+          "kver": "5.10.198",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/breeze_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "kunzite",
+      "display": "kunzite",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 15 5G / 红米Note 15 / POCO M8 5G",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.6.56",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "kunzite-v-oss",
+          "kver": "6.6.56",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/kunzite_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "flourite",
+      "display": "flourite",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Note 15 Pro+ 5G / POCO M8 Pro 5G",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.1.68",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "flourite-v-oss",
+          "kver": "6.1.68",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/flourite_consolidate.config"
+        }
       ]
     },
     {
@@ -1345,100 +1465,98 @@
       "display": "zephyr",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "红米Note 17",
+      "zh": "红米Note 17 4G",
       "versions": [
-          {"label": "Android 16 · Linux 5.15.185", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "zephyr-w-oss", "kver": "5.15.185", "android": "16", "gki": 0, "defconfig": "vendor/zephyr_consolidate.config"}
+        {
+          "label": "Android 16 · Linux 5.15.185",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "zephyr-w-oss",
+          "kver": "5.15.185",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/zephyr_consolidate.config"
+        }
       ]
     },
     {
-      "id": "zeus",
-      "display": "zeus",
+      "id": "mist",
+      "display": "mist",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米12 / 小米12 Pro",
+      "zh": "红米Note 17 5G / POCO M8 Power 5G",
       "versions": [
-          {"label": "Android 12 · Linux 5.10.43", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "zeus-s-oss", "kver": "5.10.43", "android": "12", "gki": 0, "defconfig": "vendor/zeus_GKI.config"}
+        {
+          "label": "Android 16 · Linux 6.6.118",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "mist-w-oss",
+          "kver": "6.6.118",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/mist_consolidate.config"
+        }
       ]
     },
     {
-      "id": "zijin",
-      "display": "zijin",
+      "id": "peridot",
+      "display": "peridot",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米小米Civi 1S",
+      "zh": "红米Turbo 3 / POCO F6",
       "versions": [
-          {"label": "Android 12 · Linux 5.4.86", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "zijin-s-oss", "kver": "5.4.86", "android": "12", "gki": 0, "defconfig": "vendor/zijin_QGKI.config"}
+        {
+          "label": "Android 14 · Linux 6.1.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "peridot-u-oss",
+          "kver": "6.1.57",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/peridot_consolidate.config"
+        }
       ]
     },
     {
-      "id": "ziyi",
-      "display": "ziyi",
+      "id": "onyx",
+      "display": "onyx",
       "brand": "Xiaomi",
       "model": "",
-      "zh": "小米civi2",
+      "zh": "红米Turbo 4 Pro / POCO F7",
       "versions": [
-          {"label": "Android 12 · Linux 5.10.81", "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource", "branch": "ziyi-s-oss", "kver": "5.10.81", "android": "12", "gki": 0, "defconfig": "vendor/ziyi_consolidate.config"}
+        {
+          "label": "Android 15 · Linux 6.6.56",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "onyx-v-oss",
+          "kver": "6.6.56",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/onyx_consolidate.config"
+        }
       ]
     },
     {
-      "id": "op7pro",
-      "display": "OnePlus 7 / 7 Pro / 7T / 7T Pro",
-      "brand": "OnePlus",
-      "model": "7 / 7 Pro / 7T / 7T Pro",
-      "zh": "一加 7 / 7 Pro / 7T / 7T Pro",
+      "id": "onc",
+      "display": "onc",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米Y3",
       "versions": [
-          {"label": "OOS 9 · Linux 4.14", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150", "branch": "oneplus/SM8150_P_9.0", "kver": "4.14", "android": "9", "gki": 0, "defconfig": "vendor/sm8150-perf_defconfig"},
-          {"label": "OOS 10 · Linux 4.14", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150", "branch": "oneplus/SM8150_Q_10.0", "kver": "4.14", "android": "10", "gki": 0, "defconfig": "vendor/sm8150-perf_defconfig"},
-          {"label": "OOS 12.1 · Linux 4.14", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150", "branch": "oneplus/sm8150_s_12.1_op7pro", "kver": "4.14", "android": "12", "gki": 0, "defconfig": "vendor/sm8150-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "op8",
-      "display": "OnePlus 8 / 8 Pro",
-      "brand": "OnePlus",
-      "model": "8 / 8 Pro",
-      "zh": "一加 8 / 8 Pro",
-      "versions": [
-          {"label": "OOS 10 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/SM8250_Q_10.0", "kver": "4.19", "android": "10", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
-          {"label": "OOS 11 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/SM8250_R_11.0", "kver": "4.19", "android": "11", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
-          {"label": "OOS 13 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_t_13.0.0_op8", "kver": "4.19", "android": "13", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "op8t",
-      "display": "OnePlus 8T / 9R",
-      "brand": "OnePlus",
-      "model": "8T / 9R",
-      "zh": "一加 8T / 9R",
-      "versions": [
-          {"label": "OOS 11 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/SM8250_R_11.0", "kver": "4.19", "android": "11", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
-          {"label": "OOS 12.1 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_s_12.1", "kver": "4.19", "android": "12", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
-          {"label": "OOS 13.1 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_t_13.1_op8", "kver": "4.19", "android": "13", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"},
-          {"label": "OOS 14 · Linux 4.19", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250", "branch": "oneplus/sm8250_u_14.0.0_op8t", "kver": "4.19", "android": "14", "gki": 0, "defconfig": "vendor/kona-perf_defconfig"}
-      ]
-    },
-    {
-      "id": "op9",
-      "display": "OnePlus 9 / 9 Pro",
-      "brand": "OnePlus",
-      "model": "9 / 9 Pro",
-      "zh": "一加 9 / 9 Pro",
-      "versions": [
-          {"label": "OOS 11 · Linux 5.4", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/SM8350_R_11.0", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
-          {"label": "OOS 12 · Linux 5.4", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/SM8350_S_12.0_9Pro", "kver": "5.4", "android": "12", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
-          {"label": "OOS 13.1 · Linux 5.15", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/sm8350_t_13.1.0_oneplus9", "kver": "5.15", "android": "13", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
-          {"label": "OOS 14 · Linux 5.15", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/sm8350_u_14.0.0_oneplus9", "kver": "5.15", "android": "14", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"}
-      ]
-    },
-    {
-      "id": "op9rt",
-      "display": "OnePlus 9RT",
-      "brand": "OnePlus",
-      "model": "9RT",
-      "zh": "一加 9RT",
-      "versions": [
-          {"label": "OOS 11 · Linux 5.4", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/SM8350_R_11.0_9RT", "kver": "5.4", "android": "11", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"},
-          {"label": "OOS 13.1 · Linux 5.15", "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350", "branch": "oneplus/sm8350_t_13.1.0_oneplus9rt", "kver": "5.15", "android": "13", "gki": 0, "defconfig": "vendor/lahaina_QGKI.config"}
+        {
+          "label": "Android 10 · Linux 4.9.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "onc-q-oss",
+          "kver": "4.9.186",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "onc-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.9.112",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "onc-p-oss",
+          "kver": "4.9.112",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "onc-perf_defconfig"
+        }
       ]
     },
     {
@@ -1448,7 +1566,15 @@
       "model": "Android 12",
       "zh": "通用 GKI / Android 12",
       "versions": [
-          {"label": "Android 12 · Linux 5.10 (KMI android12-5.10)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android12-5.10", "kver": "5.10", "android": "12", "gki": 1, "defconfig": "gki_defconfig"}
+        {
+          "label": "Android 12 · Linux 5.10 (KMI android12-5.10)",
+          "repo": "https://github.com/aosp-mirror/kernel_common",
+          "branch": "android12-5.10",
+          "kver": "5.10",
+          "android": "12",
+          "gki": 1,
+          "defconfig": "gki_defconfig"
+        }
       ]
     },
     {
@@ -1458,7 +1584,15 @@
       "model": "Android 13",
       "zh": "通用 GKI / Android 13",
       "versions": [
-          {"label": "Android 13 · Linux 5.15 (KMI android13-5.15)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android13-5.15", "kver": "5.15", "android": "13", "gki": 1, "defconfig": "gki_defconfig"}
+        {
+          "label": "Android 13 · Linux 5.15 (KMI android13-5.15)",
+          "repo": "https://github.com/aosp-mirror/kernel_common",
+          "branch": "android13-5.15",
+          "kver": "5.15",
+          "android": "13",
+          "gki": 1,
+          "defconfig": "gki_defconfig"
+        }
       ]
     },
     {
@@ -1468,7 +1602,15 @@
       "model": "Android 14",
       "zh": "通用 GKI / Android 14",
       "versions": [
-          {"label": "Android 14 · Linux 6.1 (KMI android14-6.1)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android14-6.1", "kver": "6.1", "android": "14", "gki": 1, "defconfig": "gki_defconfig"}
+        {
+          "label": "Android 14 · Linux 6.1 (KMI android14-6.1)",
+          "repo": "https://github.com/aosp-mirror/kernel_common",
+          "branch": "android14-6.1",
+          "kver": "6.1",
+          "android": "14",
+          "gki": 1,
+          "defconfig": "gki_defconfig"
+        }
       ]
     },
     {
@@ -1478,7 +1620,15 @@
       "model": "Android 15",
       "zh": "通用 GKI / Android 15",
       "versions": [
-          {"label": "Android 15 · Linux 6.6 (KMI android15-6.6)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android15-6.6", "kver": "6.6", "android": "15", "gki": 1, "defconfig": "gki_defconfig"}
+        {
+          "label": "Android 15 · Linux 6.6 (KMI android15-6.6)",
+          "repo": "https://github.com/aosp-mirror/kernel_common",
+          "branch": "android15-6.6",
+          "kver": "6.6",
+          "android": "15",
+          "gki": 1,
+          "defconfig": "gki_defconfig"
+        }
       ]
     },
     {
@@ -1488,7 +1638,1281 @@
       "model": "Android 16",
       "zh": "通用 GKI / Android 16",
       "versions": [
-          {"label": "Android 16 · Linux 6.12 (KMI android16-6.12)", "repo": "https://github.com/aosp-mirror/kernel_common", "branch": "android16-6.12", "kver": "6.12", "android": "16", "gki": 1, "defconfig": "gki_defconfig"}
+        {
+          "label": "Android 16 · Linux 6.12 (KMI android16-6.12)",
+          "repo": "https://github.com/aosp-mirror/kernel_common",
+          "branch": "android16-6.12",
+          "kver": "6.12",
+          "android": "16",
+          "gki": 1,
+          "defconfig": "gki_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "sagit",
+      "display": "sagit",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米6",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.4.153",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sagit-p-oss",
+          "kver": "4.4.153",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "sagit_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "dipper",
+      "display": "dipper",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米8",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.9.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "dipper-q-oss",
+          "kver": "4.9.186",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "dipper_user_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.9.112",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "dipper-p-oss",
+          "kver": "4.9.112",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "dipper_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "sirius",
+      "display": "sirius",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米8 SE",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.9.186",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sirius-q-oss",
+          "kver": "4.9.186",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "sirius_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "grus",
+      "display": "grus",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米9 SE",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.9.112",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "grus-p-oss",
+          "kver": "4.9.112",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "grus_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "umi",
+      "display": "Mi 10 / Mi 10 Pro",
+      "brand": "Xiaomi",
+      "model": "10 / Mi 10 Pro",
+      "zh": "小米10",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.19",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "umi-q-oss",
+          "kver": "4.19",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/umi_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "vangogh",
+      "display": "vangogh",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米10 Lite Zoom",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.19.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "vangogh-q-oss",
+          "kver": "4.19.81",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/vangogh_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "cmi",
+      "display": "cmi",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米10 Pro",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19.113",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "cmi-r-oss",
+          "kver": "4.19.113",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/cmi_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "cas",
+      "display": "cas",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米10 Ultra",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.19.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "cas-q-oss",
+          "kver": "4.19.81",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/cas_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "venus",
+      "display": "Mi 11",
+      "brand": "Xiaomi",
+      "model": "11",
+      "zh": "小米11",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "venus-r-oss",
+          "kver": "5.4",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/venus_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "lisa",
+      "display": "lisa",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米11 LE / 小米11 Lite 5G NE",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4.86",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "lisa-r-oss",
+          "kver": "5.4.86",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/lisa_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "courbet",
+      "display": "courbet",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米11 Lite 4G",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.180",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "courbet-r-oss",
+          "kver": "4.14.180",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/courbet_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "star",
+      "display": "star",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米11 Pro / 小米11 Ultra",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4.61",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "star-r-oss",
+          "kver": "5.4.61",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/star_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "agate",
+      "display": "agate",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米11T",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 4.19.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "agate-u-oss",
+          "kver": "4.19.191",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "agate_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "vili",
+      "display": "vili",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米11T Pro",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4.86",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "vili-r-oss",
+          "kver": "5.4.86",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/vili_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "taoyao",
+      "display": "taoyao",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米12 Lite",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.4.86",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "taoyao-s-oss",
+          "kver": "5.4.86",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/taoyao_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "zeus",
+      "display": "zeus",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米12 Pro",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.43",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "zeus-s-oss",
+          "kver": "5.10.43",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/zeus_GKI.config"
+        }
+      ]
+    },
+    {
+      "id": "daumier",
+      "display": "daumier",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米12 Pro Dimensity",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "daumier-s-oss",
+          "kver": "5.10.81",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "daumier_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "mayfly",
+      "display": "mayfly",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米12S",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "mayfly-s-oss",
+          "kver": "5.10.81",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/mayfly_GKI.config"
+        }
+      ]
+    },
+    {
+      "id": "psyche",
+      "display": "psyche",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米12X",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19.113",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "psyche-r-oss",
+          "kver": "4.19.113",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/psyche_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "fuxi",
+      "display": "fuxi",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米13",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.15.41",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "fuxi-t-oss",
+          "kver": "5.15.41",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/fuxi_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "ishtar",
+      "display": "ishtar",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米13 Ultra",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.15.41",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ishtar-t-oss",
+          "kver": "5.15.41",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/ishtar_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "shennong",
+      "display": "shennong",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米14 Pro / Ti",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 6.1.25",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "shennong-u-oss",
+          "kver": "6.1.25",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/shennong_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "aurora",
+      "display": "aurora",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米14 Ultra",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 6.1.25",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "aurora-u-oss",
+          "kver": "6.1.25",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/aurora_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "dada",
+      "display": "dada",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米15",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.6.30",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "dada-v-oss",
+          "kver": "6.6.30",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/dada_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "xuanyuan",
+      "display": "xuanyuan",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米15 Ultra",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.6.30",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "xuanyuan-v-oss",
+          "kver": "6.6.30",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/xuanyuan_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "dagu",
+      "display": "dagu",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板5 Pro 12.4",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 4.19.157",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "dagu-s-oss",
+          "kver": "4.19.157",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/dagu_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "elish",
+      "display": "elish",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板5 Pro Wi-Fi",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.19.113",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "elish-r-oss",
+          "kver": "4.19.113",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/elish_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "pipa",
+      "display": "pipa",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板6",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 4.19.157",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "pipa-t-oss",
+          "kver": "4.19.157",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/pipa_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "yudi",
+      "display": "yudi",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板6 Max 14",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.10.160",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "yudi-t-oss",
+          "kver": "5.10.160",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/yudi_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "liuqin",
+      "display": "liuqin",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板6 Pro",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.10.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "liuqin-t-oss",
+          "kver": "5.10.81",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/liuqin_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "sheng",
+      "display": "sheng",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板6S Pro 12.4",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 5.15.78",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sheng-u-oss",
+          "kver": "5.15.78",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/sheng_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "uke",
+      "display": "uke",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板7 / POCO Pad X1",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.1.68",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "uke-v-oss",
+          "kver": "6.1.68",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/uke_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "muyu",
+      "display": "muyu",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板7 Pro",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.1.68",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "muyu-v-oss",
+          "kver": "6.1.68",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/muyu_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "yupei",
+      "display": "yupei",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板8 / 小米平板9",
+      "versions": [
+        {
+          "label": "Android 16 · Linux 6.6.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "yupei-w-oss",
+          "kver": "6.6.57",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/yupei_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "piano",
+      "display": "piano",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米平板8 Pro",
+      "versions": [
+        {
+          "label": "Android 16 · Linux 6.6.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "piano-w-oss",
+          "kver": "6.6.57",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/piano_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "tissot",
+      "display": "tissot",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米A1",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 3.18.120",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "tissot-p-oss",
+          "kver": "3.18.120",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "tissot-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        }
+      ]
+    },
+    {
+      "id": "jasmine",
+      "display": "jasmine",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米A2",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.4.192",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "jasmine-q-oss",
+          "kver": "4.4.192",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "jasmine-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.4.153",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "jasmine-p-oss",
+          "kver": "4.4.153",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "jasmine-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "daisy",
+      "display": "daisy",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米A2 Lite",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 3.18.124",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "daisy-q-oss",
+          "kver": "3.18.124",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "daisy-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        },
+        {
+          "label": "Android 9 · Linux 3.18.120",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "daisy-p-oss",
+          "kver": "3.18.120",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "daisy-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        }
+      ]
+    },
+    {
+      "id": "laurel",
+      "display": "laurel",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米A3",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 4.14.180",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "laurel-r-oss",
+          "kver": "4.14.180",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/laurel_sprout-perf_defconfig"
+        },
+        {
+          "label": "Android 10 · Linux 4.14.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "laurel-q-oss",
+          "kver": "4.14.117",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/laurel_sprout-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "pyxis",
+      "display": "pyxis",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米CC9 / 小米9 Lite",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.9.112",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "pyxis-p-oss",
+          "kver": "4.9.112",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "pyxis_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "tucana",
+      "display": "tucana",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米CC9 Pro / 小米Note 10 / Note 10 Pro",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.14.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "tucana-q-oss",
+          "kver": "4.14.117",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/tucana_user_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.14.83",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "tucana-p-oss",
+          "kver": "4.14.83",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/tucana_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "laurus",
+      "display": "laurus",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米CC9e",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.14.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "laurus-q-oss",
+          "kver": "4.14.117",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/laurus-perf_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.14.98",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "laurus-p-oss",
+          "kver": "4.14.98",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/laurus-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "mona",
+      "display": "mona",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Civi",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4.86",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "mona-r-oss",
+          "kver": "5.4.86",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/mona_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "zijin",
+      "display": "zijin",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Civi 1S",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.4.86",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "zijin-s-oss",
+          "kver": "5.4.86",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/zijin_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "ziyi",
+      "display": "ziyi",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Civi 2 / 小米13 Lite / 13 Lite",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.10.81",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "ziyi-s-oss",
+          "kver": "5.10.81",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/ziyi_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "yuechu",
+      "display": "yuechu",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Civi 3",
+      "versions": [
+        {
+          "label": "Android 13 · Linux 5.10.136",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "yuechu-t-oss",
+          "kver": "5.10.136",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "yuechu_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "chenfeng",
+      "display": "chenfeng",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Civi 4 Pro",
+      "versions": [
+        {
+          "label": "Android 14 · Linux 6.1.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "chenfeng-u-oss",
+          "kver": "6.1.57",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/chenfeng_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "nitrogen",
+      "display": "nitrogen",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Max 3",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.4.192",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "nitrogen-q-oss",
+          "kver": "4.4.192",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "nitrogen_user_defconfig"
+        },
+        {
+          "label": "Android 9 · Linux 4.4.153",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "nitrogen-p-oss",
+          "kver": "4.4.153",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "nitrogen_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "perseus",
+      "display": "perseus",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米MIX 3",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.9.112",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "perseus-p-oss",
+          "kver": "4.9.112",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "perseus_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "odin",
+      "display": "odin",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米MIX 4",
+      "versions": [
+        {
+          "label": "Android 11 · Linux 5.4.86",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "odin-r-oss",
+          "kver": "5.4.86",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/odin_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "bixi",
+      "display": "bixi",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米MIX Flip 2",
+      "versions": [
+        {
+          "label": "Android 15 · Linux 6.6.56",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "bixi-v-oss",
+          "kver": "6.6.56",
+          "android": "15",
+          "gki": 0,
+          "defconfig": "vendor/bixi_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "jason",
+      "display": "jason",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Note 3",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 4.4.153",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "jason-p-oss",
+          "kver": "4.4.153",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "jason_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "toco",
+      "display": "toco",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米Note 10 Lite",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.14.117",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "toco-q-oss",
+          "kver": "4.14.117",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/toco_user_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "op7pro",
+      "display": "OnePlus 7 / 7 Pro / 7T / 7T Pro",
+      "brand": "OnePlus",
+      "model": "7 / 7 Pro / 7T / 7T Pro",
+      "zh": "一加 7 Pro",
+      "versions": [
+        {
+          "label": "OOS 9 · Linux 4.14",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150",
+          "branch": "oneplus/SM8150_P_9.0",
+          "kver": "4.14",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "vendor/sm8150-perf_defconfig"
+        },
+        {
+          "label": "OOS 10 · Linux 4.14",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150",
+          "branch": "oneplus/SM8150_Q_10.0",
+          "kver": "4.14",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/sm8150-perf_defconfig"
+        },
+        {
+          "label": "OOS 12.1 · Linux 4.14",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8150",
+          "branch": "oneplus/sm8150_s_12.1_op7pro",
+          "kver": "4.14",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/sm8150-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "op8",
+      "display": "OnePlus 8 / 8 Pro",
+      "brand": "OnePlus",
+      "model": "8 / 8 Pro",
+      "zh": "一加 8",
+      "versions": [
+        {
+          "label": "OOS 10 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/SM8250_Q_10.0",
+          "kver": "4.19",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        },
+        {
+          "label": "OOS 11 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/SM8250_R_11.0",
+          "kver": "4.19",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        },
+        {
+          "label": "OOS 13 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/sm8250_t_13.0.0_op8",
+          "kver": "4.19",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "op8t",
+      "display": "OnePlus 8T / 9R",
+      "brand": "OnePlus",
+      "model": "8T / 9R",
+      "zh": "一加 8T",
+      "versions": [
+        {
+          "label": "OOS 11 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/SM8250_R_11.0",
+          "kver": "4.19",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        },
+        {
+          "label": "OOS 12.1 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/sm8250_s_12.1",
+          "kver": "4.19",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        },
+        {
+          "label": "OOS 13.1 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/sm8250_t_13.1_op8",
+          "kver": "4.19",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        },
+        {
+          "label": "OOS 14 · Linux 4.19",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8250",
+          "branch": "oneplus/sm8250_u_14.0.0_op8t",
+          "kver": "4.19",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/kona-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "op9",
+      "display": "OnePlus 9 / 9 Pro",
+      "brand": "OnePlus",
+      "model": "9 / 9 Pro",
+      "zh": "一加 9",
+      "versions": [
+        {
+          "label": "OOS 11 · Linux 5.4",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350",
+          "branch": "oneplus/SM8350_R_11.0",
+          "kver": "5.4",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/lahaina_QGKI.config"
+        },
+        {
+          "label": "OOS 12 · Linux 5.4",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350",
+          "branch": "oneplus/SM8350_S_12.0_9Pro",
+          "kver": "5.4",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/lahaina_QGKI.config"
+        },
+        {
+          "label": "OOS 13.1 · Linux 5.15",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350",
+          "branch": "oneplus/sm8350_t_13.1.0_oneplus9",
+          "kver": "5.15",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/lahaina_QGKI.config"
+        },
+        {
+          "label": "OOS 14 · Linux 5.15",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350",
+          "branch": "oneplus/sm8350_u_14.0.0_oneplus9",
+          "kver": "5.15",
+          "android": "14",
+          "gki": 0,
+          "defconfig": "vendor/lahaina_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "op9rt",
+      "display": "OnePlus 9RT",
+      "brand": "OnePlus",
+      "model": "9RT",
+      "zh": "一加 9RT",
+      "versions": [
+        {
+          "label": "OOS 11 · Linux 5.4",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350",
+          "branch": "oneplus/SM8350_R_11.0_9RT",
+          "kver": "5.4",
+          "android": "11",
+          "gki": 0,
+          "defconfig": "vendor/lahaina_QGKI.config"
+        },
+        {
+          "label": "OOS 13.1 · Linux 5.15",
+          "repo": "https://github.com/OnePlusOSS/android_kernel_oneplus_sm8350",
+          "branch": "oneplus/sm8350_t_13.1.0_oneplus9rt",
+          "kver": "5.15",
+          "android": "13",
+          "gki": 0,
+          "defconfig": "vendor/lahaina_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "surya",
+      "display": "POCO X3 NFC",
+      "brand": "POCO",
+      "model": "X3 NFC",
+      "zh": "POCO X3 NFC / POCO X3",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 4.14",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "surya-q-oss",
+          "kver": "4.14",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "vendor/sdmsteppe-perf_defconfig"
+        }
+      ]
+    },
+    {
+      "id": "moonstone",
+      "display": "moonstone",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "POCO X5 5G",
+      "versions": [
+        {
+          "label": "Android 12 · Linux 5.4.191",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "moonstone-s-oss",
+          "kver": "5.4.191",
+          "android": "12",
+          "gki": 0,
+          "defconfig": "vendor/moonstone_QGKI.config"
+        }
+      ]
+    },
+    {
+      "id": "darwin",
+      "display": "darwin",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "POCO X8s",
+      "versions": [
+        {
+          "label": "Android 16 · Linux 6.6.57",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "darwin-w-oss",
+          "kver": "6.6.57",
+          "android": "16",
+          "gki": 0,
+          "defconfig": "vendor/darwin_consolidate.config"
+        }
       ]
     }
   ]

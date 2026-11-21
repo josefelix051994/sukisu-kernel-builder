@@ -1,137 +1,182 @@
-/* 一次性工具: 生成 tools/device_zh.tsv (机型代码 -> 中文型号)
- * 数据来源: MiCode/Xiaomi_Kernel_OpenSource README 的机型表(权威) + 少量人工补充
- * 用法: node tools/gen_device_zh.js
+#!/usr/bin/env node
+/**
+ * 生成 tools/device_zh.tsv: <机型代码>\t<中文型号>
+ *
+ * 数据来源: tools/data/mi_devices.yml(XiaomiFirmwareUpdater 的 MIUI 机型表, 按地区记录
+ *   codename → "营销名 + 地区"), 逐机型取各地区的营销名去重后作为该 codename 的机型名。
+ *   这样避免"共用内核的分支把多台设备混在一起"的问题(例: cas/cmi/umi 以前都被写成
+ *   "小米10 Ultra / 小米10 Pro / 小米10 / 红米K30 Pro", 现在分别是 小米10 Ultra、小米10 Pro、小米10)。
+ *
+ * 用法: node tools/gen_device_zh.js [devices.conf]
  */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const mapFile = path.join(__dirname, '.tmp_map.txt');       // codename \t English names
-const outFile = path.join(__dirname, 'device_zh.tsv');
+const CONF = process.argv[2] || path.join(ROOT, 'devices.conf');
+const YML = path.join(__dirname, 'data', 'mi_devices.yml');
+const OUT = path.join(__dirname, 'device_zh.tsv');
 
-/* 人工补充: README 无记录或不在表内的机型(已核对来源) */
-const EXTRA = {
-  bomb: 'Redmi 10X, Redmi 10X Pro',
-  evergo: 'Redmi Note 11T 5G',                     // Xiaomi-MT6833/kernel_xiaomi_evergo
-  ingres: 'Redmi K50 Gaming, POCO F4 GT',          // LineageOS device_xiaomi_ingres
-  lmi: 'Redmi K30 Pro, POCO F2 Pro',
-  nitrogen: 'MI MAX3, MI 8Lite',
-  perseus: 'MIX 2S',
-  pyxis: 'MI CC 9, MI CC 9 Meitu Edition',
-  sagit: 'Mi 6, Mi MIX 2',
-  umi: 'Mi 10, Mi 10 Pro',
-  vangogh: 'Mi 10T Lite, Redmi Note 9 Pro 5G',
-  /* 一加(OnePlusOSS 分支) */
-  op7pro: 'OnePlus 7, 7 Pro, 7T, 7T Pro',
-  op8: 'OnePlus 8, 8 Pro',
-  op8t: 'OnePlus 8T, 9R',
-  op9: 'OnePlus 9, 9 Pro',
-  op9rt: 'OnePlus 9RT',
-  /* GKI 通用 */
-  'gki-a12': 'General GKI, Android 12',
-  'gki-a13': 'General GKI, Android 13',
-  'gki-a14': 'General GKI, Android 14',
-  'gki-a15': 'General GKI, Android 15',
-  'gki-a16': 'General GKI, Android 16',
-};
-
-/* 显示名与 README 冲突时的人工修正(以实际机型为准) */
-const OVERRIDE = {
-  alioth: 'Redmi K40, POCO F3, Mi 10S',
-  raphael: 'Redmi K20 Pro, Mi 9T Pro',
-  davinci: 'Redmi K20, Mi 9T',
-  ginkgo: 'Redmi Note 8, Redmi Note 8T',
-  surya: 'POCO X3 NFC',
-  haydn: 'Redmi K40 Pro, Redmi K40 Pro+',
-  veux: 'Redmi Note 11 Pro 5G, POCO X4 Pro 5G',
-  munch: 'Redmi K40S, POCO F4',
-  camellian: 'POCO M3 Pro 5G, Redmi Note 10 5G, Redmi Note 10T',
-  marble: 'Redmi Note 12 Turbo, POCO F5',
-};
-
-/* 英文 -> 中文 的机型系列替换(顺序敏感) */
-const REPS = [
-  [/POCOPHONE/gi, 'POCO'],
-  [/\bRedmi POCO\b/gi, 'POCO'],
-  [/\bRedmi POCO\b/gi, 'POCO'],
-  [/\bMI CC 9e\b/gi, '小米CC9e'],
-  [/\bMI CC 9\b/gi, '小米CC9'],
-  [/\bMI CC9\b/gi, '小米CC9'],
-  [/\bMI MAX3\b/gi, '小米MAX3'],
-  [/\bMI MAX 3\b/gi, '小米MAX3'],
-  [/\bMI 8Lite\b/gi, '小米8 Lite'],
-  [/\bMI 8 Lite\b/gi, '小米8 Lite'],
-  [/\bMIX FOLD\b/gi, '小米MIX FOLD'],
-  [/\bMIX /g, '小米MIX '],
-  [/\bMi 10 Lite 5G\b/gi, '小米10 Lite 5G'],
-  [/\bMi 10 Lite Zoom\b/gi, '小米10 Lite Zoom'],
-  [/\bMi A1\b/gi, '小米A1'],
-  [/\bMi A2 lite\b/gi, '小米A2 Lite'],
-  [/\bMi A2\b/gi, '小米A2'],
-  [/\bMi A3\b/gi, '小米A3'],
-  [/^\s*Mi\s+/i, '小米'],
-  [/\bMi\s+/g, '小米'],
-  [/^\s*MI\s+/i, '小米'],
-  [/\bMI\s+/g, '小米'],
-  [/\bXiaomi\s+/gi, '小米'],
-  [/\bREDMI\s+/g, '红米'],
-  [/\bRedmi\s+/g, '红米'],
-  [/\bCivi\b/g, '小米Civi'],
-  [/\bNote PAD\b/gi, 'Note'],
-  /* 营销后缀本地化 */
-  [/\bK40 Gaming\b/g, 'K40 电竞版'],
-  [/\bK50 Gaming\b/g, 'K50 电竞版'],
-  [/\bNote 12 Pro Speed\b/g, 'Note 12 Pro 极速版'],
-  [/\bMix Flip\b/gi, 'MIX Flip'],
-  [/\bPad\b/g, 'Pad'],
-  [/\bGeneral GKI\b/g, '通用 GKI'],
-  [/\bOnePlus\b/g, '一加'],
-];
-
-function translate(one) {
-  let s = String(one).replace(/\s+/g, ' ').trim();
-  for (const [re, rep] of REPS) s = s.replace(re, rep);
-  // 清理: 双空格、中英之间多余空格(中文与英文/数字之间保留单空格更易读，这里只压缩重复)
-  return s.replace(/\s+/g, ' ').trim();
+/* ---------- 1. 读 devices.conf 的设备列表 (保持出现顺序) ---------- */
+const ids = [];
+for (const raw of fs.readFileSync(CONF, 'utf8').split('\n')) {
+  const line = raw.replace(/\r$/, '');
+  if (!line || line.startsWith('#')) continue;
+  const id = line.split('|')[0].trim();
+  if (id && !ids.includes(id)) ids.push(id);
 }
 
-function splitNames(english) {
-  return english
-    .split(/[,/]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+/* ---------- 2. 解析 mi_devices.yml ---------- */
+const REGION_WORDS = [
+  'China', 'Global', 'EEA', 'India', 'Russia', 'Indonesia', 'Turkey', 'Taiwan', 'Hong Kong',
+  'Singapore', 'Malaysia', 'Thailand', 'Vietnam', 'Philippines', 'Japan', 'Korea', 'Mexico',
+  'Brazil', 'Latin America', 'Europe', 'Middle East', 'Africa', 'Ukraine', 'Kazakhstan',
+  'Spain', 'Italy', 'France', 'Germany', 'Poland', 'Czech', 'Romania', 'Hungary', 'Bulgaria',
+  'Greece', 'Portugal', 'Netherlands', 'Belgium', 'Austria', 'Switzerland', 'Croatia',
+  'Serbia', 'Bosnia', 'Slovenia', 'Slovakia', 'Sweden', 'Norway', 'Denmark', 'Finland',
+  'Iceland', 'Ireland', 'UK', 'GB',
+].sort((a, b) => b.length - a.length); // 先匹配长的, 避免 Latin America 被切碎
+
+const REGION_TAIL = new RegExp(`\\s+(${REGION_WORDS.map((w) => w.replace(/ /g, '\\s+')).join('|')})$`);
+// 地区后缀 → 优先级(越小越靠前): 中国 → 国际 → 印度 → EEA → 其它
+function regionRank(key) {
+  if (/_(eea_)?global$/.test(key) === false) return 0;           // 无地区后缀 = 中国版
+  if (/^.*_global$/.test(key) && !/_(eea|in|id|ru|tr|tw)_global$/.test(key)) return 1;
+  if (/_in_global$|_in$|_india$/.test(key)) return 2;
+  if (/_eea_global$/.test(key)) return 3;
+  return 4;
+}
+function baseCodename(key) {
+  return key
+    .replace(/_(eea_)?global$/, '')
+    .replace(/_(in|id|ru|tr|tw|cn|india)$/, '');
 }
 
-const map = {};
-if (fs.existsSync(mapFile)) {
-  for (const raw of fs.readFileSync(mapFile, 'utf8').split('\n')) {
-    // 兼容读取过程中可能混入的 NUL 字节(UTF-16 源被按 UTF-8 读)与 BOM 残留
-    const line = raw.replace(/\u0000/g, '');
-    const [idRaw, enRaw] = line.split('\t');
-    const id = (idRaw || '').replace(/^[^\x21-\x7e]+/, '').trim();   // 去掉 UTF-16 BOM 产生的 U+FFFD 前缀
-    const en = (enRaw || '').trim();
-    if (id && en) map[id] = en;
+const ymlRaw = fs.readFileSync(YML, 'utf8');
+const byBase = new Map(); // base -> [{ rank, names: [..] }]
+let curKey = null;
+let curIdx = 0;
+for (const raw of ymlRaw.split('\n')) {
+  const line = raw.replace(/\r$/, '');
+  if (!line.trim() || line.trim().startsWith('#')) continue;
+  if (/^[^\s][^:]*:\s*$/.test(line)) {
+    curKey = line.slice(0, line.lastIndexOf(':')).trim();
+    curIdx = 0;
+    continue;
+  }
+  if (curKey && /^\s*-\s+/.test(line)) {
+    curIdx += 1;
+    // 每个键下: 第 1 条是"营销名 + 地区", 第 2 条是内部型号代码(如 ALIOTHGlobal) → 只取第 1 条
+    if (curIdx > 1) continue;
+    const val = line.replace(/^\s*-\s+/, '').trim();
+    const base = baseCodename(curKey);
+    if (!byBase.has(base)) byBase.set(base, []);
+    byBase.get(base).push({ rank: regionRank(curKey), names: val.split(/\s*\/\s*/) });
   }
 }
-Object.assign(map, EXTRA);
-Object.assign(map, OVERRIDE);
 
-const rows = [];
-for (const [id, en] of Object.entries(map)) {
-  const names = splitNames(en).map(translate).filter(Boolean);
-  // 去重(同一英文可能被两条规则翻成相同中文)
-  const uniq = [...new Set(names)];
-  if (!uniq.length) continue;
-  rows.push([id, uniq.join(' / ')]);
+/* ---------- 3. 人工覆盖(OnePlus / 通用 GKI / 数据源未收录的老机型) ---------- */
+const OVERRIDE = {
+  'gki-a12': '通用 GKI / Android 12',
+  'gki-a13': '通用 GKI / Android 13',
+  'gki-a14': '通用 GKI / Android 14',
+  'gki-a15': '通用 GKI / Android 15',
+  'gki-a16': '通用 GKI / Android 16',
+  op7pro: 'OnePlus 7 Pro',
+  op8: 'OnePlus 8',
+  op8t: 'OnePlus 8T',
+  op9: 'OnePlus 9',
+  op9rt: 'OnePlus 9RT',
+  laurel: 'Mi A3',          // MiCode 分支 laurel-*, 数据源里叫 laurel_sprout
+  onc: 'Redmi Y3',          // 数据源里叫 onc_in_global
+};
+
+/* ---------- 4. 英文 → 中文 ---------- */
+const REPS = [
+  [/^POCOPHONE\b/, 'POCO'],
+  [/^Redmi\s+Pad\b/, '红米平板'],
+  [/^Redmi\b/, '红米'],
+  [/^Xiaomi\s+Pad\b/, '小米平板'],
+  [/^Xiaomi\b/, '小米'],
+  [/^Mi\s+Pad\b/, '小米平板'],
+  [/\bMi\s+Pad\b/, '小米平板'],
+  [/^Mi\s+CC\s*9(e?)(?:\s+Meitu)?\b/, '小米CC9$1'],
+  [/^Mi\s+MIX\b/, '小米MIX'],
+  [/^Mi\s+MAX\b/, '小米MAX'],
+  [/^MIX\b/, '小米MIX'],
+  [/^Mi\b/, '小米'],
+  [/^OnePlus\b/, '一加'],
+  [/K40\s+Gaming/gi, 'K40 电竞版'],
+  [/K50\s+Gaming/gi, 'K50 电竞版'],
+  [/K60\s+Gaming/gi, 'K60 电竞版'],
+  [/Note\s+12\s+Pro\s+Speed/gi, 'Note 12 Pro 极速版'],
+];
+
+function toZh(en) {
+  let s = en.trim();
+  for (const [re, rep] of REPS) s = s.replace(re, rep);
+  s = s.replace(/\s{2,}/g, ' ').trim();
+  // 中文品牌名与型号之间不留空格: 红米 K40 → 红米K40; 小米 平板 5 → 小米平板5
+  s = s.replace(/^(红米|小米)\s+/g, '$1');
+  s = s.replace(/^(红米|小米)平板\s+/g, '$1平板');
+  return s;
 }
-rows.sort((a, b) => a[0].localeCompare(b[0]));
 
+/* ---------- 5. 生成每个机型的名字列表 ---------- */
+const rows = [];
+for (const id of ids) {
+  let enNames;
+  if (OVERRIDE[id]) {
+    enNames = [OVERRIDE[id]];
+  } else {
+    const cand = byBase.get(id) || byBase.get(`${id}_sprout`) || null;
+    if (!cand) {
+      // 退化: 用 devices.conf 第 3 列显示名
+      const line = fs.readFileSync(CONF, 'utf8').split('\n').find((l) => l.split('|')[0].trim() === id) || '';
+      enNames = [line.split('|')[2] ? line.split('|')[2].trim() : id];
+    } else {
+      cand.sort((a, b) => a.rank - b.rank);
+      const seen = new Set();
+      enNames = [];
+      const push = (name) => {
+        if (enNames.length >= 3) return; // 每台最多 3 个名字
+        const clean = name.replace(REGION_TAIL, '').replace(/\s+/g, ' ').trim();
+        if (clean && !seen.has(clean)) {
+          seen.add(clean);
+          enNames.push(clean);
+        }
+      };
+      for (const entry of cand) {
+        const pieces = entry.names.map((n) => n.replace(REGION_TAIL, '').trim());
+        // "Redmi K40 Pro / Pro+ China" 这类写法: 后段只是变体后缀, 需补回公共前缀
+        const first = pieces[0] || '';
+        const basePrefix = first.replace(/\s+(Pro\+?|Ultra|Prime|Lite|Turbo|Hypercharge|Discovery|Plus)\b.*$/i, '').trim();
+        pieces.forEach((p, i) => {
+          const isVariant = i > 0 && /^(Pro\+?|Ultra|Prime|Lite|Turbo|Hypercharge|Discovery|Plus|\+)/i.test(p);
+          push(isVariant && basePrefix ? `${basePrefix} ${p}` : p);
+        });
+        if (enNames.length >= 3) break; // 最多保留 3 个名字, 避免列表过长
+      }
+      if (!enNames.length) enNames = [id];
+    }
+  }
+  // 已有中文的(OVERRIDE/GKI)直接用; 其余走翻译; 最后保证"中文名在前, 英文名在后"
+  const zhNames = enNames.map((n) => (/[\u4e00-\u9fff]/.test(n) && !/^OnePlus|^Mi\s|^Redmi|^Xiaomi|^POCO/.test(n) ? n : toZh(n)));
+  const hasZh = (s) => /[\u4e00-\u9fff]/.test(s);
+  const ordered = [
+    ...zhNames.filter((n) => hasZh(n)),
+    ...zhNames.filter((n) => !hasZh(n)),
+  ];
+  rows.push([id, ordered.join(' / ')]);
+}
+
+/* ---------- 6. 写出 ---------- */
+rows.sort((a, b) => a[0].localeCompare(b[0]));
 const header = [
-  '# 机型代码 -> 中文型号(由 tools/gen_device_zh.js 生成)',
-  '# 数据来源: MiCode/Xiaomi_Kernel_OpenSource README 官方机型表 + 人工核对补充',
-  '# 格式: <codename>\\t<中文型号, 多合一同设备用 " / " 分隔>',
-  '# 未列出的机型代码在网页上回退显示英文/代码',
+  '# 机型代码\t中文型号 (由 tools/gen_device_zh.js 自动生成, 数据源 tools/data/mi_devices.yml)',
+  '# 想改某个机型的显示名: 改 tools/gen_device_zh.js 的 OVERRIDE, 或直接改本文件后不要重跑生成器',
+  '# 多地区同款机型用 " / " 分隔, 中文名在前英文名在后',
 ].join('\n');
-fs.writeFileSync(outFile, header + '\n' + rows.map((r) => r.join('\t')).join('\n') + '\n', 'utf8');
-console.log(`生成 ${outFile}: ${rows.length} 条`);
+fs.writeFileSync(OUT, `${header}\n${rows.map(([a, b]) => `${a}\t${b}`).join('\n')}\n`, 'utf8');
+console.log(`生成 ${OUT}: ${rows.length} 条`);

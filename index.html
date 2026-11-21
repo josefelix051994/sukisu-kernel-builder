@@ -35,8 +35,9 @@
   <section class="card">
     <h2>2 · 选择设备与版本</h2>
     <div class="grid">
-      <label>设备型号
-        <select id="device"></select>
+      <label>设备型号(按中文名排序)
+        <input id="device-filter" type="search" placeholder="搜索: 中文型号 / 机型代码, 如 K40 / alioth" autocomplete="off">
+        <select id="device" size="1"></select>
       </label>
       <label>内核版本
         <select id="version"></select>
