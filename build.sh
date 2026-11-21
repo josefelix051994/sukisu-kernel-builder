@@ -1096,7 +1096,7 @@ fix_vendor_api_compat() {
     fi
   done
   # 老 MTK 相机驱动仍 include linux/wakelock.h；该 Android 私有头在主线树中已移除，提供最小兼容桩。
-  if [ ! -f include/linux/wakelock.h ] && find -L drivers/misc/mediatek -type f \( -name '*.c' -o -name '*.h' \) -print 2>/dev/null | while read -r _wf; do grep -q 'linux/wakelock.h' "$_wf" && exit 0; done; then
+  if [ ! -f include/linux/wakelock.h ] && grep -RIl --include='*.c' --include='*.h' 'linux/wakelock.h' drivers/misc/mediatek >/dev/null 2>&1; then
     mkdir -p include/linux
     cat > include/linux/wakelock.h <<'EOF'
 #ifndef _SUKI_WAKELOCK_COMPAT_H
