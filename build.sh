@@ -1181,8 +1181,8 @@ EOF
       sed -i -E 's@^[[:space:]]*(.*camera_mfb\.o.*)$@# suki-builder: unavailable private MFB map table; \1@' "$f" || true
       n=$((n+1))
     fi
-    if grep -q 'swpm_perf_arm_pmu\.o' "$f" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*swpm_perf_arm_pmu\.o.*)$@# suki-builder: unavailable vendor PMU ABI; \1@' "$f" || true
+    if grep -qE 'swpm[_-]perf[_-]arm[_-]pmu\.o' "$f" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*swpm[_-]perf[_-]arm[_-]pmu\.o.*)$@# suki-builder: unavailable vendor PMU ABI; \1@' "$f" || true
       n=$((n+1))
     fi
   done
