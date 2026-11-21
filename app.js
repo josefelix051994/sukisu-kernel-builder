@@ -19,26 +19,74 @@ const state = {
   logBusy: false,
   logFollow: true,
   pollCount: 0,
+  etags: {},       // path -> { etag, data }: 304 条件请求不计入限速额度
+  errBackoff: 0,   // 连续出错次数(指数退避)
+  pollMs: 10000,   // 轮询间隔(正常 10 秒)
 };
 
-/* ---------- API ---------- */
+/* ---------- API(带限速诊断 + ETag 条件请求) ---------- */
+class ApiError extends Error {
+  constructor(message, { status, kind = 'http', waitMs = 0 } = {}) {
+    super(message);
+    this.status = status;
+    this.kind = kind;      // ratelimit | secondary | auth | network | http
+    this.waitMs = waitMs;  // 建议等待时间(毫秒)
+  }
+}
+
+function rateLimitHint(res) {
+  const remaining = res.headers.get('x-ratelimit-remaining');
+  const reset = res.headers.get('x-ratelimit-reset');
+  const retryAfter = res.headers.get('retry-after');
+  if (remaining === '0' && reset) {
+    return { kind: 'ratelimit', waitMs: Math.max(30000, new Date(Number(reset) * 1000).getTime() - Date.now() + 5000) };
+  }
+  if (retryAfter && Number(retryAfter) > 0) return { kind: 'secondary', waitMs: Math.max(30000, Number(retryAfter) * 1000) };
+  return { kind: 'secondary', waitMs: 60000 };
+}
+
 async function api(path, opts = {}) {
   const headers = { Accept: 'application/vnd.github+json' };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
-  const res = await fetch(`${API}${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
-  if (res.status === 401 || res.status === 403) {
-    throw new Error(`GitHub API 返回 ${res.status}: Token 无效或权限不足(需要 repo + workflow 权限)`);
+  let res;
+  try {
+    res = await fetch(`${API}${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
+  } catch (e) {
+    throw new ApiError(`网络请求失败: ${e.message}`, { kind: 'network', waitMs: 5000 });
+  }
+  if (res.status === 401) {
+    throw new ApiError('Token 无效或已过期, 请在页面顶部重新保存(需要 repo + workflow 权限)。', { status: 401, kind: 'auth' });
+  }
+  if (res.status === 403 || res.status === 429) {
+    const rl = rateLimitHint(res);
+    const mins = Math.max(1, Math.ceil(rl.waitMs / 60000));
+    throw new ApiError(
+      rl.kind === 'ratelimit'
+        ? `GitHub API 请求额度已用尽(5000 次/小时), 约 ${mins} 分钟后自动恢复, 期间会暂停轮询。`
+        : `GitHub 触发二级限速(同一 Token 请求过快), 约 ${mins} 分钟内自动退避重试。`,
+      { status: res.status, kind: rl.kind, waitMs: rl.waitMs },
+    );
   }
   return res;
 }
 
 async function apiJson(path, opts = {}) {
-  const res = await api(path, opts);
+  const isGet = !opts.method || opts.method === 'GET';
+  const cacheKey = isGet ? path : null;
+  const cached = cacheKey ? state.etags[cacheKey] : null;
+  const reqOpts = { ...opts };
+  if (cached) reqOpts.headers = { ...(reqOpts.headers || {}), 'If-None-Match': cached.etag };
+  const res = await api(path, reqOpts);
+  if (res.status === 304 && cached) return cached.data;
   if (res.status === 204) return null;
   const text = await res.text();
   let data = null;
   try { data = JSON.parse(text); } catch { data = text; }
-  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${(data && data.message) || text}`);
+  if (!res.ok) throw new ApiError(`GitHub API ${res.status}: ${(data && data.message) || text}`, { status: res.status });
+  if (cacheKey) {
+    const etag = res.headers.get('etag');
+    if (etag) state.etags[cacheKey] = { etag, data };
+  }
   return data;
 }
 
@@ -228,7 +276,7 @@ async function findNewRun() {
   return null;
 }
 
-/* ---------- 运行状态轮询 ---------- */
+/* ---------- 运行状态轮询(自调度 + 限速/错误退避) ---------- */
 async function attachRun(runId) {
   stopPolling();
   state.curRunId = runId;
@@ -236,26 +284,48 @@ async function attachRun(runId) {
   state.lastLogText = '';
   state.logWaiting = false;
   state.logBusy = false;
+  state.errBackoff = 0;
+  state.etags = {};
   $('log').textContent = '';
   $('artifacts').hidden = true;
   $('cancel-btn').hidden = true;
+  showRunError('');
   state.pollCount = 0;
   await tick();
-  state.pollTimer = setInterval(tick, 3000);
+}
+
+function scheduleTick(ms) {
+  stopPolling();
+  state.pollTimer = setTimeout(tick, Math.max(3000, ms));
+}
+
+function showRunError(text) {
+  const el = $('run-error');
+  if (!el) return;
+  if (!text) { el.hidden = true; el.textContent = ''; return; }
+  el.hidden = false;
+  el.textContent = text;
 }
 
 async function tick() {
-  if (!state.curRunId) return;
+  state.pollTimer = null;
+  const runId = state.curRunId;
+  if (!runId) return;
   try {
-    const run = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${state.curRunId}`);
+    const run = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${runId}`);
+    if (state.curRunId !== runId) return;
     renderRun(run);
-    const jobs = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${state.curRunId}/jobs`);
+    const jobs = await apiJson(`/repos/${OWNER}/${REPO}/actions/runs/${runId}/jobs`);
+    if (state.curRunId !== runId) return;
     const jobList = jobs.jobs || [];
     renderSteps(jobList);
     // job 对象不带 logs_url 字段, 按 job.id 构造日志端点
     const jobLogsUrl = jobList.length ? `${API}/repos/${OWNER}/${REPO}/actions/jobs/${jobList[0].id}/logs` : null;
+    showRunError('');
+    state.errBackoff = 0;
     if (run.status === 'in_progress' || run.status === 'queued') {
       if (!state.logBusy) refreshLog(run, jobLogsUrl);
+      scheduleTick(state.pollMs);
     } else if (run.status === 'completed') {
       stopPolling();
       await refreshLog(run, jobLogsUrl, true);
@@ -264,8 +334,25 @@ async function tick() {
       await renderHistory();
     }
   } catch (e) {
+    if (state.curRunId !== runId) return;
     $('run-status-badge').textContent = '轮询出错';
     $('run-status-badge').className = 'badge failure';
+    if (e.status === 404) {
+      stopPolling();
+      showRunError(`${e.message}\n该运行可能已被删除或仓库无权访问; 请刷新页面查看「最近构建」列表。`);
+      return;
+    }
+    if (e.kind === 'ratelimit' || e.kind === 'secondary') {
+      const next = new Date(Date.now() + e.waitMs);
+      showRunError(`${e.message}\n下次自动重试: ${next.toLocaleTimeString()}`);
+      scheduleTick(e.waitMs);
+    } else {
+      state.errBackoff = Math.min((state.errBackoff || 0) + 1, 5);
+      const ladder = [5000, 10000, 20000, 40000, 60000];
+      const waitMs = ladder[state.errBackoff - 1] || 60000;
+      showRunError(`${e.message}\n第 ${state.errBackoff} 次失败, ${Math.round(waitMs / 1000)} 秒后重试(可点右上角「在 GitHub 打开」查看)。`);
+      scheduleTick(waitMs);
+    }
   }
 }
 
@@ -479,6 +566,6 @@ async function autoResume() {
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function setMsg(text, isErr) { const m = $('build-msg'); m.textContent = text; m.style.color = isErr ? 'var(--red)' : ''; }
-function stopPolling() { if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; } }
+function stopPolling() { if (state.pollTimer) { clearTimeout(state.pollTimer); state.pollTimer = null; } }
 
 document.addEventListener('DOMContentLoaded', init);
