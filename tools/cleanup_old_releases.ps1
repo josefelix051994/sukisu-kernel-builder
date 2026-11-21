@@ -21,12 +21,9 @@ $agg = $rels | Where-Object { $_.tag_name -eq $aggTag } | Select-Object -First 1
 if (-not $agg) { Write-Error "未找到统一 Release「$aggTag」, 请先跑一次 publish=true 的编译"; exit 1 }
 $aggAssets = @($agg.assets | ForEach-Object { $_.name })
 Write-Host "内核合集现有资产: $($aggAssets.Count)"
-$aggKeys = @{}
-foreach ($n in $aggAssets) {
-  if ($n -match '_([A-Za-z0-9_\-\.]+)_([0-9]+\.[0-9]+(?:\.[0-9]+)?)\.(zip|ko)$') {
-    $aggKeys["$($matches[1])|$($matches[2])"] = $true
-  }
-}
+# 统一合集里的资产名形如 <品牌>_<机型>_<代码>_<kver>.<ext>(品牌/机型本身可能含下划线),
+# 因此用"以 _<代码>_<kver> 结尾"的后缀匹配, 而不是猜分段。
+$aggBases = @($aggAssets | ForEach-Object { $_ -replace '\.(zip|ko)$', '' })
 
 $old = $rels | Where-Object { $_.tag_name -like 'build-*' }
 Write-Host "旧 Release 数量: $($old.Count)"
@@ -37,8 +34,12 @@ foreach ($r in $old) {
   if ($parts.Count -lt 4) { $kept++; continue }
   $kver = $parts[$parts.Count - 3]
   $code = $parts[$parts.Count - 4]
-  $key = "$code|$kver"
-  if ($aggKeys.ContainsKey($key)) {
+  $suffix = "_${code}_${kver}"
+  $has = $false
+  foreach ($b in $aggBases) {
+    if ($b -eq "${code}_${kver}" -or $b.EndsWith($suffix)) { $has = $true; break }
+  }
+  if ($has) {
     if ($Apply) {
       try {
         Invoke-RestMethod -Method Delete -Uri "https://api.github.com/repos/$repo/releases/$($r.id)" -Headers $hdr | Out-Null
