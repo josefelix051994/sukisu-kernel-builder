@@ -1929,12 +1929,11 @@ make_config() {
     $SC -d DEBUG_INFO >/dev/null 2>&1 || true
     $SC -d DEBUG_INFO_DWARF4 >/dev/null 2>&1 || true
   fi
-  # gold 5.10.168 的 crypto/Makefile 有 %.asn1.c 规则 (asn1_compiler) 但缺 %.asn1.h 规则 →
-  # make 直接报 "No rule to make target 'crypto/ecdsasignature.asn1.h'"。厂商树裁剪所致,
-  # 我们只需要 Image, 关掉 CONFIG_CRYPTO_ECDSA 即可 (KSU/Android 不需要内核 ECDSA)。
-  if [ -f crypto/Makefile ] && ! grep -q '%\.asn1\.h' crypto/Makefile; then
+  # gold-s-oss 已知 crypto/ecdsasignature.asn1.h 规则损坏;按设备 ID 兜底关闭 ECDSA。
+  # 其它树仅在 Makefile 明确没有 %.asn1.h 规则时关闭，避免误伤正常内核。
+  if [ "$SEL_DEVICE_ID" = gold ] || { [ -f crypto/Makefile ] && ! grep -qE '(^|[[:space:]])[^#]*%\.asn1\.h[[:space:]]*:' crypto/Makefile; }; then
     $SC -d CRYPTO_ECDSA >/dev/null 2>&1 || true
-    info "兼容设置: crypto/Makefile 缺 %.asn1.h 生成规则, 关闭 CONFIG_CRYPTO_ECDSA"
+    info "兼容设置: crypto/Makefile 的 ECDSA ASN.1 头规则不可用, 关闭 CONFIG_CRYPTO_ECDSA"
   fi
   # 厂商 defconfig 常打开 CONFIG_HEADERS_INSTALL=y: 构建期会跑 usr/include 的 hdrtest
   # (厂商自加的头文件测试), 用新 glibc 会报 "field has incomplete type 'struct timespec'"
