@@ -1087,7 +1087,7 @@ fix_vendor_api_compat() {
   local f n=0
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
   # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
-  for f in $(grep -rl 'struct devfreq_simple_ondemand_data' drivers/scsi/ufs --include='*.h' 2>/dev/null || true); do
+  for f in $(find -L drivers/scsi/ufs -type f -name '*.h' -print 2>/dev/null | while read -r x; do grep -ql 'struct devfreq_simple_ondemand_data' "$x" && printf '%s\n' "$x"; done); do
     if ! grep -qE '^#include <linux/devfreq(/governor)?\.h>' "$f"; then
       sed -i '1i#include <linux/devfreq/governor.h>' "$f"
       n=$((n+1))
