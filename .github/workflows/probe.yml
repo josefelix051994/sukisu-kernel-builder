@@ -1,22 +1,32 @@
-name: probe compiler
+name: probe flags
 on:
   workflow_dispatch:
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - name: setup
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq ccache >/dev/null
+          sudo apt-get install -y -qq bc bison flex libssl-dev >/dev/null
           git clone -q --depth 1 -b lineage-19.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc49
-          chmod +x /tmp/gcc49/bin/aarch64-linux-android-gcc || true
+          git clone -q --depth 1 -b olive-q-oss https://github.com/MiCode/Xiaomi_Kernel_OpenSource /tmp/k
+          chmod +x /tmp/gcc49/bin/* || true
       - name: probe
         run: |
-          GCC=/tmp/gcc49/bin/aarch64-linux-android-gcc
-          echo "=== version ==="; $GCC --version | head -1
-          echo "=== plain -fstack-protector-strong -E /dev/null ==="; $GCC -fstack-protector-strong -E -x c /dev/null -o /dev/null; echo "rc=$?"
-          echo "=== cc-option style (-Werror -c -x c /dev/null) ==="; TMP=/tmp/xx.$$.o; $GCC -fstack-protector-strong -Werror -c -x c /dev/null -o $TMP; echo "rc=$?"; ls -l $TMP 2>/dev/null
-          echo "=== with ccache wrapper ==="; PATH=/usr/lib/ccache:$PATH; ccache --version | head -1; ccache $GCC -fstack-protector-strong -Werror -c -x c /dev/null -o /tmp/yy.$$.o; echo "rc=$?"
-          echo "=== gcc with -fno-builtin-bcmp ==="; $GCC -fno-builtin-bcmp -c -x c /dev/null -o /tmp/zz.$$.o; echo "rc=$?"
-          echo "=== gcc with -fno-builtin-stpcpy/date-time warn test ==="; $GCC -Wno-error=date-time -Werror -c -x c /dev/null -o /tmp/ww.$$.o; echo "rc=$?"
+          export CC=/tmp/gcc49/bin/aarch64-linux-android-gcc
+          export CROSS_COMPILE=/tmp/gcc49/bin/aarch64-linux-android-
+          cd /tmp/k
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/tmp/def.log 2>&1; echo "defconfig rc=$?"
+          tail -3 /tmp/def.log
+          echo "=== stackp-flag / stackp-name ==="
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE -pn 2>/dev/null | grep -E '^(stackp-flag|stackp-name|stackp-check) ' | head -5
+          echo "=== KBUILD_CFLAGS ==="
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE -pn 2>/dev/null | grep -m1 '^KBUILD_CFLAGS' | head -c 2500
+          echo
+          CF=$(make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE -pn 2>/dev/null | grep -m1 '^KBUILD_CFLAGS' | sed 's/^KBUILD_CFLAGS *:= *//; s/^KBUILD_CFLAGS *=\? *//')
+          echo "=== cc-option style compile with flags ==="
+          $CC $CF -fstack-protector-strong -Werror -c -x c /dev/null -o /tmp/t.o; echo "rc=$?"
+          echo "=== retry verbose (no redirect) to see message ==="
+          $CC $CF -fstack-protector-strong -Werror -c -x c /dev/null -o /tmp/t2.o 2>&1 | head -5
