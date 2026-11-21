@@ -1981,6 +1981,11 @@ make_config() {
   if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
     die_log "$LOG_FILE" "olddefconfig 失败"
   fi
+  # olddefconfig 可能因 select/default 重新打开损坏的 ECDSA ASN.1 配置，最终配置后再次强制关闭。
+  if [ "$SEL_DEVICE_ID" = gold ] || { [ -f "$KERNEL_DIR/crypto/Makefile" ] && ! grep -qE 'asn1_compiler|%\.asn1\.h' "$KERNEL_DIR/crypto/Makefile"; }; then
+    $SC -d CRYPTO_ECDSA >/dev/null 2>&1 || true
+    info "最终配置确认: 关闭损坏的 CONFIG_CRYPTO_ECDSA ASN.1 规则"
+  fi
   if grep -q "^CONFIG_KSU=[ym]" "$OUT_DIR/.config"; then
     ok "CONFIG_KSU 已生效: $(grep '^CONFIG_KSU=' "$OUT_DIR/.config" | tr -d '\n')"
   else
