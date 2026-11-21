@@ -1115,7 +1115,21 @@ EOF
       n=$((n+1))
     done
   fi
-  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS devfreq 头/移除旧 proc_ops 不支持的 proc_compat_ioctl ($n 处)"
+  # 部分 MTK CCCI 公开树缺少厂商私有 sec_osal.h；该头在公开代码中仅提供私有 OSAL 声明，
+  # 先生成最小桩以继续暴露真实缺失符号，避免在兼容探测阶段直接中止。
+  for f in $(find -L drivers -type f \( -name '*.c' -o -name '*.h' \) -print 2>/dev/null | while read -r x; do grep -qE '^[[:space:]]*#include[[:space:]]*[<"]sec_osal\.h[>"]' "$x" && printf '%s\n' "$x"; done); do
+    d="$(dirname "$f")"
+    if [ ! -f "$d/sec_osal.h" ]; then
+      cat > "$d/sec_osal.h" <<'EOF'
+#ifndef _SUKI_SEC_OSAL_STUB_H
+#define _SUKI_SEC_OSAL_STUB_H
+/* Vendor-private sec_osal.h is absent from the published kernel tree. */
+#endif
+EOF
+      n=$((n+1))
+    fi
+  done
+  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/sec_osal 私有头桩 ($n 处)"
 }
 
 fix_mtk_disp_arr_stub() {
