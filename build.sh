@@ -1085,6 +1085,10 @@ fix_missing_makefile_objs() {
 fix_vendor_api_compat() {
   cd "$KERNEL_DIR"
   local f n=0
+  # 清理旧版本兼容桩：工具链缓存会复用内核树，避免旧 governor 桩与厂商实现重定义。
+  if [ -f include/linux/devfreq/governor.h ] && grep -q '_SUKI_DEVFREQ_GOVERNOR_STUB_H' include/linux/devfreq/governor.h; then
+    rm -f include/linux/devfreq/governor.h
+  fi
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
   # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
   for f in $(find -L drivers/scsi/ufs -type f -name '*.h' -print 2>/dev/null | while read -r x; do grep -ql 'struct devfreq_simple_ondemand_data' "$x" && printf '%s\n' "$x"; done); do
@@ -1092,6 +1096,7 @@ fix_vendor_api_compat() {
       sed -i '1i#ifndef _SUKI_UFS_DEVFREQ_DATA\n#define _SUKI_UFS_DEVFREQ_DATA\nstruct devfreq_simple_ondemand_data { unsigned int upthreshold; unsigned int downdifferential; };\n#endif' "$f"
       n=$((n+1))
     fi
+    sed -i '/#include <linux\/devfreq\/governor\.h>/d' "$f" || true
   done
   # proc_compat_ioctl 仅存在于较新的 proc_ops; 老树 struct proc_ops 无此成员时删除指定初始化行。
   # 老 proc_ops 没有 proc_compat_ioctl；某些厂商头会在注释/其它结构中误含同名文本，
@@ -1114,6 +1119,11 @@ fix_vendor_api_compat() {
 #ifndef _SUKI_${_sec_h//./_}_STUB_H
 #define _SUKI_${_sec_h//./_}_STUB_H
 /* Vendor-private $_sec_h is absent from the published kernel tree. */
+#if defined(_SUKI_sec_osal_h_STUB_H)
+#define OSAL_FILE_SEEK_FAIL (-1)
+#define OSAL_FILE_GET_POS_FAIL (-1)
+#define OSAL_FILE_READ_FAIL (-1)
+#endif
 #endif
 EOF
         n=$((n+1))
