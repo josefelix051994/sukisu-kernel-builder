@@ -1105,9 +1105,13 @@ EOF
     fi
   done
   # proc_compat_ioctl 仅存在于较新的 proc_ops; 老树 struct proc_ops 无此成员时删除指定初始化行。
-  if [ -f include/linux/proc_fs.h ] && ! grep -q 'proc_compat_ioctl' include/linux/proc_fs.h; then
+  # 老 proc_ops 没有 proc_compat_ioctl；某些厂商头会在注释/其它结构中误含同名文本，
+  # 不以全文件 grep 判定，直接对旧内核树的指定初始化项做兼容删除。
+  local _pkmaj _pkmin
+  _pkmaj="${KVER%%.*}"; _pkmin="${KVER#*.}"; _pkmin="${_pkmin%%.*}"
+  if [ "${_pkmaj:-99}" -lt 5 ] || { [ "${_pkmaj:-99}" -eq 5 ] && [ "${_pkmin:-99}" -lt 5 ]; }; then
     for f in $(find -L drivers -type f -name '*.c' -print 2>/dev/null | while read -r x; do grep -qlE '^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=' "$x" && printf '%s\n' "$x"; done); do
-      sed -i '/^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=.*/d' "$f"
+      sed -i '/^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=.*/d' "$f" || true
       n=$((n+1))
     done
   fi
