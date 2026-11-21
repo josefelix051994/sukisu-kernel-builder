@@ -1095,6 +1095,14 @@ fix_vendor_api_compat() {
       sed -i -E 's/\bdevfreq_update_stats\b/suki_vendor_devfreq_update_stats/g' "$_gov" || true
     fi
   done
+  # 老 ARM64 头在部分厂商树未间接包含 errno.h；补充 EOPNOTSUPP 的兼容定义。
+  if grep -RIl --include='*.h' 'EOPNOTSUPP' arch/arm64/include >/dev/null 2>&1; then
+    for _eh in arch/arm64/include/asm/cpuidle.h; do
+      if [ -f "$_eh" ] && ! grep -q 'suki-builder: EOPNOTSUPP' "$_eh"; then
+        sed -i '1i#ifndef EOPNOTSUPP\n#define EOPNOTSUPP 95\n#endif /* suki-builder: EOPNOTSUPP */' "$_eh" || true
+      fi
+    done
+  fi
   # 老 MTK 相机驱动仍 include linux/wakelock.h；该 Android 私有头在主线树中已移除，提供最小兼容桩。
   if [ ! -f include/linux/wakelock.h ] && grep -RIl --include='*.c' --include='*.h' 'linux/wakelock.h' drivers/misc/mediatek >/dev/null 2>&1; then
     mkdir -p include/linux
