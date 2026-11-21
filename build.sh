@@ -694,6 +694,15 @@ compat_fixups() {
     info "兼容修复: 顶层 Makefile 的 KBUILD_CFLAGS -Werror 降级为 -Wno-error (厂商追加, 会让 clang 专属告警升格成错误)"
     sed -i -E '/^[[:space:]]*KBUILD_(CFLAGS|AFLAGS)/{ s/-Werror=/-Wno-error=/g; s/-Werror([[:space:]]|$)/-Wno-error\1/g }' "$topmk"
   fi
+  # 部分 5.10 树把 `-std=gnu89 -Werror` 与 `-Werror=implicit-function-declaration` 写在
+  # KBUILD_CFLAGS 的**续行**里(不在赋值行首), 上面的行首匹配抓不到 → rubens/yunluo 5.10.66/.81
+  # 的 ged_bridge.c 仍报 [-Werror,-Wimplicit-function-declaration]。这里补一遍具名告警降级 +
+  # 裸 -Werror 降级; $(call cc-option,-Werror=...) 是 ",-Werror" 形式, 前后都不是空白, 不会误伤。
+  if [ -f "$topmk" ] && grep -q -- '-Werror' "$topmk"; then
+    sed -i -E 's/-Werror=(implicit-function-declaration|implicit-int|return-type|incompatible-pointer-types|int-conversion|static-declaration|format|array-bounds|unused-but-set-variable|unused-variable|unused-function|designated-init)/-Wno-error=\1/g' "$topmk"
+    sed -i -E 's/(^|[[:space:]])-Werror([[:space:]])/\1-Wno-error\2/g; s/(^|[[:space:]])-Werror$/\1-Wno-error/g; s/(^|[[:space:]])-Werror\\($| )/\1-Wno-error\\\2/g' "$topmk"
+    info "兼容修复: 顶层 Makefile 续行里的 -Werror / -Werror=<具名告警> 一并降级"
+  fi
   # __start_builtin_fw 若未 8 字节对齐, clang 生成的 adrp+ldr 会触发
   # "relocation truncated to fit: R_AARCH64_LDST64_ABS_LO12_NC against __start_builtin_fw"
   # (biloba/camellian 4.14.186 实测, firmware_class.c:58)。在 .builtin_fw 里插入 ALIGN(8)。
@@ -1672,7 +1681,7 @@ toolchain_make_args() {
   if [ "$USE_CLANG" = 1 ] && ! { [ "$SEL_GKI" = 1 ] \
        || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
        || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; }; then
-    kc="$kc -Wno-error"
+    kc="$kc -Wno-error -Wno-error=int-conversion"
   fi
   if [ -n "$kc" ]; then
     a+=(KCFLAGS="$kc")
@@ -1867,6 +1876,23 @@ make_config() {
   # (厂商自加的头文件测试), 用新 glibc 会报 "field has incomplete type 'struct timespec'"
   # 直接中断整次编译 (op9 5.4 OnePlus SM8350 实测)。我们只需要 Image, 关掉头文件导出。
   $SC -d HEADERS_INSTALL >/dev/null 2>&1 || true
+  # 非 GKI 的老厂商树 (kver<5.10) 额外收尾:
+  #  * DEBUG_INFO: 老树默认开 DWARF 调试信息, binutils 2.27 遇到 clang 12 生成的 DWARF5
+  #    (.file 0/.loc 0) 会报 "file number less than one" / "junk at end of line"
+  #    (munch 4.19.157 / camellian / pissarro 4.14.186 实测); 不需要调试符号, 关掉还省很多时间。
+  #  * MODVERSIONS: 只产出 Image 从不打包 module, 关掉可避免 4.14 树 vmlinux 链接阶段
+  #    "ld.lld: error: cannot find linker script .tmp_symversions" (cannon v2 实测)。
+  if [ "$SEL_GKI" != 1 ]; then
+    local _kmaj _kmin
+    _kmaj="$(echo "${KVER:-0}" | cut -d. -f1)"
+    _kmin="$(echo "${KVER:-0}" | cut -d. -f2)"
+    if [ -n "$_kmaj" ] && { [ "$_kmaj" -lt 5 ] || { [ "$_kmaj" -eq 5 ] && [ "${_kmin:-0}" -lt 10 ]; }; }; then
+      $SC -d DEBUG_INFO >/dev/null 2>&1 || true
+      $SC -d DEBUG_INFO_DWARF4 >/dev/null 2>&1 || true
+      $SC -d MODVERSIONS >/dev/null 2>&1 || true
+      info "兼容设置: 老内核关闭 DEBUG_INFO/DWARF4 (binutils 2.27 与 DWARF5 不兼容) 与 MODVERSIONS"
+    fi
+  fi
   if ! "${MK[@]}" olddefconfig >>"$LOG_FILE" 2>&1; then
     die_log "$LOG_FILE" "olddefconfig 失败"
   fi
