@@ -1117,10 +1117,9 @@ EOF
   fi
   # 部分 MTK CCCI 公开树缺少厂商私有 sec_osal.h；该头在公开代码中仅提供私有 OSAL 声明，
   # 先生成最小桩以继续暴露真实缺失符号，避免在兼容探测阶段直接中止。
-  for f in $(find -L drivers -type f \( -name '*.c' -o -name '*.h' \) -print 2>/dev/null | while read -r x; do grep -qE '^[[:space:]]*#include[[:space:]]*[<"]sec_(osal|export)\.h[>"]' "$x" && printf '%s\n' "$x"; done); do
+  for f in $(find -L drivers -type f \( -name '*.c' -o -name '*.h' \) -print 2>/dev/null | while read -r x; do grep -qE '^[[:space:]]*#include[[:space:]]*[<"](sec_(osal|export)|scp_ipi)\.h[>"]' "$x" && printf '%s\n' "$x"; done); do
     d="$(dirname "$f")"
-    if [ ! -f "$d/sec_osal.h" ]; then
-      for _sec_h in sec_osal.h sec_export.h scp_ipi.h; do
+    for _sec_h in sec_osal.h sec_export.h scp_ipi.h; do
       if [ ! -f "$d/$_sec_h" ]; then
         cat > "$d/$_sec_h" <<EOF
 #ifndef _SUKI_${_sec_h//./_}_STUB_H
@@ -1128,10 +1127,9 @@ EOF
 /* Vendor-private $_sec_h is absent from the published kernel tree. */
 #endif
 EOF
+        n=$((n+1))
       fi
     done
-      n=$((n+1))
-    fi
   done
   [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/sec_osal 私有头桩 ($n 处)"
 }
