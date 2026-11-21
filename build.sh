@@ -1114,6 +1114,12 @@ static inline void disp_unregister_fps_chg_callback(void (*cb)(unsigned int)) { 
 static inline void drm_register_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
 static inline void drm_unregister_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
 static inline void drm_invoke_fps_chg_callbacks(unsigned int fps) { (void)fps; }
+#ifndef LFR_MODE_BOTH_MODE
+#define LFR_MODE_BOTH_MODE 0
+#endif
+#ifndef LFR_TYPE_HSYNC_ONLY
+#define LFR_TYPE_HSYNC_ONLY 0
+#endif
 #endif
 EOF
   for f in $(grep -rlE '^[[:space:]]*#include[[:space:]]*[<"]disp_arr\.h[>"]' drivers 2>/dev/null || true); do
