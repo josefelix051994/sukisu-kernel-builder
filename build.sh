@@ -1089,7 +1089,18 @@ fix_vendor_api_compat() {
   # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
   for f in $(find -L drivers/scsi/ufs -type f -name '*.h' -print 2>/dev/null | while read -r x; do grep -ql 'struct devfreq_simple_ondemand_data' "$x" && printf '%s\n' "$x"; done); do
     if ! grep -qE '^#include <linux/devfreq/governor\.h>' "$f"; then
-      sed -i '1i#include <linux/devfreq/governor.h>' "$f"
+      if [ -f include/linux/devfreq/governor.h ]; then
+        sed -i '1i#include <linux/devfreq/governor.h>' "$f"
+      else
+        mkdir -p include/linux/devfreq
+        cat > include/linux/devfreq/governor.h <<'EOF'
+#ifndef _SUKI_DEVFREQ_GOVERNOR_STUB_H
+#define _SUKI_DEVFREQ_GOVERNOR_STUB_H
+struct devfreq_simple_ondemand_data { unsigned int upthreshold; unsigned int downdifferential; };
+#endif
+EOF
+        sed -i '1i#include <linux/devfreq/governor.h>' "$f"
+      fi
       n=$((n+1))
     fi
   done
