@@ -631,15 +631,21 @@ compat_fixups() {
     info "兼容修复: arch/arm64/kernel/vdso/gettimeofday.S 去掉宏调用前导逗号 (clang IAS 兼容)"
     sed -i 's/clock_gettime_return, shift=/clock_gettime_return shift=/g' "$vd"
   fi
-  # 厂商驱动的 Makefile 常自带 subdir-ccflags-y := -Werror (如 drivers/misc/mediatek/Makefile),
-  # 会把 clang 独有告警 (pointer-to-int-cast 等) 升格成错误, 而 gcc 构建不报 →
-  # 老厂商树用 clang 编不过 (run #40/#47: agate 的 mediatek eccci)。从 ccflags 行里剥掉 -Werror。
+  # 厂商驱动的 Makefile 常自带 -Werror (subdir-ccflags-y := -Werror / KBUILD_CFLAGS += -Werror /
+  # EXTRA_CFLAGS 之类), 会把 clang 独有告警 (pointer-to-int-cast、unused-but-set 等) 升格成错误,
+  # 而厂商用 gcc 构建时不报 → 老厂商树用 clang 编不过 (run #40/#47 agate eccci、fire aw87xxx、
+  # fire primary_display 等)。把 Makefile/Kbuild 里出现的 -Werror 一律降级为 -Wno-error
+  # (-Werror=foo → -Wno-error=foo, 保留按告警的开关语义)。跳过 scripts/ 与 tools/, 避免破坏 kbuild 自身。
   local mkvm mknum=0
   while IFS= read -r mkvm; do
-    sed -i -E 's/^((subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=[^#]*)[[:space:]]-Werror/\1/g' "$mkvm" 2>/dev/null && mknum=$((mknum+1))
-  done < <(find . \( -name '.git' -o -name '.tmp_*' \) -prune -o \( -name 'Makefile' -o -name 'Kbuild' \) -exec grep -lE '^(subdir-)?ccflags[-A-Za-z0-9_$()]*[[:space:]]*[:+]?=.*-Werror' {} + 2>/dev/null || true)
+    if sed -i -E 's/(^|[^A-Za-z0-9_-])-Werror(=[A-Za-z0-9_=,-]+)?/\1-Wno-error\2/g' "$mkvm" 2>/dev/null; then
+      mknum=$((mknum + 1))
+    fi
+  done < <(find . \( -name '.git' -o -name 'scripts' -o -name 'tools' \) -prune -o \
+             \( -name 'Makefile' -o -name 'Kbuild' -o -name '*.mk' \) \
+             -exec grep -l -- '-Werror' {} + 2>/dev/null || true)
   if [ "$mknum" -gt 0 ]; then
-    info "兼容修复: 移除 $mknum 个厂商 Makefile/Kbuild 的 ccflags -Werror (clang 专属告警在 gcc 下只是警告)"
+    info "兼容修复: 将 $mknum 个厂商 Makefile/Kbuild 中的 -Werror 全部降级为 -Wno-error (clang 专属告警在 gcc 下只是警告)"
   fi
   # 顶层 Makefile 也可能在 KBUILD_CFLAGS 里追加 -Werror, 且位置在 $(KCFLAGS) 之后 →
   # KCFLAGS 里的 -Wno-error 会被覆盖, clang 专属告警仍变错误 (begonia-q 4.14: mm/rmap.c
@@ -678,6 +684,31 @@ compat_fixups() {
       printf 'KBUILD_CFLAGS += -Wno-error\n'
     } >> "$topmk"
     info "兼容修复: 顶层 Makefile 末尾追加 KBUILD_CFLAGS += -Wno-error (兜底抑制 -Werror)"
+  fi
+  # drivers/char/rpmb/rpmb-mtk.c: mtk_mmc_host 数组的声明在 #if IS_ENABLED(CONFIG_MMC_MTK_PRO) 里,
+  # 但 TEE 路径 (#if IS_ENABLED(CONFIG_TRUSTONIC_TEE_SUPPORT)) 也引用它。厂商 defconfig 同时写了
+  # CONFIG_MMC_MTK=m 与 CONFIG_MMC_MTK_PRO=m, 而 Kconfig 里 MMC_MTK_PRO depends on !MMC_MTK →
+  # olddefconfig 把 MMC_MTK_PRO 丢掉 → "use of undeclared identifier 'mtk_mmc_host'"
+  # (yunluo 5.10.101 / daumier 5.10.81 / yuechu 5.10.136 实测)。
+  # 给这个 #if 补一个 TEE 分支的 #elif 声明: 若 MMC_MTK_PRO 已启用则走原分支, 新分支不会生效,
+  # 不存在重复定义; 只在两个开关都关时两条都不生效。
+  local rmf=drivers/char/rpmb/rpmb-mtk.c
+  if [ -f "$rmf" ] && grep -qE 'static struct mmc_host \*mtk_mmc_host\[\] = \{NULL\};' "$rmf" \
+     && ! grep -q 'suki-builder: rpmb mtk_mmc_host fallback' "$rmf"; then
+    if awk '
+      /static struct mmc_host \*mtk_mmc_host\[\] = \{NULL\};/ && !decl { decl = 1; print; next }
+      decl && /^[[:space:]]*#endif/ {
+        print "#elif IS_ENABLED(CONFIG_TRUSTONIC_TEE_SUPPORT) /* suki-builder: rpmb mtk_mmc_host fallback */"
+        print "static struct mmc_host *mtk_mmc_host[] = {NULL};"
+        print "#endif"
+        decl = 0; next
+      }
+      { print }
+    ' "$rmf" > "$rmf.tmp_rpmb" 2>/dev/null && mv "$rmf.tmp_rpmb" "$rmf"; then
+      info "兼容修复: rpmb-mtk.c 的 mtk_mmc_host 声明补 TEE 分支 (MMC_MTK_PRO 依赖 !MMC_MTK 被配置系统丢弃)"
+    else
+      rm -f "$rmf.tmp_rpmb"
+    fi
   fi
   # 厂商改过的 scripts/mkcompile_h (如 OnePlus sm8250 4.19 的 L57) 会写 bash 专属展开
   # `${CURRENT_RELEASE//\//\\\\}`, 而 kbuild 用 CONFIG_SHELL(/bin/sh=dash) 调用它 →
