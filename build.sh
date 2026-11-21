@@ -1172,6 +1172,12 @@ EOF
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
+  # connectivity 适配器依赖已移除/变更的厂商回调，跳过该不完整对象。
+  for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -q 'connectivity_build_in_adapter\.o' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*connectivity_build_in_adapter\.o.*)$@# suki-builder: unavailable connectivity vendor API; \1@' "$_mf" || true
+    fi
+  done
   for f in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE 'ccci_(fsm_scp|core)\.o' "$f" 2>/dev/null; then
       sed -i -E 's@^[[:space:]]*(.*ccci_(fsm_scp|core)\.o.*)$@# suki-builder: unavailable private SCP API; \1@' "$f" || true
