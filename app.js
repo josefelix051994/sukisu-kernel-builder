@@ -556,7 +556,7 @@ async function renderArtifacts(run) {
     const relHint = $('release-hint');
     if (relHint) {
       relHint.hidden = arts.length === 0;
-      relHint.querySelector('a').href = `https://github.com/${OWNER}/${REPO}/releases`;
+      relHint.querySelector('a').href = `https://github.com/${OWNER}/${REPO}/releases/tag/${encodeURIComponent('内核合集')}`;
     }
   } catch { /* 忽略 */ }
 }

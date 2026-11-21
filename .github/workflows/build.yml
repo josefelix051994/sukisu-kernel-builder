@@ -1,4 +1,4 @@
-﻿name: SukiSU Kernel Build
+name: SukiSU Kernel Build
 
 on:
   workflow_dispatch:
@@ -339,22 +339,36 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: 自动发布 GitHub Release(附备注与说明)
+      - name: 发布到统一 Release(中文机型名资产)
         if: success() && !inputs.dry_run && inputs.publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: 内核合集
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           art="${{ steps.art.outputs.file }}"
           if [ -z "$art" ] || [ ! -f "$art" ]; then echo "无产物文件, 跳过发布"; exit 0; fi
-          base="$(basename "${art%.*}")"
-          tag="build-${base}"
-          echo ">>> 发布 $base (tag: $tag)"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$art" --clobber
-          else
-            gh release create "$tag" "$art" \
-              --title "$base" \
-              --notes-file output/release-notes.md
+          asset="$(cat output/RELEASE_ASSET 2>/dev/null || true)"
+          [ -n "$asset" ] || asset="$(basename "$art")"
+          echo ">>> 发布产物到统一 Release: tag=${RELEASE_TAG} asset=${asset}"
+
+          # 统一 Release: 不存在则创建 (并发创建时忽略"已存在"报错)
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            cat > /tmp/aggregate-notes.md <<'NOTES'
+          ## SukiSU-Ultra 内核合集
+
+          本 Release 收录全部机型的内核刷机包, 资产名统一为 **中文机型名_机型代码_内核版本.zip**,
+          可直接按机型中文名查找; 各机型对应的内核版本 / 分支 / 刷入说明见本仓库 README 的「内核下载索引」。
+
+          - 刷入方式: TWRP 等支持 AnyKernel3 的 Recovery 直刷 (非 GKI 4.x/5.x 机型), 刷前请备份 boot 分区;
+          - 由 [SukiSU-Ultra 内核编译工具](https://github.com/xingyiqaq/sukisu-kernel-builder) 自动构建, 仅供个人学习研究。
+          NOTES
+            gh release create "$RELEASE_TAG" --title "SukiSU-Ultra 内核合集(按中文机型名索引)" \
+              --notes-file /tmp/aggregate-notes.md 2>/dev/null || true
           fi
-          gh release view "$tag" --json url,assets --jq '.url, (.assets[] | "  - \(.name) (\(.size) bytes)")'
+
+          cp -f "$art" "$asset"
+          gh release upload "$RELEASE_TAG" "$asset" --clobber
+          gh release view "$RELEASE_TAG" --json url --jq '.url'
+          echo ">>> 下载直链: https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${asset}"

@@ -252,6 +252,20 @@ resolve_ksu_version() {
   sanitize_name "$v"
 }
 
+# 中文机型名 (取自 tools/device_zh.tsv; 用于 Release 资产命名)
+resolve_device_zh() {
+  local id="${1:-$SEL_DEVICE_ID}" tsv="$SCRIPT_DIR/tools/device_zh.tsv"
+  [ -n "$id" ] && [ -f "$tsv" ] || return 0
+  awk -F'\t' -v want="$id" '$1 == want { print $2; exit }' "$tsv"
+}
+
+# Release 资产名清洗: 保留中文/字母/数字/._+-, 空白与路径分隔符换成下划线
+sanitize_asset_name() {
+  printf '%s' "$1" \
+    | sed -e 's#[/\\:*?"<>|]#_#g' -e 's/[[:space:]]\{1,\}/_/g' -e 's/_\{1,\}/_/g' \
+          -e 's/^_//' -e 's/_$//'
+}
+
 # 产物基础名: 品牌_机型_机型代码_内核版本_SukiSU-<版本>_<北京时间>
 # 可选参数 3~5: 内核版本 / 时间戳 / SukiSU 版本 (预览用占位符)
 build_artifact_base() {
@@ -308,6 +322,18 @@ write_release_notes() {
     echo "- 刷机有风险, 请自行承担。"
   } > "$OUTPUT_DIR/release-notes.md"
   printf '%s\n' "$art" > "$OUTPUT_DIR/LAST_ARTIFACT"
+  # 合集 Release 里用的稳定资产名: 中文机型名_机型代码_内核版本.zip (同名覆盖, README 里的链接可长期使用)
+  local zh zh_first ext
+  zh="$(resolve_device_zh)"
+  zh="${zh%% / *}"                     # 多名字机型只取第一个中文名, 保持资产名简短
+  [ -n "$zh" ] || zh="${BUILD_BRAND}${BUILD_MODEL:+-$BUILD_MODEL}"
+  [ -n "$zh" ] || zh="$SEL_DEVICE_ID"
+  case "$art" in
+    *.ko) ext=".ko" ;;
+    *) ext=".zip" ;;
+  esac
+  zh_first="$(sanitize_asset_name "$zh")"
+  printf '%s\n' "${zh_first}_${SEL_DEVICE_ID}_${KVER}${ext}" > "$OUTPUT_DIR/RELEASE_ASSET"
 }
 
 
