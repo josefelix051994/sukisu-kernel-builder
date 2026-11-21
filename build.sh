@@ -1058,7 +1058,9 @@ fix_missing_makefile_objs() {
               if (p == "" || p ~ /^#/) break
               sub(/\\$/, "", p)
               if (p !~ /\/$/ || p ~ /\$/) continue
-              if (system("test -d \"" dir "/" p "\"") != 0) hit = 1
+              # 目录存在但缺 Makefile/Kbuild 也视为不可构建 (camellian 的 drivers/mihw
+              # 目录被厂商清空但 Makefile 仍 `obj-y += mihw/` → ar 报 built-in.o No such file)。
+              if (system("d=\"" dir "/" p "\"; { [ -d \"$d\" ] && [ -f \"$d/Makefile\" ] || [ -f \"$d/Kbuild\" ]; }") != 0) hit = 1
             }
             if (hit) { print "# " line; next }
           }
@@ -1073,6 +1075,36 @@ fix_missing_makefile_objs() {
     fi
   done <<< "$files"
   [ "$cnt" -gt 0 ] && ok "已注释 $cnt 个 Makefile 中指向缺失目录的 obj-/subdir- 条目"
+  return 0
+}
+
+# MTK 5.10 树 (yunluo/rubens/xaga/pearl) 的 drivers/gpu/mediatek/ged/src/ged_kpi.c 引用了
+# disp_arr.h / mtk_drm_arr.h (DRM FPS 变更回调), 但这两个头在厂商公开树里不存在。
+# ged_kpi.c 只在 CONFIG_DRM_MEDIATEK / CONFIG_MTK_HIGH_FRAME_RATE 分支里调用
+# drm/ disp_register_fps_chg_callback(...), 这里给缺失头生成 no-op 桩, 避免影响 DRM 正常路径。
+fix_mtk_disp_arr_stub() {
+  cd "$KERNEL_DIR"
+  local stub f d n=0
+  read -r -d '' stub <<'EOF' || true
+#ifndef _SUKI_DISP_ARR_STUB_H
+#define _SUKI_DISP_ARR_STUB_H
+static inline void disp_register_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
+static inline void disp_unregister_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
+static inline void drm_register_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
+static inline void drm_unregister_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
+#endif
+EOF
+  for f in $(grep -rlE '^[[:space:]]*#include[[:space:]]*[<"]disp_arr\.h[>"]' drivers 2>/dev/null || true); do
+    d="$(dirname "$f")"
+    printf '%s\n' "$stub" > "$d/disp_arr.h"
+    n=$((n+1))
+  done
+  for f in $(grep -rlE '^[[:space:]]*#include[[:space:]]*[<"]mtk_drm_arr\.h[>"]' drivers 2>/dev/null || true); do
+    d="$(dirname "$f")"
+    printf '%s\n' "$stub" > "$d/mtk_drm_arr.h"
+    n=$((n+1))
+  done
+  [ "$n" -gt 0 ] && ok "兼容修复: 为缺失的 disp_arr.h / mtk_drm_arr.h 生成桩头 (MTK GED FPS 回调, $n 处)"
   return 0
 }
 
@@ -1897,12 +1929,12 @@ make_config() {
     $SC -d DEBUG_INFO >/dev/null 2>&1 || true
     $SC -d DEBUG_INFO_DWARF4 >/dev/null 2>&1 || true
   fi
-  # gold 5.10.168 的 crypto/Makefile 只有 .asn1.h 的显式依赖, 却没有 %.asn1.h 生成规则 →
+  # gold 5.10.168 的 crypto/Makefile 有 %.asn1.c 规则 (asn1_compiler) 但缺 %.asn1.h 规则 →
   # make 直接报 "No rule to make target 'crypto/ecdsasignature.asn1.h'"。厂商树裁剪所致,
   # 我们只需要 Image, 关掉 CONFIG_CRYPTO_ECDSA 即可 (KSU/Android 不需要内核 ECDSA)。
-  if [ -f crypto/Makefile ] && ! grep -q 'asn1_compiler' crypto/Makefile && ! grep -q '%\.asn1\.h' crypto/Makefile; then
+  if [ -f crypto/Makefile ] && ! grep -q '%\.asn1\.h' crypto/Makefile; then
     $SC -d CRYPTO_ECDSA >/dev/null 2>&1 || true
-    info "兼容设置: crypto/Makefile 缺 asn1 生成规则, 关闭 CONFIG_CRYPTO_ECDSA"
+    info "兼容设置: crypto/Makefile 缺 %.asn1.h 生成规则, 关闭 CONFIG_CRYPTO_ECDSA"
   fi
   # 厂商 defconfig 常打开 CONFIG_HEADERS_INSTALL=y: 构建期会跑 usr/include 的 hdrtest
   # (厂商自加的头文件测试), 用新 glibc 会报 "field has incomplete type 'struct timespec'"
@@ -2279,6 +2311,7 @@ main() {
   compat_fixups
   fix_missing_kconfig_sources
   fix_missing_makefile_objs
+  fix_mtk_disp_arr_stub
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
