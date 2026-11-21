@@ -206,12 +206,18 @@ function renderVersions() {
     o.textContent = `${i + 1}. ${v.label}${v.unsupported ? ' ⚠ 不支持' : ''}`;
     sel.appendChild(o);
   });
-  const v = dev.versions[0];
+  // 默认选中第一个"可编译"的版本(3.x 版本会被跳过)
+  const firstOk = dev.versions.findIndex((x) => !x.unsupported);
+  const pick = firstOk >= 0 ? firstOk : 0;
+  sel.value = String(pick + 1);
+  const v = dev.versions[pick];
   // 按设备类型预选集成分支: GKI → main, 传统内核 → builtin (用户仍可手动改)
   $('ksu-branch').value = v && v.gki == 1 ? 'main' : 'builtin';
+  const okCount = dev.versions.filter((x) => !x.unsupported).length;
   const zhLine = dev.zh ? `中文型号: <b>${esc(dev.zh)}</b> · ` : '';
+  const verLine = `${okCount}/${dev.versions.length} 个版本可编译`;
   $('device-info').innerHTML = v
-    ? `${zhLine}机型代码: <code>${esc(dev.id)}</code> · 仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''}${v.unsupported ? ' · <b style="color:#f59e0b">⚠ 该内核版本不受支持(仅编译演练)</b>' : ''}`
+    ? `${zhLine}机型代码: <code>${esc(dev.id)}</code> · 仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''} · ${verLine}${v.unsupported ? ' · <b style="color:#f59e0b">⚠ 该内核版本不受支持(仅编译演练)</b>' : ''}`
     : '';
   updateActionButtons();
 }
@@ -229,7 +235,17 @@ function updateActionButtons() {
   const bad = !!(v && v.unsupported);
   $('build-btn').disabled = bad;
   $('dry-run-btn').disabled = false;
-  if (bad) setMsg('该设备/内核版本不受 SukiSU-Ultra 支持(Linux 3.x 仅可演练), 请改选其它版本。', true);
+  if (bad) {
+    const dev = state.devices.find((d) => d.id === $('device').value);
+    const name = dev ? `${dev.zh || dev.id}(${dev.id})` : '该机型';
+    const ok = dev ? dev.versions.filter((x) => !x.unsupported).length : 0;
+    setMsg(
+      ok
+        ? `${name} 选中的是 Linux ${v.kver} 内核(3.x),SukiSU-Ultra 需要 4.4+;该机型还有 ${ok} 个可编译版本,已自动切到可编译版本,若仍提示请手动换版本。`
+        : `${name} 只有 Linux ${v.kver} 内核(3.x),而 SukiSU-Ultra 需要 4.4+,所以无法真正编译(只可演练)。请改选其它机型 —— 用上方搜索框输入 K40 / alioth / 红米 等关键词即可快速定位。`,
+      true,
+    );
+  }
 }
 
 function toggleCustom() {

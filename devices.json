@@ -1,26 +1,6 @@
 {
   "devices": [
     {
-      "id": "sakura",
-      "display": "sakura",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "红米6 Pro",
-      "versions": [
-        {
-          "label": "Android 9 · Linux 3.18.120",
-          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
-          "branch": "sakura-p-oss",
-          "kver": "3.18.120",
-          "android": "9",
-          "gki": 0,
-          "defconfig": "sakura-perf_defconfig",
-          "unsupported": true,
-          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
-        }
-      ]
-    },
-    {
       "id": "olive",
       "display": "olive",
       "brand": "Xiaomi",
@@ -2289,26 +2269,6 @@
       ]
     },
     {
-      "id": "tissot",
-      "display": "tissot",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米A1",
-      "versions": [
-        {
-          "label": "Android 9 · Linux 3.18.120",
-          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
-          "branch": "tissot-p-oss",
-          "kver": "3.18.120",
-          "android": "9",
-          "gki": 0,
-          "defconfig": "tissot-perf_defconfig",
-          "unsupported": true,
-          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
-        }
-      ]
-    },
-    {
       "id": "jasmine",
       "display": "jasmine",
       "brand": "Xiaomi",
@@ -2332,37 +2292,6 @@
           "android": "9",
           "gki": 0,
           "defconfig": "jasmine-perf_defconfig"
-        }
-      ]
-    },
-    {
-      "id": "daisy",
-      "display": "daisy",
-      "brand": "Xiaomi",
-      "model": "",
-      "zh": "小米A2 Lite",
-      "versions": [
-        {
-          "label": "Android 10 · Linux 3.18.124",
-          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
-          "branch": "daisy-q-oss",
-          "kver": "3.18.124",
-          "android": "10",
-          "gki": 0,
-          "defconfig": "daisy-perf_defconfig",
-          "unsupported": true,
-          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
-        },
-        {
-          "label": "Android 9 · Linux 3.18.120",
-          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
-          "branch": "daisy-p-oss",
-          "kver": "3.18.120",
-          "android": "9",
-          "gki": 0,
-          "defconfig": "daisy-perf_defconfig",
-          "unsupported": true,
-          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
         }
       ]
     },
@@ -2912,6 +2841,77 @@
           "android": "16",
           "gki": 0,
           "defconfig": "vendor/darwin_consolidate.config"
+        }
+      ]
+    },
+    {
+      "id": "sakura",
+      "display": "sakura",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "红米6 Pro",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 3.18.120",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "sakura-p-oss",
+          "kver": "3.18.120",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "sakura-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        }
+      ]
+    },
+    {
+      "id": "tissot",
+      "display": "tissot",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米A1",
+      "versions": [
+        {
+          "label": "Android 9 · Linux 3.18.120",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "tissot-p-oss",
+          "kver": "3.18.120",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "tissot-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        }
+      ]
+    },
+    {
+      "id": "daisy",
+      "display": "daisy",
+      "brand": "Xiaomi",
+      "model": "",
+      "zh": "小米A2 Lite",
+      "versions": [
+        {
+          "label": "Android 10 · Linux 3.18.124",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "daisy-q-oss",
+          "kver": "3.18.124",
+          "android": "10",
+          "gki": 0,
+          "defconfig": "daisy-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
+        },
+        {
+          "label": "Android 9 · Linux 3.18.120",
+          "repo": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+          "branch": "daisy-p-oss",
+          "kver": "3.18.120",
+          "android": "9",
+          "gki": 0,
+          "defconfig": "daisy-perf_defconfig",
+          "unsupported": true,
+          "note": "Linux 3.x 实验性分支, SukiSU-Ultra 不支持"
         }
       ]
     }

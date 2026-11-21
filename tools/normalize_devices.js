@@ -24,7 +24,12 @@ for (const dev of data.devices) {
   dev.zh = [...parts.filter(hasZh), ...parts.filter((p) => !hasZh(p))].join(' / ');
 }
 
+const allUnsupported = (d) => (d.versions || []).length > 0 && d.versions.every((v) => v.unsupported);
+
 data.devices.sort((a, b) => {
+  // 全部版本都不支持(3.x 内核)的机型排到最后, 避免默认落到不可编译的机型上
+  const rankDiff = (allUnsupported(a) ? 1 : 0) - (allUnsupported(b) ? 1 : 0);
+  if (rankDiff) return rankDiff;
   const ka = a.zh || a.display || a.id;
   const kb = b.zh || b.display || b.id;
   return collator.compare(ka, kb) || a.id.localeCompare(b.id);
