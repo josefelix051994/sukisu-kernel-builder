@@ -499,6 +499,24 @@ setup_toolchain() {
   mkdir -p "$TOOLCHAIN_DIR"
   if [ "$USE_CLANG" = 1 ]; then
     CLANG_DIR="$TOOLCHAIN_DIR/clang"
+    # 工具链缓存来自 actions/cache (restore-keys 会回退到"任意"工具链缓存),
+    # 可能拿到与目标内核不匹配的旧 clang (如 6.12 需要 Clang>=13, 却恢复了 clang-r416183b
+    # 的 12.0.5 → "C compiler is too old")。用 .suki_spec 记录本目录对应的规格,
+    # 不匹配则丢弃重下, 保证 "设备/Android 版本 → clang 版本" 的映射真正生效。
+    local want_spec=""
+    if [ -n "$OPT_CLANG" ]; then
+      want_spec="$OPT_CLANG"
+    else
+      want_spec="$(clang_spec_candidates "$SEL_ANDROID" | awk '{print $1}')"
+    fi
+    if [ -x "$CLANG_DIR/bin/clang" ] && [ -n "$want_spec" ]; then
+      if [ -f "$CLANG_DIR/.suki_spec" ] && [ "$(cat "$CLANG_DIR/.suki_spec" 2>/dev/null)" = "$want_spec" ]; then
+        info "复用已下载的 Clang: $CLANG_DIR ($want_spec)"
+      else
+        warn "已缓存的 Clang 与目标规格不符 (期望 $want_spec, 目录里是 $(cat "$CLANG_DIR/.suki_spec" 2>/dev/null || echo 未知)), 重新下载"
+        rm -rf "$CLANG_DIR"
+      fi
+    fi
     if [ ! -x "$CLANG_DIR/bin/clang" ]; then
       info "下载 Clang 工具链, 约 1~2 GB, 请耐心等待..."
       rm -rf "$CLANG_DIR.tmp" "$CLANG_DIR.tar"
@@ -520,9 +538,13 @@ setup_toolchain() {
           mkdir -p "$CLANG_DIR.tmp"
           if tar -xzf "$CLANG_DIR.tar" -C "$CLANG_DIR.tmp" 2>/dev/null; then
             if [ -x "$CLANG_DIR.tmp/$dir/bin/clang" ]; then
-              mv "$CLANG_DIR.tmp/$dir" "$CLANG_DIR"; ok=1; break
+              mv "$CLANG_DIR.tmp/$dir" "$CLANG_DIR"; ok=1
             elif [ -x "$CLANG_DIR.tmp/bin/clang" ]; then
-              mv "$CLANG_DIR.tmp" "$CLANG_DIR"; ok=1; break
+              mv "$CLANG_DIR.tmp" "$CLANG_DIR"; ok=1
+            fi
+            if [ "$ok" = 1 ]; then
+              printf '%s\n' "$spec" > "$CLANG_DIR/.suki_spec"
+              break
             fi
           fi
         fi
@@ -534,8 +556,6 @@ setup_toolchain() {
         rm -rf "$CLANG_DIR.tmp"
         die "Clang 下载失败: 尝试过的规格 [$*] 均不可用 (可用 --clang 分支:目录 覆盖)"
       fi
-    else
-      info "复用已下载的 Clang: $CLANG_DIR"
     fi
   fi
   # GCC 4.9 (clang 经典模式也需要它的 binutils 作交叉前缀)
@@ -1728,6 +1748,15 @@ make_config() {
     # KSU 不需要 BTF, 直接关闭; LKM 模式只产出 kernelsu.ko, 不影响 GKI 模块加载 (vermagic 才是校验项)。
     $SC -d DEBUG_INFO_BTF >/dev/null 2>&1 || true
     $SC -d DEBUG_INFO_BTF_MODULES >/dev/null 2>&1 || true
+    # GKI 的 gki_defconfig 默认开 CONFIG_LTO_CLANG_FULL (ThinLTO/Full LTO): vmlinux.o 的 LTO
+    # 链接在 2 核 runner 上要多花 30~60 分钟, 且实测 gki-a13 在 "LTO vmlinux.o" 阶段被
+    # runner 回收(SIGTERM 143)。KSU 不依赖 LTO → 关闭, 显著缩短 GKI 构建时间。
+    $SC -d LTO_CLANG >/dev/null 2>&1 || true
+    $SC -d LTO_CLANG_FULL >/dev/null 2>&1 || true
+    $SC -d LTO_CLANG_THIN >/dev/null 2>&1 || true
+    $SC -e LTO_NONE >/dev/null 2>&1 || true
+    $SC -d DEBUG_INFO >/dev/null 2>&1 || true
+    $SC -d DEBUG_INFO_DWARF4 >/dev/null 2>&1 || true
   fi
   # 厂商 defconfig 常打开 CONFIG_HEADERS_INSTALL=y: 构建期会跑 usr/include 的 hdrtest
   # (厂商自加的头文件测试), 用新 glibc 会报 "field has incomplete type 'struct timespec'"
