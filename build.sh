@@ -1091,7 +1091,8 @@ fix_vendor_api_compat() {
   for _gov in $(find -L drivers -type f -path '*/devfreq/governor.h' -print 2>/dev/null); do
     # 该厂商头与 include/linux/devfreq/governor.h 同名但内容不同；UFS 只需兼容结构，禁用其重复实现。
     if grep -q 'devfreq_update_stats' "$_gov"; then
-      sed -i '/^[[:space:]]*static[[:space:]]\+int[[:space:]]\+devfreq_update_stats[[:space:]]*(/,/^[[:space:]]*}/d' "$_gov" || true
+      # 保留厂商实现但改名，避免与内核 governor API 同名重定义。
+      sed -i -E 's/\bdevfreq_update_stats\b/suki_vendor_devfreq_update_stats/g' "$_gov" || true
     fi
   done
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
@@ -1137,8 +1138,8 @@ EOF
   done
   # MTK charger 的回调在公开树中缺少前置声明；补一个本地原型避免 static/implicit 冲突。
   for _cf in $(find -L drivers/power/supply -type f -name 'mtk_charger.c' -print 2>/dev/null); do
-    if grep -q 'static.*usbpd_mi_vdm_received_cb' "$_cf" && ! grep -q 'static void usbpd_mi_vdm_received_cb' "$_cf"; then
-      sed -i '/^#include/i static void usbpd_mi_vdm_received_cb(void);' "$_cf" || true
+    if grep -q 'usbpd_mi_vdm_received_cb' "$_cf" && ! grep -q 'suki-builder: usbpd prototype' "$_cf"; then
+      sed -i '/^#include/i /* suki-builder: usbpd prototype */\nstatic void usbpd_mi_vdm_received_cb(void);' "$_cf" || true
     fi
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
