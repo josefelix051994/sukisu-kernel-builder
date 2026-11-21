@@ -764,6 +764,27 @@ compat_fixups() {
     info "兼容修复: qpnp-power-on.h 的 qpnp_pon_wd_config 定义加 static (多 TU 重复定义冲突)"
     sed -i -E 's/^int qpnp_pon_wd_config\(bool enable\)[[:space:]]*$/static int qpnp_pon_wd_config(bool enable)/' "$qpon"
   fi
+  # 小米 5.10 公开树 (marble/mayfly/garnet/sky/yudi 等) 的 drivers/usb/gadget/udc/core.c
+  # 把 usb_gadget_{enable,disable}_async_callbacks 的 static inline 实现写了两遍(厂商合并
+  # 上游 commit 65e6c2f3 时重复应用) → "error: redefinition of 'usb_gadget_enable_async_callbacks'"
+  # (报在第二份定义行, 批跑 #11 的 mayfly/marble/garnet 等 5.10 树)。两份实现完全相同,
+  # 首次定义无人调用(调用点都在文件后部) → 把第一份重命名为 suki_dup_* 即可。
+  local udcc=drivers/usb/gadget/udc/core.c
+  if [ -f "$udcc" ]; then
+    local dupn=0 fnn
+    for fnn in usb_gadget_enable_async_callbacks usb_gadget_disable_async_callbacks; do
+      [ "$(grep -c "^static inline void $fnn" "$udcc")" -ge 2 ] || continue
+      awk -v fn="$fnn" '
+        index($0, "static inline void " fn) == 1 {
+          c++
+          if (c == 1) sub("static inline void " fn, "static inline void suki_dup_" fn)
+        }
+        { print }
+      ' "$udcc" > "$udcc.tmp_usb" 2>/dev/null && mv "$udcc.tmp_usb" "$udcc" || rm -f "$udcc.tmp_usb"
+      dupn=$((dupn+1))
+    done
+    [ "$dupn" -gt 0 ] && info "兼容修复: usb gadget core.c 里重复的 static inline async_callbacks 定义已重命名 ($dupn 处)"
+  fi
   # OnePlus(sm8250/sm8350) 公开树缺 include/linux/sched_assist/ (厂商私有调度增强头),
   # 但 OplusKernelEnvConfig.mk 的 ALLOWED_MCROS 会自动 -DOPLUS_FEATURE_SCHED_ASSIST →
   # include/linux/mutex.h 里的 #include <linux/sched_assist/sched_assist_mutex.h> 直接
