@@ -1138,7 +1138,8 @@ EOF
   done
   # MTK charger 的回调在公开树中缺少前置声明；补一个本地原型避免 static/implicit 冲突。
   for _cf in $(find -L drivers/power/supply -type f -name 'mtk_charger.c' -print 2>/dev/null); do
-    sed -i '/suki-builder: usbpd prototype/d;/static void usbpd_mi_vdm_received_cb(struct mtk_charger \*pinfo, struct tcp_ny_uvdm uvdm);/d' "$_cf" || true
+    # 公开树缺少该回调的前置声明；将其定义改为外部链接，避免 clang 将隐式声明视为 extern 后与 static 冲突。
+    sed -i '/suki-builder: usbpd prototype/d;/static void usbpd_mi_vdm_received_cb(struct mtk_charger \*pinfo, struct tcp_ny_uvdm uvdm);/d;s/^static void usbpd_mi_vdm_received_cb(/void usbpd_mi_vdm_received_cb(/' "$_cf" || true
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
