@@ -1113,6 +1113,29 @@ detect_kver() {
 }
 
 # ------------------------------ SukiSU 集成 -------------------------------
+# drivers/kernelsu 是 setup.sh/手动集成建的**符号链接** (指向 KernelSU/kernel)。
+# KSU 自己的 Kbuild 用 -I$(KSU_KERNEL_DIR)/include 找 klog.h / uapi/app_profile.h,
+# 个别内核版本 (实测 6.12 android16) 下 $(src) 推导不到真实目录 → 头文件找不到。
+# 这里补上指向真实目录的绝对 include 路径 (幂等, 只加一次)。
+ksu_include_fixup() {
+  local real="$KERNEL_DIR/KernelSU/kernel"
+  local kfile=""
+  [ -d "$real" ] || return 0
+  # 直接写真实目录 (drivers/kernelsu 是符号链接; MSYS/Windows 上写链接路径可能静默失效)
+  if [ -f "$real/Kbuild" ]; then
+    kfile="$real/Kbuild"
+  elif [ -f "$real/Makefile" ]; then
+    kfile="$real/Makefile"
+  fi
+  [ -n "$kfile" ] || return 0
+  grep -q 'suki-builder: ksu include dirs' "$kfile" && return 0
+  {
+    printf '\n# suki-builder: ksu include dirs (drivers/kernelsu 是符号链接, $(src) 推导不到 include/ 时兜底)\n'
+    printf 'ccflags-y += -I%s -I%s/include -I%s/include/uapi\n' "$real" "$real" "$real"
+  } >>"$kfile"
+  ok "兼容修复: SukiSU 的 Kbuild/Makefile 补绝对 include 路径 (klog.h / uapi/app_profile.h)"
+}
+
 integrate_sukisu() {
   (
     cd "$KERNEL_DIR"
@@ -1122,6 +1145,7 @@ integrate_sukisu() {
       info "  尝试官方 setup.sh: curl .../setup.sh | bash -s $KSU_BRANCH"
       if curl -LSs "$SUKISU_SETUP_URL" | bash -s "$KSU_BRANCH" >>"$LOG_FILE" 2>&1; then
         ok "官方 setup.sh 集成成功"
+        ksu_include_fixup
         return 0
       fi
       warn "官方 setup.sh 失败(其私有 Git 源可能不可达), 改用 GitHub 手动集成... (日志: $LOG_FILE)"
@@ -1144,6 +1168,7 @@ integrate_sukisu() {
       sed -i '/^endmenu$/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig
     fi
     ok "手动集成完成 (KernelSU/kernel → drivers/kernelsu, Makefile/Kconfig 已打补丁)"
+    ksu_include_fixup
   )
 }
 
@@ -1871,6 +1896,13 @@ make_config() {
     $SC -e LTO_NONE >/dev/null 2>&1 || true
     $SC -d DEBUG_INFO >/dev/null 2>&1 || true
     $SC -d DEBUG_INFO_DWARF4 >/dev/null 2>&1 || true
+  fi
+  # gold 5.10.168 的 crypto/Makefile 只有 .asn1.h 的显式依赖, 却没有 %.asn1.h 生成规则 →
+  # make 直接报 "No rule to make target 'crypto/ecdsasignature.asn1.h'"。厂商树裁剪所致,
+  # 我们只需要 Image, 关掉 CONFIG_CRYPTO_ECDSA 即可 (KSU/Android 不需要内核 ECDSA)。
+  if [ -f crypto/Makefile ] && ! grep -q 'asn1_compiler' crypto/Makefile && ! grep -q '%\.asn1\.h' crypto/Makefile; then
+    $SC -d CRYPTO_ECDSA >/dev/null 2>&1 || true
+    info "兼容设置: crypto/Makefile 缺 asn1 生成规则, 关闭 CONFIG_CRYPTO_ECDSA"
   fi
   # 厂商 defconfig 常打开 CONFIG_HEADERS_INSTALL=y: 构建期会跑 usr/include 的 hdrtest
   # (厂商自加的头文件测试), 用新 glibc 会报 "field has incomplete type 'struct timespec'"
