@@ -1086,8 +1086,13 @@ fix_vendor_api_compat() {
   cd "$KERNEL_DIR"
   local f n=0
   # 清理旧版本兼容桩：工具链缓存会复用内核树，避免旧 governor 桩与厂商实现重定义。
-  # 该路径仅由本兼容层创建；老厂商树若自带同名私有头会与 drivers/devfreq/governor.h 冲突。
+  # 清理兼容层旧头；对厂商自带 governor 头加一次性保护，避免重复包含导致函数重定义。
   rm -f include/linux/devfreq/governor.h 2>/dev/null || true
+  for _gov in $(find -L drivers -type f -path '*/devfreq/governor.h' -print 2>/dev/null); do
+    if ! grep -q 'suki-builder: pragma-once' "$_gov"; then
+      sed -i '1i/* suki-builder: pragma-once */\n#pragma once' "$_gov" || true
+    fi
+  done
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
   # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
   for f in $(find -L drivers/scsi/ufs -type f -name '*.h' -print 2>/dev/null | while read -r x; do grep -ql 'struct devfreq_simple_ondemand_data' "$x" && printf '%s\n' "$x"; done); do
