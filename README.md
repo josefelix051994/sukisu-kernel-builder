@@ -1,4 +1,4 @@
-﻿# SukiSU-Ultra 内核编译工具
+# SukiSU-Ultra 内核编译工具
 
 依据官方集成教程 [sukisu.org/zh/guide/how-to-integrate](https://sukisu.org/zh/guide/how-to-integrate) 编写的一键式内核编译工具。
 
@@ -130,6 +130,7 @@ alioth|Android 11 · Linux 4.19|Redmi K40 / POCO F3|https://github.com/MiCode/Xi
 - `GKI标志`:`1` = GKI 通用内核(默认内置模式),`0` = 非 GKI(默认内置模式)
 - `defconfig提示` 可留空(自动按设备 ID 探测),支持 glob(如 `vendor/kona*`)
 - **片段配置**(`vendor/*_consolidate.config`、`*_GKI.config` 等不足 200 行的文件):工具会自动以 `gki_defconfig` 为基础合并片段,并裁掉 FULL LTO / KASAN / DWARF 等调试选项(否则 2 核 runner 极易超时)
+- **中文型号**:网页设备下拉显示的是中文名,来自 `tools/device_zh.tsv`(每行 `<机型代码>\t<中文型号>`,如 `alioth	红米K40 / POCO F3 / 小米10S`)。数据由 `node tools/gen_device_zh.js` 从 MiCode README 的机型表自动解析并翻译生成(覆盖全部 146 台);想改某个机型的显示名,直接编辑这个 TSV 或脚本里的 `OVERRIDE` 再重跑生成器与 `gen_devices.sh` 即可。英文名保留在选项的悬停提示里。
 - 改完 `devices.conf` 后请重新生成两份派生文件:
 
 ```bash

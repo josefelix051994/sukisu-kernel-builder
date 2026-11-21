@@ -1,0 +1,150 @@
+# 机型代码 -> 中文型号(由 tools/gen_device_zh.js 生成)
+# 数据来源: MiCode/Xiaomi_Kernel_OpenSource README 官方机型表 + 人工核对补充
+# 格式: <codename>\t<中文型号, 多合一同设备用 " / " 分隔>
+# 未列出的机型代码在网页上回退显示英文/代码
+agate	小米11T
+alioth	红米K40 / POCO F3 / 小米10S
+annibale	红米K90 / POCO F8 Pro
+apollo	红米K30S Ultra
+ares	红米K40 电竞版
+aurora	小米14 Ultra
+begonia	红米Note 8 Pro
+biloba	红米Note 8
+bixi	小米小米MIX Flip 2
+blue	POCO C61 / 红米A3
+bomb	红米10X / 红米10X Pro
+breeze	红米Note 13R
+camellia	红米Note 10
+camellian	POCO M3 Pro 5G / 红米Note 10 5G / 红米Note 10T
+cannon	红米Note 9
+cas	小米10 Ultra / 小米10 Pro / 小米10 / 红米K30 Pro
+cezanne	红米K30 Ultra
+chenfeng	小米Civi 4 pro
+chopin	红米Note 10 Pro
+cmi	红米K30S Ultra / 小米10 Ultra / 小米10 Pro / 红米K30 Pro / 小米10
+courbet	小米11 Lite
+creek	POCO M7 / 红米15
+dada	小米15 / 小米15 Pro
+dagu	小米Pad 5 pro 12.4
+daisy	小米A2 Lite / 红米6pro
+dandelion	红米9C / POCO C3 / 红米9A
+darwin	POCO X8s
+daumier	小米12 Pro
+davinci	红米K20 / 小米9T
+dipper	小米8 / 小米8 Explorer Edition / POCO F1
+earth	红米12C / POCO C55
+elish	小米Pad 5 Pro / 小米Pad 5 Pro 5G
+erhu	红米Pad 2 SE 4G
+evergo	红米Note 11T 5G
+fire	红米12
+flame	红米14R 5G / POCO M7 5G / 红米14C 5G
+fleur	红米Note 11S / POCO M4 Pro
+flourite	POCO M8 Pro 5G / 红米Note 15 Pro+ / 红米Note 15 Pro+ 5G Pro
+fuxi	小米13 / 小米13 Pro
+gale	红米13C �POCO C65
+garnet	红米Note 13 Pro
+gauguin	红米Note 9 Pro
+ginkgo	红米Note 8 / 红米Note 8T
+gki-a12	通用 GKI / Android 12
+gki-a13	通用 GKI / Android 13
+gki-a14	通用 GKI / Android 14
+gki-a15	通用 GKI / Android 15
+gki-a16	通用 GKI / Android 16
+gold	红米Note 13 5G
+grus	小米8SE / 小米9SE
+guitar	红米Pad 2 SE
+haydn	红米K40 Pro / 红米K40 Pro+
+ingres	红米K50 电竞版 / POCO F4 GT
+ishtar	小米13 Ultra
+jasmine	小米A2
+jason	小米Note 3
+kunzite	红米Note 15 SE 5G / 红米Note 15
+lancelot	红米10X 4G / 红米9 / POCO M2
+laurel	小米A3
+laurus	小米CC9e / 小米A3
+lavender	红米Note 7
+light	POCO M4 5G / 红米10 5G / 红米11 Prime 5G / 红米Note 11E
+lime	红米Note 9 4G / POCO M3
+lisa	小米11 LE
+liuqin	小米Pad 6 Pro
+lmi	红米K30 Pro / POCO F2 Pro
+marble	红米Note 12 Turbo / POCO F5
+mayfly	小米12S
+merlin	红米10X 4G / 红米9 and POCO M2
+mist	红米Note 17 5G / 红米Note 17 / POCO M8 Power 5G
+mona	小米小米Civi
+mondrian	红米K60
+moon	POCO M6 / 红米13
+moonstone	POCO X5 5G
+munch	红米K40S / POCO F4
+muyu	小米Pad 7 Pro
+nitrogen	小米MAX3 / 小米8 Lite
+odin	小米MIX 4
+olive	红米8 / 红米8A
+onc	红米7 / 红米Y3
+onyx	红米Turbo 4 Pro
+op7pro	一加 7 / 7 Pro / 7T / 7T Pro
+op8	一加 8 / 8 Pro
+op8t	一加 8T / 9R
+op9	一加 9 / 9 Pro
+op9rt	一加 9RT
+pearl	红米Note 12T Pro
+peridot	红米Turbo 3
+perseus	小米MIX 2S
+phoenix	红米K20 / 红米K30 / 小米Note 10 Lite / 小米CC9 Pro
+piano	小米Pad 8 Pro
+picasso	小米10 Lite 5G / 红米K30 5G / 小米10 Lite Zoom
+pipa	小米Pad 6
+pissarro	红米Note 11 Pro / 红米Note 11 Pro+
+psyche	小米12X
+pyxis	小米CC9 / 小米CC9 Meitu Edition
+raphael	红米K20 Pro / 小米9T Pro
+redwood	红米Note 12 Pro 极速版 / POCO X5 Pro 5G
+rosemary	红米Note 10S
+ruan	POCO Pad 5G / 红米Pad Pro 5G
+rubens	红米K50
+ruby	红米Note12 Pro
+sagit	小米6 / 小米小米MIX 2
+sakura	红米6Pro / 红米5Plus / 小米5X
+sea	红米Note 12S
+selene	红米10 Prime
+sheng	小米Pad 6S Pro 12.4
+shennong	小米14 / 小米14 Pro
+sirius	小米8 SE
+sky	红米Note 12R
+socrates	红米K60 Pro
+spark	红米Pad SE 4G / 红米Pad SE 8.7 4G
+spes	红米note 11
+spring	红米15 5G / 红米Note 15R / POCO M7 Plus 5G
+star	小米11 Lite 5G / 小米11 Pro / 小米11 Ultra / 小米小米MIX FOLD
+sunstone	红米Note 12 5G / 红米Note 12R
+surya	POCO X3 NFC
+sweet	红米Note 10 Pro
+taoyao	小米12 Lite
+tissot	小米A1
+toco	小米Note 10
+topaz	红米Note 12
+tucana	小米CC9 Pro
+tulip	红米Note 5 / 红米Note6 Pro / 小米6X
+uke	小米Pad 7
+umi	小米10 / 小米10 Pro
+vangogh	小米10T Lite / 红米Note 9 Pro 5G
+venus	小米11
+veux	红米Note 11 Pro 5G / POCO X4 Pro 5G
+vili	小米11T Pro
+violet	红米Note 7Pro
+viva	红米Note 11 Pro
+warm	红米A4 5G / POCO C75 5G
+warsaw	红米K90 Ultra
+willow	红米Note 8T
+xaga	红米Note 11T Pro
+xuanyuan	小米15 Ultra
+xun	红米Pad SE
+yudi	小米Pad 6 Max 14
+yuechu	小米Civi3
+yunluo	红米Pad
+yupei	小米Pad 8
+zephyr	红米Note 17
+zeus	小米12 / 小米12 Pro
+zijin	小米小米Civi 1S
+ziyi	小米civi2

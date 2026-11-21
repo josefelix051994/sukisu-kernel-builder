@@ -11,6 +11,17 @@ CONF="${1:-$SRC/devices.conf}"
 
 json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 
+# 中文型号映射(可选): tools/device_zh.tsv, 每行 "<codename>\t<中文型号>"
+declare -A ZH_OF
+ZH_FILE="$SRC/tools/device_zh.tsv"
+if [ -f "$ZH_FILE" ]; then
+  while IFS=$'\t' read -r zid zname || [ -n "$zid" ]; do
+    zid="${zid%%$'\r'}"; zname="${zname%%$'\r'}"
+    case "$zid" in ''|\#*) continue ;; esac
+    [ -n "$zname" ] && ZH_OF[$zid]="$zname"
+  done < "$ZH_FILE"
+fi
+
 # 品牌/机型推导 (与 build.sh derive_brand_model 一致)
 derive_brand_model() {
   local disp="$1" id="$2" repo="$3" brand="" model=""
@@ -92,6 +103,7 @@ for did in "${IDS[@]}"; do
   echo "      \"display\": \"$(json_escape "${DISPLAY_OF[$did]}")\","
   echo "      \"brand\": \"$(json_escape "$brand")\","
   echo "      \"model\": \"$(json_escape "$model")\","
+  echo "      \"zh\": \"$(json_escape "${ZH_OF[$did]:-}")\","
   echo "      \"versions\": ["
   echo "${VERSIONS_OF[$did]}" | sed 's/^/      /'
   echo "      ]"

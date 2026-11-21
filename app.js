@@ -148,8 +148,10 @@ function renderDevices() {
   for (const d of state.devices) {
     const o = document.createElement('option');
     o.value = d.id;
-    const label = d.brand && d.model ? `${d.brand} ${d.model} (${d.id})` : `${d.display} (${d.id})`;
-    o.textContent = label;
+    const en = d.brand && d.model ? `${d.brand} ${d.model}` : d.display;
+    // 优先显示中文型号, 括号内是机型代码; 英文名放进 title 供悬停查看
+    o.textContent = d.zh ? `${d.zh} (${d.id})` : `${en} (${d.id})`;
+    o.title = d.zh ? `${d.id} · ${en}` : `${d.id}`;
     sel.appendChild(o);
   }
   renderVersions();
@@ -170,8 +172,9 @@ function renderVersions() {
   const v = dev.versions[0];
   // 按设备类型预选集成分支: GKI → main, 传统内核 → builtin (用户仍可手动改)
   $('ksu-branch').value = v && v.gki == 1 ? 'main' : 'builtin';
+  const zhLine = dev.zh ? `中文型号: <b>${esc(dev.zh)}</b> · ` : '';
   $('device-info').innerHTML = v
-    ? `仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''}${v.unsupported ? ' · <b style="color:#f59e0b">⚠ 该内核版本不受支持(仅编译演练)</b>' : ''}`
+    ? `${zhLine}机型代码: <code>${esc(dev.id)}</code> · 仓库: <code>${v.repo}</code> · 分支: <code>${v.branch}</code> · defconfig: <code>${v.defconfig || '自动探测'}</code> · 内核: Linux ${v.kver}${v.gki == 1 ? ' · GKI' : ''}${v.unsupported ? ' · <b style="color:#f59e0b">⚠ 该内核版本不受支持(仅编译演练)</b>' : ''}`
     : '';
   updateActionButtons();
 }
