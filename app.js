@@ -162,6 +162,16 @@ function fillDeviceOptions(keyword) {
     return hay.includes(kw);
   });
   sel.innerHTML = '';
+  if (!list.length) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = '没有匹配的机型';
+    o.disabled = true;
+    sel.appendChild(o);
+    $('version').innerHTML = '';
+    $('device-info').innerHTML = `没有匹配「<b>${esc(keyword)}</b>」的机型, 试试机型代码或关键词(如 K40 / alioth / 红米)`;
+    return;
+  }
   for (const d of list) {
     const { text, title } = deviceLabel(d);
     const o = document.createElement('option');
