@@ -1093,12 +1093,16 @@ fix_vendor_api_compat() {
         sed -i '1i#include <linux/devfreq/governor.h>' "$f"
       else
         mkdir -p include/linux/devfreq
-        cat > include/linux/devfreq/governor.h <<'EOF'
+        if [ -f drivers/devfreq/governor.h ]; then
+          cp -f drivers/devfreq/governor.h include/linux/devfreq/governor.h
+        else
+          cat > include/linux/devfreq/governor.h <<'EOF'
 #ifndef _SUKI_DEVFREQ_GOVERNOR_STUB_H
 #define _SUKI_DEVFREQ_GOVERNOR_STUB_H
 struct devfreq_simple_ondemand_data { unsigned int upthreshold; unsigned int downdifferential; };
 #endif
 EOF
+        fi
         sed -i '1i#include <linux/devfreq/governor.h>' "$f"
       fi
       n=$((n+1))
@@ -1805,7 +1809,7 @@ toolchain_make_args() {
   if [ "$USE_CLANG" = 1 ] && ! { [ "$SEL_GKI" = 1 ] \
        || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
        || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; }; then
-    kc="$kc -Wno-error -Wno-error=int-conversion"
+    kc="$kc -Wno-error -Wno-error=int-conversion -Wno-error=implicit-function-declaration"
   fi
   if [ -n "$kc" ]; then
     a+=(KCFLAGS="$kc")
