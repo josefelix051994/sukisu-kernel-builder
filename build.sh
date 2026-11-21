@@ -1095,6 +1095,24 @@ fix_vendor_api_compat() {
       sed -i -E 's/\bdevfreq_update_stats\b/suki_vendor_devfreq_update_stats/g' "$_gov" || true
     fi
   done
+  # 老 MTK 相机驱动仍 include linux/wakelock.h；该 Android 私有头在主线树中已移除，提供最小兼容桩。
+  if [ ! -f include/linux/wakelock.h ] && find -L drivers/misc/mediatek -type f \( -name '*.c' -o -name '*.h' \) -print 2>/dev/null | while read -r _wf; do grep -q 'linux/wakelock.h' "$_wf" && exit 0; done; then
+    mkdir -p include/linux
+    cat > include/linux/wakelock.h <<'EOF'
+#ifndef _SUKI_WAKELOCK_COMPAT_H
+#define _SUKI_WAKELOCK_COMPAT_H
+#include <linux/types.h>
+struct wake_lock { int dummy; };
+#define WAKE_LOCK_SUSPEND 0
+static inline void wake_lock_init(struct wake_lock *l, int t, const char *n) { (void)l; (void)t; (void)n; }
+static inline void wake_lock_destroy(struct wake_lock *l) { (void)l; }
+static inline void wake_lock(struct wake_lock *l) { (void)l; }
+static inline void wake_unlock(struct wake_lock *l) { (void)l; }
+static inline int wake_lock_active(struct wake_lock *l) { (void)l; return 0; }
+static inline void wake_lock_timeout(struct wake_lock *l, long t) { (void)l; (void)t; }
+#endif
+EOF
+  fi
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
   # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
   for f in $(find -L drivers/scsi/ufs -type f -name '*.h' -print 2>/dev/null | while read -r x; do grep -ql 'struct devfreq_simple_ondemand_data' "$x" && printf '%s\n' "$x"; done); do
