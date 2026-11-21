@@ -1082,6 +1082,27 @@ fix_missing_makefile_objs() {
 # disp_arr.h / mtk_drm_arr.h (DRM FPS 变更回调), 但这两个头在厂商公开树里不存在。
 # ged_kpi.c 只在 CONFIG_DRM_MEDIATEK / CONFIG_MTK_HIGH_FRAME_RATE 分支里调用
 # drm/ disp_register_fps_chg_callback(...), 这里给缺失头生成 no-op 桩, 避免影响 DRM 正常路径。
+fix_vendor_api_compat() {
+  cd "$KERNEL_DIR"
+  local f n=0
+  # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
+  # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
+  for f in $(grep -rl 'struct devfreq_simple_ondemand_data' drivers/scsi/ufs --include='*.h' 2>/dev/null || true); do
+    if ! grep -qE '^#include <linux/devfreq(/governor)?\.h>' "$f"; then
+      sed -i '1i#include <linux/devfreq/governor.h>' "$f"
+      n=$((n+1))
+    fi
+  done
+  # proc_compat_ioctl 仅存在于较新的 proc_ops; 老树 struct proc_ops 无此成员时删除指定初始化行。
+  if [ -f include/linux/proc_fs.h ] && ! grep -q 'proc_compat_ioctl' include/linux/proc_fs.h; then
+    for f in $(grep -rl '^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=' drivers --include='*.c' 2>/dev/null || true); do
+      sed -i '/^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=.*/d' "$f"
+      n=$((n+1))
+    done
+  fi
+  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS devfreq 头/移除旧 proc_ops 不支持的 proc_compat_ioctl ($n 处)"
+}
+
 fix_mtk_disp_arr_stub() {
   cd "$KERNEL_DIR"
   local stub f d n=0
@@ -1092,6 +1113,7 @@ static inline void disp_register_fps_chg_callback(void (*cb)(unsigned int)) { (v
 static inline void disp_unregister_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
 static inline void drm_register_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
 static inline void drm_unregister_fps_chg_callback(void (*cb)(unsigned int)) { (void)cb; }
+static inline void drm_invoke_fps_chg_callbacks(unsigned int fps) { (void)fps; }
 #endif
 EOF
   for f in $(grep -rlE '^[[:space:]]*#include[[:space:]]*[<"]disp_arr\.h[>"]' drivers 2>/dev/null || true); do
@@ -2310,6 +2332,7 @@ main() {
   compat_fixups
   fix_missing_kconfig_sources
   fix_missing_makefile_objs
+  fix_vendor_api_compat
   fix_mtk_disp_arr_stub
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
