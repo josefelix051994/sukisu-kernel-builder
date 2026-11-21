@@ -261,9 +261,9 @@ resolve_device_zh() {
 
 # Release 资产名清洗: 保留中文/字母/数字/._+-, 空白与路径分隔符换成下划线
 sanitize_asset_name() {
-  printf '%s' "$1" \
-    | sed -e 's#[/\\:*?"<>|]#_#g' -e 's/[[:space:]]\{1,\}/_/g' -e 's/_\{1,\}/_/g' \
-          -e 's/^_//' -e 's/_$//'
+  # 只保留 ASCII 字母数字与 ._- : GitHub 会把 Release 资产名里的非 ASCII 字符静默删掉,
+  # 所以统一 Release 里一律用 ASCII 资产名, 中文机型名在 README 索引里做映射
+  printf '%s' "$1" | sed -e 's/[^A-Za-z0-9._-]/_/g' -e 's/_\{1,\}/_/g' -e 's/^_//' -e 's/_$//'
 }
 
 # 产物基础名: 品牌_机型_机型代码_内核版本_SukiSU-<版本>_<北京时间>
@@ -322,18 +322,23 @@ write_release_notes() {
     echo "- 刷机有风险, 请自行承担。"
   } > "$OUTPUT_DIR/release-notes.md"
   printf '%s\n' "$art" > "$OUTPUT_DIR/LAST_ARTIFACT"
-  # 合集 Release 里用的稳定资产名: 中文机型名_机型代码_内核版本.zip (同名覆盖, README 里的链接可长期使用)
-  local zh zh_first ext
-  zh="$(resolve_device_zh)"
-  zh="${zh%% / *}"                     # 多名字机型只取第一个中文名, 保持资产名简短
-  [ -n "$zh" ] || zh="${BUILD_BRAND}${BUILD_MODEL:+-$BUILD_MODEL}"
-  [ -n "$zh" ] || zh="$SEL_DEVICE_ID"
+  # 合集 Release 里用的稳定资产名 (同名覆盖, README 里的链接可长期使用)
+  # 注意: GitHub 的 Release 资产名不允许非 ASCII 字符 (中文会被直接吃掉, 红米8_x.zip → 8_x.zip),
+  # 所以这里用 品牌_机型_代码_内核版本 的 ASCII 形式; 中文机型名在 README「内核下载索引」
+  # 与 Release 说明里做映射, 用户按中文名照样能一键找到。
+  local ext
   case "$art" in
     *.ko) ext=".ko" ;;
     *) ext=".zip" ;;
   esac
-  zh_first="$(sanitize_asset_name "$zh")"
-  printf '%s\n' "${zh_first}_${SEL_DEVICE_ID}_${KVER}${ext}" > "$OUTPUT_DIR/RELEASE_ASSET"
+  local -a an=()
+  local part
+  for part in "$BUILD_BRAND" "$BUILD_MODEL" "$SEL_DEVICE_ID" "$KVER"; do
+    part="$(sanitize_asset_name "$part")"
+    [ -n "$part" ] && an+=("$part")
+  done
+  local IFS=_
+  printf '%s\n' "${an[*]}${ext}" > "$OUTPUT_DIR/RELEASE_ASSET"
 }
 
 
