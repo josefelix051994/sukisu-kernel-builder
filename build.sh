@@ -1173,6 +1173,10 @@ EOF
       sed -i -E 's@^[[:space:]]*(.*camera_mfb\.o.*)$@# suki-builder: unavailable private MFB map table; \1@' "$f" || true
       n=$((n+1))
     fi
+    if grep -q 'swpm_perf_arm_pmu\.o' "$f" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*swpm_perf_arm_pmu\.o.*)$@# suki-builder: unavailable vendor PMU ABI; \1@' "$f" || true
+      n=$((n+1))
+    fi
   done
   [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失 SCP 对象 ($n 处)"
 }
