@@ -1086,9 +1086,8 @@ fix_vendor_api_compat() {
   cd "$KERNEL_DIR"
   local f n=0
   # 清理旧版本兼容桩：工具链缓存会复用内核树，避免旧 governor 桩与厂商实现重定义。
-  if [ -f include/linux/devfreq/governor.h ] && grep -q '_SUKI_DEVFREQ_GOVERNOR_STUB_H' include/linux/devfreq/governor.h; then
-    rm -f include/linux/devfreq/governor.h
-  fi
+  # 该路径仅由本兼容层创建；老厂商树若自带同名私有头会与 drivers/devfreq/governor.h 冲突。
+  rm -f include/linux/devfreq/governor.h 2>/dev/null || true
   # 部分 5.10 厂商 UFS 头直接嵌入 devfreq_simple_ondemand_data, 却未包含其定义。
   # governor 头在老树中提供该结构; 仅在 ufshcd.h 确有字段且缺 include 时补入。
   for f in $(find -L drivers/scsi/ufs -type f -name '*.h' -print 2>/dev/null | while read -r x; do grep -ql 'struct devfreq_simple_ondemand_data' "$x" && printf '%s\n' "$x"; done); do
@@ -1129,6 +1128,12 @@ EOF
         n=$((n+1))
       fi
     done
+  done
+  # MTK charger 的回调在公开树中缺少前置声明；补一个本地原型避免 static/implicit 冲突。
+  for _cf in $(find -L drivers/power/supply -type f -name 'mtk_charger.c' -print 2>/dev/null); do
+    if grep -q 'static.*usbpd_mi_vdm_received_cb' "$_cf" && ! grep -q 'static void usbpd_mi_vdm_received_cb' "$_cf"; then
+      sed -i '/^#include/i static void usbpd_mi_vdm_received_cb(void);' "$_cf" || true
+    fi
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
