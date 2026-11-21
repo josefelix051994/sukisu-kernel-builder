@@ -1106,7 +1106,7 @@ EOF
   done
   # proc_compat_ioctl 仅存在于较新的 proc_ops; 老树 struct proc_ops 无此成员时删除指定初始化行。
   if [ -f include/linux/proc_fs.h ] && ! grep -q 'proc_compat_ioctl' include/linux/proc_fs.h; then
-    for f in $(grep -rl '^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=' drivers --include='*.c' 2>/dev/null || true); do
+    for f in $(find -L drivers -type f -name '*.c' -print 2>/dev/null | while read -r x; do grep -qlE '^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=' "$x" && printf '%s\n' "$x"; done); do
       sed -i '/^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=.*/d' "$f"
       n=$((n+1))
     done
