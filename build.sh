@@ -1131,7 +1131,15 @@ EOF
       fi
     done
   done
-  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/sec_osal 私有头桩 ($n 处)"
+  # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
+  # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
+  for f in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -q 'ccci_fsm_scp\.o' "$f" 2>/dev/null; then
+      sed -i 's@^[[:space:]]*\(.*ccci_fsm_scp\.o.*\)$@# suki-builder: unavailable private SCP API; \1@' "$f" || true
+      n=$((n+1))
+    fi
+  done
+  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失 SCP 对象 ($n 处)"
 }
 
 fix_mtk_disp_arr_stub() {
