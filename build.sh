@@ -662,9 +662,17 @@ compat_fixups() {
   # 而厂商用 gcc 构建时不报 → 老厂商树用 clang 编不过 (run #40/#47 agate eccci、fire aw87xxx、
   # fire primary_display 等)。把 Makefile/Kbuild 里出现的 -Werror 一律降级为 -Wno-error
   # (-Werror=foo → -Wno-error=foo, 保留按告警的开关语义)。跳过 scripts/ 与 tools/, 避免破坏 kbuild 自身。
+  # 只改带 '=' 的 -Werror=foo 与裸 -Werror; 绝不动 -Werror-implicit-function-declaration 这类
+  # 短横线形式 (老 gcc 把它当合法独立选项, 被改成 -Wno-error-implicit-... 会变成未知选项 →
+  # 任何带 -Werror 的 cc-option 探测都失败 → KBUILD_CFLAGS 相关能力全被误判缺失,
+  # 4.9 树上直接报 "Cannot use CONFIG_CC_STACKPROTECTOR_STRONG")。
+  # 顶层 Makefile/Kbuild 不在此循环处理 (见下方独立块), 避免破坏 kbuild 的探测链。
   local mkvm mknum=0
   while IFS= read -r mkvm; do
-    if sed -i -E 's/(^|[^A-Za-z0-9_-])-Werror(=[A-Za-z0-9_=,-]+)?/\1-Wno-error\2/g' "$mkvm" 2>/dev/null; then
+    case "$mkvm" in
+      ./Makefile|Makefile|./Kbuild|Kbuild) continue ;;
+    esac
+    if sed -i -E 's/-Werror=/-Wno-error=/g; s/(^|[^A-Za-z0-9_-])-Werror([[:space:]]|$)/\1-Wno-error\2/g' "$mkvm" 2>/dev/null; then
       mknum=$((mknum + 1))
     fi
   done < <(find . \( -name '.git' -o -name 'scripts' -o -name 'tools' \) -prune -o \
