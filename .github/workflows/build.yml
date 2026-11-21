@@ -368,7 +368,21 @@ jobs:
               --notes-file /tmp/aggregate-notes.md 2>/dev/null || true
           fi
 
-          cp -f "$art" "$asset"
-          gh release upload "$RELEASE_TAG" "$asset" --clobber
-          gh release view "$RELEASE_TAG" --json url --jq '.url'
+          # 注意: gh release upload 会把资产名里的非 ASCII 字符去掉 (红米8_x.zip → 8_x.zip),
+          # 所以这里直接用 REST API 上传, 用 name= 参数显式传 URL 编码后的中文名。
+          release_id="$(gh api "repos/${REPO}/releases/tags/$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$RELEASE_TAG")" --jq .id)"
+          qname="$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1], safe=""))' "$asset")"
+          # 同名资产先删除 (等价 --clobber), 保证链接长期有效
+          gh api "repos/${REPO}/releases/${release_id}/assets?per_page=100" --jq '.[] | select(.name=="'"$asset"'") | .id' 2>/dev/null | while read -r old_id; do
+            [ -n "$old_id" ] && gh api -X DELETE "repos/${REPO}/releases/assets/${old_id}" >/dev/null
+          done
+          code="$(curl -sS -o /tmp/upload.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'Content-Type: application/octet-stream' \
+            --data-binary "@${art}" \
+            "https://uploads.github.com/repos/${REPO}/releases/${release_id}/assets?name=${qname}")"
+          if [ "$code" != "201" ]; then echo "上传失败 (HTTP ${code}): $(cat /tmp/upload.json)"; exit 1; fi
+          echo ">>> 已上传资产: $(python3 -c 'import json,sys;print(json.load(open("/tmp/upload.json"))["name"])')"
+          echo ">>> 下载直链: https://github.com/${REPO}/releases/download/$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1], safe=""))' "$RELEASE_TAG")/${qname}"
           echo ">>> 下载直链: https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${asset}"
