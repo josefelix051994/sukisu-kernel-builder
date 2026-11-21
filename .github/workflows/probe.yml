@@ -1,4 +1,4 @@
-name: probe v3
+name: probe v4
 on:
   workflow_dispatch:
 jobs:
@@ -8,30 +8,29 @@ jobs:
     steps:
       - name: setup
         run: |
+          set +e
           sudo apt-get update -qq
           sudo apt-get install -y -qq bc bison flex libssl-dev >/dev/null
           git clone -q --depth 1 -b lineage-19.1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 /tmp/gcc49
           git clone -q --depth 1 -b olive-q-oss https://github.com/MiCode/Xiaomi_Kernel_OpenSource /tmp/k
-          chmod +x /tmp/gcc49/bin/* || true
+          chmod +x /tmp/gcc49/bin/* 
       - name: probe
         run: |
+          set +e
           export CC=/tmp/gcc49/bin/aarch64-linux-android-gcc
           export CROSS_COMPILE=/tmp/gcc49/bin/aarch64-linux-android-
           cd /tmp/k
-          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/dev/null 2>&1
-          base() { make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE "$@" 2>&1; }
-          echo "=== A: clean prepare ==="
-          base prepare >/tmp/a.log 2>&1; echo "rc=$?"; tail -2 /tmp/a.log
-          echo "=== B: with KCFLAGS (build.sh ?????) ==="
-          rm -rf /tmp/o; make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/dev/null 2>&1
-          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE KCFLAGS="-fno-builtin-sprintf -fno-builtin-stpcpy -fno-builtin-memcmp -fno-builtin-bcmp" prepare >/tmp/b.log 2>&1; echo "rc=$?"; tail -3 /tmp/b.log
-          echo "=== C: append KBUILD_CFLAGS += -Wno-error ==="
-          printf '\nKBUILD_CFLAGS += -Wno-error\n' >> Makefile
-          rm -rf /tmp/o; make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/dev/null 2>&1
-          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE prepare >/tmp/c.log 2>&1; echo "rc=$?"; tail -3 /tmp/c.log
-          echo "=== D: broad -Werror demotion (?? sed) ==="
-          grep -rlE -- '-Werror' --include=Makefile --include=Kbuild --include='*.mk' . 2>/dev/null | grep -v '^./scripts' | grep -v '^./tools' | while read -r f; do sed -i -E 's/(^|[^A-Za-z0-9_-])-Werror(=[A-Za-z0-9_=,-]+)?/\1-Wno-error\2/g' "$f"; done
-          rm -rf /tmp/o; make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/dev/null 2>&1
-          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE prepare >/tmp/d.log 2>&1; echo "rc=$?"; tail -5 /tmp/d.log
-          echo "=== E: ?? D ?? KBUILD_CFLAGS ?? ==="
-          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE -pn 2>/dev/null | grep -m1 '^KBUILD_CFLAGS' | tail -c 600
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/dev/null 2>&1; echo "defconfig rc=$?"
+          echo "=== D: broad demotion ==="
+          n=0
+          for f in $(grep -rlE -- '-Werror' --include=Makefile --include=Kbuild --include='*.mk' . 2>/dev/null | grep -v '^\./scripts' | grep -v '^\./tools'); do
+            sed -i -E 's/(^|[^A-Za-z0-9_-])-Werror(=[A-Za-z0-9_=,-]+)?/\1-Wno-error\2/g' "$f"
+            n=$((n+1))
+          done
+          echo "demoted files: $n"
+          rm -rf /tmp/o
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE olive-perf_defconfig >/dev/null 2>&1; echo "defconfig2 rc=$?"
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE prepare >/tmp/d.log 2>&1; echo "prepare rc=$?"
+          tail -6 /tmp/d.log
+          echo "=== KBUILD_CFLAGS tail ==="
+          make O=/tmp/o ARCH=arm64 CC=$CC CROSS_COMPILE=$CROSS_COMPILE -pn 2>/dev/null | grep -m1 '^KBUILD_CFLAGS' | tail -c 700
