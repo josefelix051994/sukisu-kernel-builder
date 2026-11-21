@@ -1109,7 +1109,7 @@ EOF
   # 不以全文件 grep 判定，直接对旧内核树的指定初始化项做兼容删除。
   local _pkmaj _pkmin
   _pkmaj="${KVER%%.*}"; _pkmin="${KVER#*.}"; _pkmin="${_pkmin%%.*}"
-  if [ "${_pkmaj:-99}" -lt 5 ] || { [ "${_pkmaj:-99}" -eq 5 ] && [ "${_pkmin:-99}" -lt 5 ]; }; then
+  if { [ -f include/linux/proc_fs.h ] && ! grep -q 'proc_compat_ioctl' include/linux/proc_fs.h; } || [ -z "${_pkmaj:-}" ] || [ "${_pkmaj:-99}" -lt 5 ] || { [ "${_pkmaj:-99}" -eq 5 ] && [ "${_pkmin:-99}" -lt 5 ]; }; then
     for f in $(find -L drivers -type f -name '*.c' -print 2>/dev/null | while read -r x; do grep -qlE '^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=' "$x" && printf '%s\n' "$x"; done); do
       sed -i '/^[[:space:]]*\.proc_compat_ioctl[[:space:]]*=.*/d' "$f" || true
       n=$((n+1))
