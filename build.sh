@@ -818,6 +818,41 @@ compat_fixups() {
     done < <(grep -rlE '^[[:space:]]*#include <linux/sched_assist/' include/linux 2>/dev/null || true)
     [ "$sasnum" -gt 0 ] && info "兼容修复: 注释 $sasnum 处 include/linux/sched_assist/... (公开树缺该私有目录)"
   fi
+  # AOSP vendor hook 头 (include/trace/hooks/*.h) 在部分小米树里未公开, 但经过厂商改造的
+  # 驱动仍然 #include 它们并调用 trace_android_vh_/rvh_* 钩子 (mayfly 5.10.81 的
+  # drivers/thermal/thermal_core.c:27 → trace/hooks/thermal.h not found)。钩子在公开树里
+  # 本来就是空实现, 这里为每个缺失头生成桩: 把树里出现过的 trace_android_vh_/rvh_ 标识符
+  # 全部定义成无副作用的可变参宏 (do{}while(0)), 包含该头的文件即可正常编译。
+  local hvmiss hvink hvids hvnum=0 hvstub hn
+  hvmiss="$(mktemp)"; hvids="$(mktemp)"
+  grep -rhoE '#include[[:space:]]*<trace/hooks/[A-Za-z0-9_]+\.h>' --include='*.c' --include='*.h' . 2>/dev/null \
+    | sed -E 's@.*<([^>]+)>.*@\1@' | sort -u > "$hvids" || true
+  : > "$hvmiss"
+  while IFS= read -r hn; do
+    [ -n "$hn" ] || continue
+    [ -e "include/$hn" ] && continue
+    printf '%s\n' "$hn" >> "$hvmiss"
+  done < "$hvids"
+  # 收集树里实际出现的 vendor hook 名
+  local hvnames
+  hvnames="$(grep -rhoE 'trace_android_(vh|rvh)_[A-Za-z0-9_]+' --include='*.c' --include='*.h' . 2>/dev/null | sort -u || true)"
+  if [ -s "$hvmiss" ] && [ -n "$hvnames" ]; then
+    while IFS= read -r hn; do
+      mkdir -p "$(dirname "include/$hn")"
+      {
+        printf '/* suki-builder: AOSP vendor hook 头未公开, 生成空桩 (钩子本为空实现) */\n'
+        printf '#ifndef SUKI_TRACE_HOOK_STUB_H\n#define SUKI_TRACE_HOOK_STUB_H\n'
+        printf '#include <linux/types.h>\n'
+        while IFS= read -r hvink; do
+          printf '#define %s(...) do { } while (0)\n' "$hvink"
+        done <<< "$hvnames"
+        printf '#endif\n'
+      } > "include/$hn"
+      hvnum=$((hvnum+1))
+    done < "$hvmiss"
+    [ "$hvnum" -gt 0 ] && warn "厂商源码缺失 AOSP vendor hook 头 $hvnum 个 (trace/hooks/*.h), 已生成空桩 (钩子失效, 不影响基本功能)"
+  fi
+  rm -f "$hvmiss" "$hvids"
   # OnePlus 公开树的 OplusKernelEnvConfig.mk 会把一批 OPLUS_FEATURE_* 直接 -D 上去,
   # 其中部分特性源码未公开 (如 sched_assist 头、oplus_phoenix 驱动), 导致引用处 fatal error
   # (op8t 4.19: init/main.c 里的 ../drivers/soc/oplus/system/oplus_phoenix/oplus_phoenix.h)。
