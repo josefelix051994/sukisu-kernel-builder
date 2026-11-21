@@ -1120,7 +1120,7 @@ EOF
   for f in $(find -L drivers -type f \( -name '*.c' -o -name '*.h' \) -print 2>/dev/null | while read -r x; do grep -qE '^[[:space:]]*#include[[:space:]]*[<"]sec_(osal|export)\.h[>"]' "$x" && printf '%s\n' "$x"; done); do
     d="$(dirname "$f")"
     if [ ! -f "$d/sec_osal.h" ]; then
-      for _sec_h in sec_osal.h sec_export.h; do
+      for _sec_h in sec_osal.h sec_export.h scp_ipi.h; do
       if [ ! -f "$d/$_sec_h" ]; then
         cat > "$d/$_sec_h" <<EOF
 #ifndef _SUKI_${_sec_h//./_}_STUB_H
