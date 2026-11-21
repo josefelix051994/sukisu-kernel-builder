@@ -1985,6 +1985,9 @@ make_config() {
   if [ "$SEL_DEVICE_ID" = gold ] || { [ -f "$KERNEL_DIR/crypto/Makefile" ] && ! grep -qE 'asn1_compiler|%\.asn1\.h' "$KERNEL_DIR/crypto/Makefile"; }; then
     $SC -d CRYPTO_ECDSA >/dev/null 2>&1 || true
     info "最终配置确认: 关闭损坏的 CONFIG_CRYPTO_ECDSA ASN.1 规则"
+    if [ -f "$KERNEL_DIR/crypto/Makefile" ]; then
+      sed -i -E 's@^([[:space:]]*obj-[^=]*\$\(CONFIG_CRYPTO_ECDSA\)[[:space:]]*\+=[[:space:]]+.*ecdsa\.o.*)$@# suki-builder: disabled broken ECDSA ASN1 rule\n# \1@' "$KERNEL_DIR/crypto/Makefile" || true
+    fi
   fi
   if grep -q "^CONFIG_KSU=[ym]" "$OUT_DIR/.config"; then
     ok "CONFIG_KSU 已生效: $(grep '^CONFIG_KSU=' "$OUT_DIR/.config" | tr -d '\n')"
