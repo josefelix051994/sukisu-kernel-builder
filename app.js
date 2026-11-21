@@ -296,8 +296,14 @@ async function attachRun(runId) {
 
 function scheduleTick(ms) {
   stopPolling();
-  state.pollTimer = setTimeout(tick, Math.max(3000, ms));
+  // 标签页不可见时降频(60 秒), 避免长时间挂后台把 API 额度耗尽; 回到前台立即刷新
+  const delay = document.hidden ? Math.max(60000, ms) : Math.max(3000, ms);
+  state.pollTimer = setTimeout(tick, delay);
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state.curRunId && !state.pollTimer) tick();
+});
 
 function showRunError(text) {
   const el = $('run-error');
@@ -324,7 +330,7 @@ async function tick() {
     showRunError('');
     state.errBackoff = 0;
     if (run.status === 'in_progress' || run.status === 'queued') {
-      if (!state.logBusy) refreshLog(run, jobLogsUrl);
+      if (!state.logBusy && !document.hidden) refreshLog(run, jobLogsUrl);
       scheduleTick(state.pollMs);
     } else if (run.status === 'completed') {
       stopPolling();
