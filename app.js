@@ -422,9 +422,13 @@ function renderRun(run) {
   const badge = $('run-status-badge');
   const map = { queued: '排队中', in_progress: '编译中', completed: '已结束' };
   badge.textContent = map[run.status] || run.status;
-  badge.className = 'badge ' + run.status;
-  if (run.status === 'completed') badge.textContent = `已结束 · ${conclusionText(run.conclusion)}`;
-  badge.classList.add(conclusionClass(run.conclusion));
+  // 只有 run.status / conclusion 是非空合法 class 时才写 classList: 运行中的 run 没有 conclusion,
+  // 直接 classList.add('') 会抛 "DOMTokenList.add: The empty string is not a valid token"
+  badge.className = `badge ${run.status || 'queued'}`;
+  if (run.status === 'completed') {
+    badge.textContent = `已结束 · ${conclusionText(run.conclusion)}`;
+    if (run.conclusion) badge.classList.add(run.conclusion);
+  }
   $('run-name').textContent = `${state.curDeviceLabel} · 运行 #${run.run_number} · 事件 ${run.event} · 分支 ${run.head_branch}`;
   $('run-link').href = run.html_url;
   $('cancel-btn').hidden = !(run.status === 'in_progress' || run.status === 'queued');
@@ -433,7 +437,6 @@ function renderRun(run) {
 function conclusionText(c) {
   return { success: '成功 ✅', failure: '失败 ❌', cancelled: '已取消', timed_out: '超时', skipped: '跳过' }[c] || c || '';
 }
-function conclusionClass(c) { return c || ''; }
 
 function renderSteps(jobs) {
   const tb = $('steps-body');
