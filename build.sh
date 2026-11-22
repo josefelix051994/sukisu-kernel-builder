@@ -1227,7 +1227,7 @@ EOF
   # 其它依赖缺失的私有 GPU/安全/USB glue 也无法安全补 ABI，按对象跳过。
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE 'clk-fhctl-gpueb\.o|musb_main\.o|device-apc-common\.o|ged_(bridge|monitor_3D_fence|ge|kpi|eb)\.o|devapc-mtk-multi-ao\.o|musb(_gadget|_host)?\.o|usb20_host\.o|widevine_driver\.o' "$_mf" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*(clk-fhctl-gpueb|musb_main|device-apc-common|ged_(bridge|monitor_3D_fence|ge|kpi|eb)|devapc-mtk-multi-ao|musb(_gadget|_host)?|usb20_host|widevine_driver)\.o.*)$@# suki-builder: unavailable private vendor ABI; \1@' "$_mf" || true
+      sed -i -E 's@^[[:space:]]*(.*(clk-fhctl-gpueb|musb_main|musb_qmu|device-apc-common|ged_(bridge|monitor_3D_fence|ge|kpi|eb)|devapc-mtk-multi-ao|musb(_gadget|_host)?|usb20_host|widevine_driver)\.o.*)$@# suki-builder: unavailable private vendor ABI; \1@' "$_mf" || true
     fi
   done
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
