@@ -1172,6 +1172,12 @@ EOF
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
+  # mrdump panic 访问 struct module 内部布局；缺少 CONFIG_MODULES/私有实现时跳过该诊断对象。
+  for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -q 'mrdump_panic\.o' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*mrdump_panic\.o.*)$@# suki-builder: unavailable module internals; \1@' "$_mf" || true
+    fi
+  done
   # 旧 MTK AEE slog 依赖未包含 seq_file API；补标准头并跳过不完整 Android debug symbols 头的 NULL 缺失。
   for _sf in $(find -L drivers/misc/mediatek -type f -name 'slog.c' -print 2>/dev/null); do
     grep -q '#include <linux/seq_file.h>' "$_sf" || sed -i '1i#include <linux/seq_file.h>' "$_sf" || true
