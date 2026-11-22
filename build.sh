@@ -1225,8 +1225,8 @@ EOF
   done
   # SCP RV 是厂商私有预编译式对象集合；旧 GCC ld 无法链接其绝对重定位。
   # 整个目录均跳过，避免逐个追逐 helper/excep/wrapper/irq/logger 等对象。
-  for _sf in $(find -L drivers/misc/mediatek/scp -type f -name 'Makefile' -print 2>/dev/null); do
-    if [[ "$_sf" == */rv/Makefile || "$_sf" == */scp/Makefile ]]; then
+  for _sf in $(find -L drivers/misc/mediatek -path '*/rv/Makefile' -print 2>/dev/null); do
+    if [[ "$_sf" == */scp/rv/Makefile || "$_sf" == */vcp/rv/Makefile ]]; then
       printf '\n# suki-builder: skip incompatible private SCP RV directory\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
     fi
   done
