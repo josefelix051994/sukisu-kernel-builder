@@ -1938,7 +1938,7 @@ toolchain_make_args() {
     a+=(KCFLAGS="$kc")
     # 老厂商树常含重复 tentative/初始化符号；旧 GCC 链接器会合并，LLD 默认拒绝。
     # 老内核通常直接调用 $(LD)，KBUILD_LDFLAGS 传给 ld.lld，不能带编译器的 -Wl 前缀。
-    a+=(KBUILD_LDFLAGS="--allow-multiple-definition -z notext --no-rosegment")
+    a+=(KBUILD_LDFLAGS="--allow-multiple-definition -z notext")
   fi
   printf '%s\n' "${a[@]}"
 }
