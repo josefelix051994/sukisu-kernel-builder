@@ -1172,6 +1172,12 @@ EOF
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
+  # MTK VOW 依赖未公开的 mt-plat/aee.h，跳过其对象；MKP 也依赖私有 module 布局。
+  for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -qE 'vow.*\.o' "$_mf" && grep -RIl 'mt-plat/aee\.h' drivers/misc/mediatek/vow >/dev/null 2>&1; then
+      sed -i -E 's@^[[:space:]]*(.*vow[^[:space:]]*\.o.*)$@# suki-builder: unavailable mt-plat AEE API; \1@' "$_mf" || true
+    fi
+  done
   # MTK MKP 依赖不可用的 struct module_layout 私有布局，跳过该对象。
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE 'mkp_module\.o' "$_mf" 2>/dev/null; then
