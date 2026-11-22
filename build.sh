@@ -1240,14 +1240,17 @@ EOF
   done
   # 父级 drivers/misc/mediatek Makefile 可能通过 subdir-y 重新进入 performance；同时处理 Makefile/Kbuild。
   if [ -f include/linux/sched.h ] && ! grep -q 'trace_recursion' include/linux/sched.h; then
-    for _pf in $(find -L drivers/misc/mediatek -type f \( -name Makefile -o -name Kbuild \) -print 2>/dev/null); do
-      if grep -qE '(^|[ /])(performance|perf_common)([/ .]|$)' "$_pf"; then
-        if ! grep -q 'suki-builder: disable legacy trace parent' "$_pf"; then
-          sed -i -E '/^[[:space:]]*#/! /(performance|perf_common)/ s@^@# suki-builder: disable legacy trace parent; @' "$_pf" || true
-        fi
+    for _pf in $(grep -RIl -E 'performance|perf_common' --include='Makefile' --include='Kbuild' drivers/misc/mediatek 2>/dev/null); do
+      sed -i -E '/^[[:space:]]*#/! /(performance|perf_common)/ s@^@# suki-builder: disable legacy trace parent; @' "$_pf" || true
+    done
+    # 某些厂商 Kbuild 用变量展开绕过父级屏蔽；将这些私有目录源码变为空对象，避免进入 kernel/trace/trace.h。
+    for _src in $(find -L drivers/misc/mediatek -type f -path '*/performance/*' -o -path '*/perf_common/*' 2>/dev/null | grep -E '\.(c|h)$' || true); do
+      if ! grep -q 'suki-builder: disable legacy perf source' "$_src"; then
+        sed -i '1i/* suki-builder: disable legacy perf source (missing task_struct.trace_recursion) */\n#if 0' "$_src" || true
+        printf '\n#endif /* suki-builder: disable legacy perf source */\n' >> "$_src"
       fi
     done
-    info "兼容修复: 禁用旧内核中递归进入 performance/perf_common 的父级构建项"
+    info "兼容修复: 禁用旧内核中 performance/perf_common 父级入口及源码"
   fi
   [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失私有对象 ($n 处)"
 }
