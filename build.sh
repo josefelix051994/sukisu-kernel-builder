@@ -1173,6 +1173,12 @@ EOF
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
   # MTK VOW 依赖未公开的 mt-plat/aee.h，跳过其对象；MKP 也依赖私有 module 布局。
+  # nanohub-mtk 同样依赖缺失的 SCP IPI 私有枚举/类型；整目录禁用，避免逐符号伪造 ABI。
+  for _nf in $(find -L drivers/staging -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -q 'nanohub-mtk\.o' "$_nf" 2>/dev/null; then
+      printf '\n# suki-builder: skip incomplete private nanohub SCP ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_nf" || true
+    fi
+  done
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE 'vow.*\.o' "$_mf" && grep -RIl 'mt-plat/aee\.h' drivers/misc/mediatek/vow >/dev/null 2>&1; then
       sed -i -E 's@^[[:space:]]*(.*vow[^[:space:]]*\.o.*)$@# suki-builder: unavailable mt-plat AEE API; \1@' "$_mf" || true
