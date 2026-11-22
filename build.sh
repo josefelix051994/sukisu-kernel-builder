@@ -1912,7 +1912,7 @@ toolchain_make_args() {
   if [ -n "$kmaj" ] && { [ "$kmaj" -lt 5 ] || { [ "$kmaj" -eq 5 ] && [ "$kmin" -lt 10 ]; }; }; then
     # -fno-builtin-memcmp/-bcmp: 部分厂商老树删掉了 lib/string.c 的 bcmp, 而 clang 会把
     # memcmp(a,b,n)==0 优化成 bcmp 调用 (begonia 4.14.94: undefined reference to `bcmp')
-    kc="-fno-builtin-sprintf -fno-builtin-stpcpy -fno-builtin-memcmp -fno-builtin-bcmp"
+    kc="-fno-builtin-sprintf -fno-builtin-stpcpy -fno-builtin-memcmp -fno-builtin-bcmp -fcommon"
   fi
   # 4.19 等老树的 KBUILD_CFLAGS 自带 -Werror=strict-prototypes; clang 对"无原型的老式函数定义"
   # (如 drivers/gpu/drm/mediatek/mtk_dsi.c) 也报该警告并升格为错误, 而 gcc 不报 →
