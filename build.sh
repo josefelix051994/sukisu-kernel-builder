@@ -1258,6 +1258,13 @@ EOF
       n=$((n+1))
     fi
   done
+  # staging/nanohub 也可能由父级 Makefile 强制聚合；清空整个私有 nanohub 子树，避免留下孤立 built-in.o。
+  for _sf in $(find -L drivers/staging -type f -name 'Makefile' -print 2>/dev/null); do
+    if [[ "$_sf" == */nanohub/* || "$_sf" == */nanohub/Makefile ]] && grep -qE 'nanohub|subdir-[ym]|obj-[ym]' "$_sf" 2>/dev/null; then
+      printf '\n# suki-builder: skip incomplete private staging nanohub ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
+      n=$((n+1))
+    fi
+  done
   # 传感器 SCP_nanoHub 依赖缺失的 SCP_IPI 私有枚举/类型；整目录跳过，避免伪造闭源 ABI。
   for _sf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
     if [[ "$_sf" == */SCP_nanoHub/* || "$_sf" == */sensorHub/* ]] && grep -qE 'SCP_nanoHub|scp.*nano|subdir-[ym]' "$_sf" 2>/dev/null; then
