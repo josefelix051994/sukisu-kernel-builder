@@ -1268,6 +1268,10 @@ EOF
       n=$((n+1))
     fi
   done
+  # 全树移除 nanohub/sensorHub 聚合入口；厂商树可能在 drivers/Makefile 或中间 Kbuild 重新引入，避免孤立 built-in.o。
+  for _pm in $(find -L drivers -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
+    sed -i -E '/^[[:space:]]*#/! /nanohub|sensorHub/ s@^@# suki-builder: unavailable private hub ABI; @' "$_pm" || true
+  done
   # 传感器 SCP_nanoHub 依赖缺失的 SCP_IPI 私有枚举/类型；整目录跳过，并移除 sensorHub 父级聚合，避免孤立 built-in.o。
   for _sm in $(find -L drivers/misc/mediatek/sensors-1.0 -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
     sed -i -E '/^[[:space:]]*#/! /sensorHub/ s@^@# suki-builder: unavailable sensorHub ABI; @' "$_sm" || true
