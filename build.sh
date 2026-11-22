@@ -1226,10 +1226,10 @@ EOF
   # 旧 MTK 树中 IIO/regulator 实现与驱动配置不匹配，禁用孤立的 MT637x 电源对象。
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE 'mt637[05]-(charger|gauge)\.o|mt6359p(-gauge|_battery)\.o|bat_id_adc\.o' "$_mf" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*(mt637[05]-(charger|gauge)|mt6359p(-gauge|_battery)|bat_id_adc)\.o.*)$@# suki-builder: unavailable IIO/regulator API; \1@' "$_mf" || true
+      sed -i -E 's@^[[:space:]]*(.*(mt637[05]-(charger|gauge|battery)|mt6359p(-gauge|_battery)|bat_id_adc)\.o.*)$@# suki-builder: unavailable IIO/regulator API; \1@' "$_mf" || true
     fi
-    if grep -qE 'tui-hal_mt\.o' "$_mf" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*tui-hal_mt\.o.*)$@# suki-builder: unavailable private TUI API; \1@' "$_mf" || true
+    if grep -qE 'tui-hal_mt\.o|t-base-tui\.o' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*(tui-hal_mt|t-base-tui)\.o.*)$@# suki-builder: unavailable private TUI API; \1@' "$_mf" || true
     fi
   done
   # SCP RV 是厂商私有预编译式对象集合；旧 GCC ld 无法链接其绝对重定位。
