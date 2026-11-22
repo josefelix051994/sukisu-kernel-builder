@@ -2312,7 +2312,8 @@ build_kernel() {
   for _hub in drivers/staging/nanohub drivers/misc/mediatek/sensors-1.0/sensorHub; do
     mkdir -p "$OUT_DIR/$_hub"
     if [ ! -e "$OUT_DIR/$_hub/built-in.o" ]; then
-      : > "$OUT_DIR/$_hub/built-in.o"
+      # ar 归档必须有 valid GNU archive header；空文件会触发 "File truncated"。
+      "${AR:-ar}" rcs "$OUT_DIR/$_hub/built-in.o" 2>/dev/null || printf '!<arch>\n' > "$OUT_DIR/$_hub/built-in.o"
     fi
   done
   # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
