@@ -1928,6 +1928,8 @@ toolchain_make_args() {
   fi
   if [ -n "$kc" ]; then
     a+=(KCFLAGS="$kc")
+    # 老厂商树常含重复 tentative/初始化符号；旧 GCC 链接器会合并，LLD 默认拒绝。
+    a+=(LDFLAGS_vmlinux="-Wl,--allow-multiple-definition")
   fi
   printf '%s\n' "${a[@]}"
 }
