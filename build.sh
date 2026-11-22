@@ -1180,8 +1180,8 @@ EOF
   done
   # MTK MKP 依赖不可用的 struct module_layout 私有布局，跳过该对象。
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
-    if grep -qE 'mkp_module\.o' "$_mf" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*mkp_module\.o.*)$@# suki-builder: unavailable module_layout ABI; \1@' "$_mf" || true
+    if grep -qE 'mkp_(module|demo)\.o' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*mkp_(module|demo)\.o.*)$@# suki-builder: unavailable MKP module ABI; \1@' "$_mf" || true
     fi
   done
   # mrdump panic 访问 struct module 内部布局；缺少 CONFIG_MODULES/私有实现时跳过该诊断对象。
@@ -1217,7 +1217,13 @@ EOF
       n=$((n+1))
     fi
   done
-  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失 SCP 对象 ($n 处)"
+  # 旧厂商 trace.h 访问 task_struct.trace_recursion，但目标树未包含该字段；关闭对应 tracing 对象。
+  for _tf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -qE '(^|[[:space:]])[^#]*trace.*\.o' "$_tf" 2>/dev/null && [ -f include/linux/sched.h ] && ! grep -q 'trace_recursion' include/linux/sched.h; then
+      sed -i -E 's@^[[:space:]]*(.*trace[^[:space:]]*\.o.*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
+    fi
+  done
+  [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失私有对象 ($n 处)"
 }
 
 fix_mtk_disp_arr_stub() {
