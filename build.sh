@@ -1244,7 +1244,7 @@ EOF
       sed -i -E '/^[[:space:]]*#/! /(performance|perf_common)/ s@^@# suki-builder: disable legacy trace parent; @' "$_pf" || true
     done
     # 某些厂商 Kbuild 用变量展开绕过父级屏蔽；将这些私有目录源码变为空对象，避免进入 kernel/trace/trace.h。
-    for _src in $(find -L drivers/misc/mediatek -type f \( -path '*/performance/*' -o -path '*/perf_common/*' -o -path '*/sched/*' \) 2>/dev/null | grep -E '\.(c|h)$' || true); do
+    for _src in $(find -L drivers/misc/mediatek -type f \( -path '*/performance/*' -o -path '*/perf_common/*' -o -path '*/sched/*' -o -path '*/task_turbo/*' \) 2>/dev/null | grep -E '\.(c|h)$' || true); do
       if ! grep -q 'suki-builder: disable legacy perf source' "$_src"; then
         sed -i '1i/* suki-builder: disable legacy perf source (missing task_struct.trace_recursion) */\n#if 0' "$_src" || true
         printf '\n#endif /* suki-builder: disable legacy perf source */\n' >> "$_src"
