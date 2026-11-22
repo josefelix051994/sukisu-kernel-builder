@@ -1268,7 +1268,10 @@ EOF
       n=$((n+1))
     fi
   done
-  # 传感器 SCP_nanoHub 依赖缺失的 SCP_IPI 私有枚举/类型；整目录跳过，避免伪造闭源 ABI。
+  # 传感器 SCP_nanoHub 依赖缺失的 SCP_IPI 私有枚举/类型；整目录跳过，并移除 sensorHub 父级聚合，避免孤立 built-in.o。
+  for _sm in $(find -L drivers/misc/mediatek/sensors-1.0 -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
+    sed -i -E '/^[[:space:]]*#/! /sensorHub/ s@^@# suki-builder: unavailable sensorHub ABI; @' "$_sm" || true
+  done
   for _sf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
     if [[ "$_sf" == */SCP_nanoHub/* || "$_sf" == */sensorHub/* ]] && grep -qE 'SCP_nanoHub|scp.*nano|subdir-[ym]' "$_sf" 2>/dev/null; then
       printf '\n# suki-builder: skip incomplete sensor SCP IPI ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
