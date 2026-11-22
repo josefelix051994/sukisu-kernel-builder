@@ -1302,6 +1302,10 @@ EOF
       printf '\n# suki-builder: skip incomplete private SCP version subtree\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
     fi
   done
+  # 全树清除 MASP 私有聚合入口，避免禁用对象后父级仍引用 masp/built-in.o。
+  for _mm in $(find -L drivers/misc/mediatek -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
+    sed -i -E '/^[[:space:]]*#/! /masp|asfv2|sec_boot/ s@^@# suki-builder: unavailable private MASP ABI; @' "$_mm" || true
+  done
   # MTK MASP 安全启动依赖未公开 SEC_ASSERT 宏/实现；跳过该私有对象而不伪造安全 ABI。
   for _mf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE 'sec_boot_core\.o|masp.*\.o' "$_mf" 2>/dev/null; then
