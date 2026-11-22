@@ -1890,6 +1890,12 @@ toolchain_make_args() {
        || { [ -n "$kmaj" ] && [ "$kmaj" -gt 5 ]; } \
        || { [ -n "$kmaj" ] && [ "$kmaj" -eq 5 ] && [ "$kmin" -ge 10 ]; }; then
       a+=(LLVM=1 CROSS_COMPILE=aarch64-linux-gnu- CC="${CCW}$CLANG_DIR/bin/clang")
+      # 老厂商树即使使用 LLVM=1 也可能包含绝对重定位；优先显式使用 GCC 镜像中的 GNU ld。
+      if [ -x "$GCC64_DIR/bin/aarch64-linux-android-ld.bfd" ]; then
+        a+=(LD="$GCC64_DIR/bin/aarch64-linux-android-ld.bfd")
+      elif [ -x "$GCC64_DIR/bin/aarch64-linux-android-ld" ]; then
+        a+=(LD="$GCC64_DIR/bin/aarch64-linux-android-ld")
+      fi
     else
       a+=(CC="${CCW}$CLANG_DIR/bin/clang" CLANG_TRIPLE=aarch64-linux-gnu-)
       a+=(CROSS_COMPILE="$GCC64_DIR/bin/aarch64-linux-android-")
