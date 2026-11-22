@@ -1,0 +1,5 @@
+{
+  "policy": "A combination is excluded after more than 10 documented repair attempts without a successful build.",
+  "combinations": [],
+  "records": []
+}
