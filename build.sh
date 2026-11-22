@@ -1251,6 +1251,18 @@ EOF
       printf '\n# suki-builder: skip incompatible private SCP RV directory\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
     fi
   done
+  # SCP 版本目录依赖缺失的闭源 scp.o；清空具体版本入口，避免留下孤立目标。
+  for _sf in $(find -L drivers/misc/mediatek/scp -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -qE '(^|[[:space:]])scp\.o([[:space:]]|$)' "$_sf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*scp\.o.*)$@# suki-builder: unavailable private SCP firmware object; \1@' "$_sf" || true
+    fi
+  done
+  # MTK MASP 安全启动依赖未公开 SEC_ASSERT 宏/实现；跳过该私有对象而不伪造安全 ABI。
+  for _mf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -qE 'sec_boot_core\.o|masp.*\.o' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*(sec_boot_core|masp)[^[:space:]]*\.o.*)$@# suki-builder: unavailable private MASP security ABI; \1@' "$_mf" || true
+    fi
+  done
   # 旧厂商 trace.h 访问 task_struct.trace_recursion；相关 FPSGO 私有目录无法在该树上兼容。
   # 目录级递归变量必须直接清空，单纯注释 obj-y 行会被父级 subdir-y 再次进入。
   for _tf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
