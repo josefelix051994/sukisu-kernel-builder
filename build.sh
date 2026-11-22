@@ -1929,8 +1929,7 @@ toolchain_make_args() {
   if [ -n "$kc" ]; then
     a+=(KCFLAGS="$kc")
     # 老厂商树常含重复 tentative/初始化符号；旧 GCC 链接器会合并，LLD 默认拒绝。
-    a+=(LDFLAGS_vmlinux="-Wl,--allow-multiple-definition")
-    # 4.x/厂商树直接调用 $(LD) 而不是 LDFLAGS_vmlinux；同步传递给 KBUILD_LDFLAGS。
+    # 老内核通常直接调用 $(LD)，KBUILD_LDFLAGS 传给 ld.lld，不能带编译器的 -Wl 前缀。
     a+=(KBUILD_LDFLAGS="--allow-multiple-definition")
   fi
   printf '%s\n' "${a[@]}"
