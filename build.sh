@@ -1258,6 +1258,13 @@ EOF
       n=$((n+1))
     fi
   done
+  # 传感器 SCP_nanoHub 依赖缺失的 SCP_IPI 私有枚举/类型；整目录跳过，避免伪造闭源 ABI。
+  for _sf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
+    if [[ "$_sf" == */SCP_nanoHub/* || "$_sf" == */sensorHub/* ]] && grep -qE 'SCP_nanoHub|scp.*nano|subdir-[ym]' "$_sf" 2>/dev/null; then
+      printf '\n# suki-builder: skip incomplete sensor SCP IPI ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
+      n=$((n+1))
+    fi
+  done
   # SCP v01/cm4 子树使用未公开 SHARE_BUF_SIZE 等私有 ABI；整目录跳过，避免逐符号伪造。
   for _sf in $(find -L drivers/misc/mediatek/scp -type f -name 'Makefile' -print 2>/dev/null); do
     if [[ "$_sf" == */v[0-9]*/Makefile || "$_sf" == */cm4/*/Makefile ]] && grep -qE 'scp(_helper|_excep|_ipi)?\.o|subdir-[ym].*v[0-9]' "$_sf" 2>/dev/null; then
