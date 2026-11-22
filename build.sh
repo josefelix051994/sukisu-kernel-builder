@@ -1220,7 +1220,8 @@ EOF
   # 旧厂商 trace.h 访问 task_struct.trace_recursion；相关 FPSGO 私有对象无法在该树上兼容，跳过对象。
   for _tf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if [ -f include/linux/sched.h ] && ! grep -q 'trace_recursion' include/linux/sched.h; then
-      sed -i -E 's@^[[:space:]]*(.*(fpsgo_base|perf_freq_tracker)\.o.*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
+      sed -i -E 's@^[[:space:]]*(.*fpsgo[^[:space:]]*\.o.*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
+      sed -i -E 's@^[[:space:]]*(.*perf_common[^[:space:]]*\.o.*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
     fi
   done
   [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失私有对象 ($n 处)"
