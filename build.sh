@@ -1251,6 +1251,12 @@ EOF
       fi
     done
     info "兼容修复: 禁用旧内核中 performance/perf_common 父级入口及源码"
+    # 旧 4.x trace.h 自身直接访问 task_struct.trace_recursion；改用本地占位变量避免头解析失败。
+    if [ -f kernel/trace/trace.h ] && ! grep -q 'suki-builder: legacy trace recursion shim' kernel/trace/trace.h; then
+      sed -i '1i/* suki-builder: legacy trace recursion shim */\nstatic unsigned int suki_trace_recursion_dummy;\n' kernel/trace/trace.h || true
+      sed -i 's/current->trace_recursion/suki_trace_recursion_dummy/g' kernel/trace/trace.h || true
+      info "兼容修复: trace.h 使用 legacy trace_recursion 占位变量"
+    fi
   fi
   [ "$n" -gt 0 ] && info "兼容修复: 补 UFS/proc_ops/MTK 私有头桩并跳过缺失私有对象 ($n 处)"
 }
