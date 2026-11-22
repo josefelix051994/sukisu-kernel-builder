@@ -1305,9 +1305,12 @@ EOF
   # MTK videox debug 使用缺失的 primary_display 私有回调；跳过该可选调试对象，不伪造厂商 ABI。
   for _vf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE '(^|/|[[:space:]])debug\.o([[:space:]$]|\.)|videox' "$_vf" 2>/dev/null; then
-      case "$_vf" in */video/*/videox/*|*/video/*/videox/Makefile|*/video/*/videox/../*)
-        sed -i -E 's@^[[:space:]]*(.*debug\.o.*)$@# suki-builder: unavailable primary_display vendor API; \1@' "$_vf" || true
-        ;;
+      case "$_vf" in
+        */video/*)
+          # 父级 video/Makefile 也可能以 videox/ 目录聚合，统一移除 videox/debug.o 入口。
+          sed -i -E 's@^[[:space:]]*(.*(videox/)?debug\.o.*)$@# suki-builder: unavailable primary_display vendor API; \1@' "$_vf" || true
+          sed -i -E 's@^[[:space:]]*(.*videox/.*)$@# suki-builder: unavailable primary_display vendor API; \1@' "$_vf" || true
+          ;;
       esac
     fi
   done
