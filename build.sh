@@ -1258,7 +1258,10 @@ EOF
       n=$((n+1))
     fi
   done
-  # staging/nanohub 也可能由父级 Makefile 强制聚合；清空整个私有 nanohub 子树，避免留下孤立 built-in.o。
+  # staging/nanohub 也可能由父级 Makefile 强制聚合；清空整个私有 nanohub 子树，并从所有父级聚合入口移除 nanohub/，避免孤立 built-in.o。
+  for _pm in $(find -L drivers/staging -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
+    sed -i -E '/^[[:space:]]*#/! /nanohub/ s@^@# suki-builder: unavailable nanohub ABI; @' "$_pm" || true
+  done
   for _sf in $(find -L drivers/staging -type f -name 'Makefile' -print 2>/dev/null); do
     if [[ "$_sf" == */nanohub/* || "$_sf" == */nanohub/Makefile ]] && grep -qE 'nanohub|subdir-[ym]|obj-[ym]' "$_sf" 2>/dev/null; then
       printf '\n# suki-builder: skip incomplete private staging nanohub ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
