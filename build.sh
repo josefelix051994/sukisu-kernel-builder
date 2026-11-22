@@ -2304,6 +2304,13 @@ build_kernel() {
     args+=($EXTRA_MAKE_ARGS)
     info "附加 make 参数: $EXTRA_MAKE_ARGS"
   fi
+  # 某些旧厂商 Kbuild 即使禁用私有子树仍会在父级聚合其 built-in.o；提供空归档占位，避免链接阶段因不存在文件中止（不伪造任何 ABI）。
+  for _hub in drivers/staging/nanohub drivers/misc/mediatek/sensors-1.0/sensorHub; do
+    mkdir -p "$OUT_DIR/$_hub"
+    if [ ! -e "$OUT_DIR/$_hub/built-in.o" ]; then
+      : > "$OUT_DIR/$_hub/built-in.o"
+    fi
+  done
   # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
   info "预检: 快速编译 drivers/kernelsu/ (尽早发现兼容错误)..."
   # 诊断: 确认 autoconf.h 中的核心配置 (排查 run #24 的 atomic64_t 未定义)
