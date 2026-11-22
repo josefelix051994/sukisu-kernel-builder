@@ -34,7 +34,8 @@ permissions:
 jobs:
   prepare:
     name: 生成编译矩阵
-    runs-on: ubuntu-latest
+    # 固定 runner，避免矩阵中旧内核因镜像漂移产生不可复现失败。
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}

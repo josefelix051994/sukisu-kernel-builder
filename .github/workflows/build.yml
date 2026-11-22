@@ -159,7 +159,8 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # 固定 runner，避免 ubuntu-latest 镜像升级改变旧内核工具链行为。
+    runs-on: ubuntu-22.04
     timeout-minutes: 350
     steps:
       - name: 检出仓库
@@ -233,10 +234,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /home/runner/.ccache
-          key: ccache-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.ksu_branch }}-${{ inputs.custom_repo }}-v1
-          restore-keys: |
-            ccache-${{ inputs.device }}-
-            ccache-
+           key: ccache-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.ksu_branch }}-${{ inputs.custom_repo }}-${{ github.sha }}-v2
+           # 不跨设备或提交恢复，避免旧配置污染失败复现。
 
       - name: 安装编译依赖
         run: |
