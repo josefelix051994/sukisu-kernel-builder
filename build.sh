@@ -1244,6 +1244,13 @@ EOF
       sed -i -E 's@^[[:space:]]*(.*(tui-hal_mt|t-base-tui)\.o.*)$@# suki-builder: unavailable private TUI API; \1@' "$_mf" || true
     fi
   done
+  # MTK DRM FPS 回调实现依赖未公开的 FPS_CHG_CALLBACK/disp_arr ABI；仅保留桩头时必须跳过实现对象，避免类型缺失和函数重定义。
+  for _mf in $(find -L drivers/gpu -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -qE '(^|[[:space:]])(mtk_drm_arr|disp_arr)\.o([[:space:]]|$)' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*(mtk_drm_arr|disp_arr)\.o.*)$@# suki-builder: unavailable private DRM FPS callback ABI; \1@' "$_mf" || true
+      n=$((n+1))
+    fi
+  done
   # SCP RV 是厂商私有预编译式对象集合；旧 GCC ld 无法链接其绝对重定位。
   # 整个目录均跳过，避免逐个追逐 helper/excep/wrapper/irq/logger 等对象。
   for _sf in $(find -L drivers/misc/mediatek -path '*/rv/Makefile' -print 2>/dev/null); do
