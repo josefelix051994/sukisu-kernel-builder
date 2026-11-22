@@ -1244,6 +1244,13 @@ EOF
       sed -i -E 's@^[[:space:]]*(.*(tui-hal_mt|t-base-tui)\.o.*)$@# suki-builder: unavailable private TUI API; \1@' "$_mf" || true
     fi
   done
+  # MTK MASP 安全启动目录通过复合目标递归进入 sec_boot_core；清空父级入口，避免注释单对象后仍编译私有 SEC_ASSERT ABI。
+  for _sf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
+    if [[ "$_sf" == */masp/* || "$_sf" == */asfv2/* ]] && grep -qE 'sec_boot|masp|subdir-[ym]' "$_sf" 2>/dev/null; then
+      printf '\n# suki-builder: skip incomplete private MASP security subtree\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
+      n=$((n+1))
+    fi
+  done
   # MTK DRM FPS 回调实现依赖未公开的 FPS_CHG_CALLBACK/disp_arr ABI；仅保留桩头时必须跳过实现对象，避免类型缺失和函数重定义。
   for _mf in $(find -L drivers/gpu -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE '(^|[[:space:]])(mtk_drm_arr|disp_arr)\.o([[:space:]]|$)' "$_mf" 2>/dev/null; then
