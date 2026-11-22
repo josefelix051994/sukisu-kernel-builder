@@ -1239,7 +1239,7 @@ EOF
     fi
   done
   # 父级 drivers/misc/mediatek Makefile 可能通过 subdir-y 重新进入 performance；同时处理 Makefile/Kbuild。
-  if [ -f include/linux/sched.h ] && ! grep -q 'trace_recursion' include/linux/sched.h; then
+  if [ -f include/linux/sched.h ] && ! grep -qE '(unsigned int|u32|int)[[:space:]]+trace_recursion[[:space:]]*;' include/linux/sched.h; then
     for _pf in $(grep -RIl -E 'performance|perf_common' --include='Makefile' --include='Kbuild' drivers/misc/mediatek 2>/dev/null); do
       sed -i -E '/^[[:space:]]*#/! /(performance|perf_common)/ s@^@# suki-builder: disable legacy trace parent; @' "$_pf" || true
     done
