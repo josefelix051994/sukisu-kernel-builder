@@ -1172,6 +1172,12 @@ EOF
   done
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
   # 若源文件存在但其私有头缺失，跳过该可选对象，避免污染内核其它 CCCI 功能。
+  # MTK MKP 依赖不可用的 struct module_layout 私有布局，跳过该对象。
+  for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
+    if grep -qE 'mkp_module\.o' "$_mf" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*mkp_module\.o.*)$@# suki-builder: unavailable module_layout ABI; \1@' "$_mf" || true
+    fi
+  done
   # mrdump panic 访问 struct module 内部布局；缺少 CONFIG_MODULES/私有实现时跳过该诊断对象。
   for _mf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -q 'mrdump_panic\.o' "$_mf" 2>/dev/null; then
