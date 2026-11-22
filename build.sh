@@ -1251,6 +1251,13 @@ EOF
       n=$((n+1))
     fi
   done
+  # SCP v01/cm4 子树使用未公开 SHARE_BUF_SIZE 等私有 ABI；整目录跳过，避免逐符号伪造。
+  for _sf in $(find -L drivers/misc/mediatek/scp -type f -name 'Makefile' -print 2>/dev/null); do
+    if [[ "$_sf" == */v[0-9]*/Makefile || "$_sf" == */cm4/*/Makefile ]] && grep -qE 'scp(_helper|_excep|_ipi)?\.o|subdir-[ym].*v[0-9]' "$_sf" 2>/dev/null; then
+      printf '\n# suki-builder: skip incomplete private SCP v01/cm4 ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
+      n=$((n+1))
+    fi
+  done
   # SCP RV 是厂商私有预编译式对象集合；旧 GCC ld 无法链接其绝对重定位。
   # 整个目录均跳过，避免逐个追逐 helper/excep/wrapper/irq/logger 等对象。
   for _sf in $(find -L drivers/misc/mediatek -path '*/rv/Makefile' -print 2>/dev/null); do
