@@ -1217,13 +1217,24 @@ EOF
       n=$((n+1))
     fi
   done
-  # 旧厂商 trace.h 访问 task_struct.trace_recursion；相关 FPSGO 私有对象无法在该树上兼容，跳过对象。
+  # 旧厂商 trace.h 访问 task_struct.trace_recursion；相关 FPSGO 私有目录无法在该树上兼容。
+  # 目录级递归变量必须直接清空，单纯注释 obj-y 行会被父级 subdir-y 再次进入。
   for _tf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
     if [ -f include/linux/sched.h ] && ! grep -q 'trace_recursion' include/linux/sched.h; then
       sed -i -E 's@^[[:space:]]*(.*fpsgo[^[:space:]]*(\.o|/).*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
       sed -i -E 's@^[[:space:]]*(.*perf_common[^[:space:]]*(\.o|/).*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
       case "$_tf" in
-        */performance/*|*/perf_common/*) sed -i -E '/^[[:space:]]*#/! s@^@# suki-builder: incompatible trace_recursion ABI; @' "$_tf" || true ;;
+        */performance/*|*/perf_common/*)
+          if ! grep -q 'suki-builder: disable legacy trace directory' "$_tf"; then
+            cat >> "$_tf" <<'EOF'
+# suki-builder: disable legacy trace directory (missing task_struct.trace_recursion)
+obj-y :=
+obj-m :=
+subdir-y :=
+subdir-m :=
+EOF
+          fi
+          ;;
       esac
     fi
   done
