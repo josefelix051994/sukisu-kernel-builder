@@ -1930,6 +1930,8 @@ toolchain_make_args() {
     a+=(KCFLAGS="$kc")
     # 老厂商树常含重复 tentative/初始化符号；旧 GCC 链接器会合并，LLD 默认拒绝。
     a+=(LDFLAGS_vmlinux="-Wl,--allow-multiple-definition")
+    # 4.x/厂商树直接调用 $(LD) 而不是 LDFLAGS_vmlinux；同步传递给 KBUILD_LDFLAGS。
+    a+=(KBUILD_LDFLAGS="--allow-multiple-definition")
   fi
   printf '%s\n' "${a[@]}"
 }
