@@ -1222,9 +1222,8 @@ EOF
     if [ -f include/linux/sched.h ] && ! grep -q 'trace_recursion' include/linux/sched.h; then
       sed -i -E 's@^[[:space:]]*(.*fpsgo[^[:space:]]*(\.o|/).*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
       sed -i -E 's@^[[:space:]]*(.*perf_common[^[:space:]]*(\.o|/).*)$@# suki-builder: incompatible trace_recursion ABI; \1@' "$_tf" || true
-      sed -i -E '/^[[:space:]]*obj-[^#]*[[:space:]]\+=[[:space:]].*(fpsgo_v[0-9]+|perf_common|performance\/)/ s@^@# suki-builder: incompatible trace_recursion ABI; @' "$_tf" || true
       case "$_tf" in
-        */performance/*|*/perf_common/*) sed -i -E '/^[[:space:]]*obj-[^#]*\+=/ s@^@# suki-builder: incompatible trace_recursion ABI; @' "$_tf" || true ;;
+        */performance/*|*/perf_common/*) sed -i -E '/^[[:space:]]*#/! s@^@# suki-builder: incompatible trace_recursion ABI; @' "$_tf" || true ;;
       esac
     fi
   done
