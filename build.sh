@@ -1223,6 +1223,13 @@ EOF
       n=$((n+1))
     fi
   done
+  # SCP RV 是厂商私有预编译式对象集合；旧 GCC ld 无法链接其绝对重定位。
+  # 整个目录均跳过，避免逐个追逐 helper/excep/wrapper/irq/logger 等对象。
+  for _sf in $(find -L drivers/misc/mediatek/scp -type f -name 'Makefile' -print 2>/dev/null); do
+    if [[ "$_sf" == */rv/Makefile || "$_sf" == */scp/Makefile ]]; then
+      printf '\n# suki-builder: skip incompatible private SCP RV directory\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
+    fi
+  done
   # 旧厂商 trace.h 访问 task_struct.trace_recursion；相关 FPSGO 私有目录无法在该树上兼容。
   # 目录级递归变量必须直接清空，单纯注释 obj-y 行会被父级 subdir-y 再次进入。
   for _tf in $(find -L drivers -type f -name 'Makefile' -print 2>/dev/null); do
