@@ -1210,8 +1210,8 @@ EOF
     fi
     # SCP RV helper is a vendor prebuilt-style object with absolute relocations;
     # it cannot be linked into the legacy kernel shared image with GNU ld.
-    if grep -qE '(^|[[:space:]])(scp/rv/)?scp_helper\.o([[:space:]]|$)' "$f" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*scp_helper\.o.*)$@# suki-builder: incompatible private SCP RV object; \1@' "$f" || true
+    if grep -qE '(^|[[:space:]])scp_(helper|excep)\.o([[:space:]]|$)' "$f" 2>/dev/null; then
+      sed -i -E 's@^[[:space:]]*(.*scp_(helper|excep)\.o.*)$@# suki-builder: incompatible private SCP RV object; \1@' "$f" || true
       n=$((n+1))
     fi
     if grep -q 'camera_mfb\.o' "$f" 2>/dev/null; then
