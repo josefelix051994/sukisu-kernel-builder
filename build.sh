@@ -1251,10 +1251,10 @@ EOF
       printf '\n# suki-builder: skip incompatible private SCP RV directory\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
     fi
   done
-  # SCP 版本目录依赖缺失的闭源 scp.o；清空具体版本入口，避免留下孤立目标。
+  # SCP 版本目录依赖缺失的闭源 scp.o；逐项注释不足时清空整个私有 SCP 子树，避免孤立目标。
   for _sf in $(find -L drivers/misc/mediatek/scp -type f -name 'Makefile' -print 2>/dev/null); do
-    if grep -qE '(^|[[:space:]])scp\.o([[:space:]]|$)' "$_sf" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*scp\.o.*)$@# suki-builder: unavailable private SCP firmware object; \1@' "$_sf" || true
+    if grep -qE 'scp\.o|subdir-[ym].*(v[0-9]|mt[0-9])|obj-[ym].*(v[0-9]|mt[0-9])' "$_sf" 2>/dev/null; then
+      printf '\n# suki-builder: skip incomplete private SCP version subtree\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
     fi
   done
   # MTK MASP 安全启动依赖未公开 SEC_ASSERT 宏/实现；跳过该私有对象而不伪造安全 ABI。
