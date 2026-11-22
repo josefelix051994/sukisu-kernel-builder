@@ -1304,8 +1304,11 @@ EOF
   done
   # MTK videox debug 使用缺失的 primary_display 私有回调；跳过该可选调试对象，不伪造厂商 ABI。
   for _vf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
-    if grep -qE 'videox.*debug\.o|debug\.o.*videox' "$_vf" 2>/dev/null; then
-      sed -i -E 's@^[[:space:]]*(.*videox[^[:space:]]*debug\.o.*)$@# suki-builder: unavailable primary_display vendor API; \1@' "$_vf" || true
+    if grep -qE '(^|/|[[:space:]])debug\.o([[:space:]$]|\.)|videox' "$_vf" 2>/dev/null; then
+      case "$_vf" in */video/*/videox/*|*/video/*/videox/Makefile|*/video/*/videox/../*)
+        sed -i -E 's@^[[:space:]]*(.*debug\.o.*)$@# suki-builder: unavailable primary_display vendor API; \1@' "$_vf" || true
+        ;;
+      esac
     fi
   done
   # 全树清除 MASP 私有聚合入口，避免禁用对象后父级仍引用 masp/built-in.o。
