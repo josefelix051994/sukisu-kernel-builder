@@ -1899,6 +1899,8 @@ toolchain_make_args() {
       # 显式指定 GCC4.9 工具链里的 GNU bfd ld (binutils 2.27, 主线老内核同款配方)。
       if [ -x "$GCC64_DIR/bin/aarch64-linux-android-ld.bfd" ]; then
         a+=(LD="$GCC64_DIR/bin/aarch64-linux-android-ld.bfd")
+      elif [ -x "$GCC64_DIR/bin/aarch64-linux-android-ld" ]; then
+        a+=(LD="$GCC64_DIR/bin/aarch64-linux-android-ld")
       fi
     fi
   else
