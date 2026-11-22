@@ -234,8 +234,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /home/runner/.ccache
-           key: ccache-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.ksu_branch }}-${{ inputs.custom_repo }}-${{ github.sha }}-v2
-           # 不跨设备或提交恢复，避免旧配置污染失败复现。
+          key: ccache-${{ inputs.device }}-${{ inputs.version }}-${{ inputs.ksu_branch }}-${{ inputs.custom_repo }}-${{ github.sha }}-v2
+          # 不跨设备或提交恢复，避免旧配置污染失败复现。
 
       - name: 安装编译依赖
         run: |
