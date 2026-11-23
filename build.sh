@@ -2340,7 +2340,10 @@ build_kernel() {
     info "附加 make 参数: $EXTRA_MAKE_ARGS"
   fi
   # 某些旧厂商 Kbuild 即使禁用私有子树仍会在父级聚合其 built-in.o；提供空归档占位，避免链接阶段因不存在文件中止（不伪造任何 ABI）。
-  for _hub in drivers/staging/nanohub drivers/misc/mediatek/sensors-1.0/sensorHub; do
+  for _hub in drivers/staging/nanohub drivers/misc/mediatek/sensors-1.0/sensorHub \
+    drivers/misc/mediatek/video/common/color20 \
+    drivers/misc/mediatek/video/mt6765/dispsys \
+    drivers/misc/mediatek/video/mt6768/dispsys; do
     mkdir -p "$OUT_DIR/$_hub"
     if [ ! -e "$OUT_DIR/$_hub/built-in.o" ]; then
       # ar 归档必须有 valid GNU archive header；空文件会触发 "File truncated"。
