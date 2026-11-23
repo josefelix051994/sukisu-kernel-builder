@@ -1302,6 +1302,25 @@ EOF
       printf '\n# suki-builder: skip incomplete private SCP version subtree\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_sf" || true
     fi
   done
+  # MTK legacy display color20/dispsys 依赖未公开的 disp_drv_platform.h/disp_drv_log.h。
+  # 这些头属于厂商私有显示 ABI；不伪造假头，按能力禁用相关子目录并移除父级聚合入口。
+  for _vf in $(find -L drivers/misc/mediatek/video -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
+    case "$_vf" in
+      */color20/*|*/mt6765/dispsys/*|*/mt6768/dispsys/*)
+        if ! grep -q 'suki-builder: skip missing private display ABI' "$_vf"; then
+          printf '\n# suki-builder: skip missing private display ABI (disp_drv_platform/log.h)\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_vf" || true
+          n=$((n+1))
+        fi
+        ;;
+      *)
+        # Parent video Kbuild files may re-add disabled color20/dispsys directories.
+        if grep -qE '(^|[[:space:]])(color20|mt6765/dispsys|mt6768/dispsys)(/|[[:space:]]|$)' "$_vf" 2>/dev/null; then
+          sed -i -E '/^[[:space:]]*#/! /(color20|mt6765\/dispsys|mt6768\/dispsys)/ s@^@# suki-builder: unavailable private display ABI; @' "$_vf" || true
+          n=$((n+1))
+        fi
+        ;;
+    esac
+  done
   # MTK videox debug 使用缺失的 primary_display 私有回调；跳过该可选调试对象，不伪造厂商 ABI。
   for _vf in $(find -L drivers/misc/mediatek -type f -name 'Makefile' -print 2>/dev/null); do
     if grep -qE '(^|/|[[:space:]])debug\.o([[:space:]$]|\.)|videox' "$_vf" 2>/dev/null; then
