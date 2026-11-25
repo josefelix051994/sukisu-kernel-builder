@@ -1333,6 +1333,47 @@ EOF
       esac
     fi
   done
+    # Redmi K40 Gaming (ares) 4.14:
+  # El árbol público de Xiaomi usa struct mtk_dsi_lfr_con en el comando
+  # de depuración arr4_enable, pero no publica su definición completa.
+  # Desactivamos únicamente ese comando de debug para permitir compilar
+  # sin tocar el resto del driver DRM/DSI.
+  if [ "$SEL_DEVICE_ID" = "ares" ]; then
+    _mtkdbg="drivers/gpu/drm/mediatek/mtk_debug.c"
+    if [ -f "$_mtkdbg" ] && grep -q 'struct mtk_dsi_lfr_con lfr_con' "$_mtkdbg"; then
+      python3 - "$_mtkdbg" <<'PY'
+import sys
+
+p = sys.argv[1]
+
+with open(p, "r", encoding="utf-8") as f:
+    s = f.read()
+
+start_marker = '} else if (strncmp(opt, "arr4_enable", 11) == 0) {'
+end_marker = '} else if (strncmp(opt, "LFR_update", 10) == 0) {'
+
+start = s.find(start_marker)
+end = s.find(end_marker, start)
+
+if start == -1 or end == -1:
+    print("ares arr4_enable block not found")
+    sys.exit(1)
+
+replacement = '''} else if (strncmp(opt, "arr4_enable", 11) == 0) {
+        DDPMSG("arr4_enable disabled: unavailable vendor LFR ABI\\n");
+    '''
+
+s = s[:start] + replacement + s[end:]
+
+with open(p, "w", encoding="utf-8") as f:
+    f.write(s)
+
+print("ares: disabled broken arr4_enable debug path")
+PY
+
+      info "兼容修复: ares 禁用缺失 mtk_dsi_lfr_con 的 arr4_enable 调试路径"
+    fi
+  fi
   # 全树清除 MASP 私有聚合入口，避免禁用对象后父级仍引用 masp/built-in.o。
   for _mm in $(find -L drivers/misc/mediatek -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null); do
     sed -i -E '/^[[:space:]]*#/! /masp|asfv2|sec_boot/ s@^@# suki-builder: unavailable private MASP ABI; @' "$_mm" || true
