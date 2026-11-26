@@ -1170,18 +1170,23 @@ EOF
       sed -i '/^#include/i /* suki-builder: usbpd prototype */\nstatic void usbpd_mi_vdm_received_cb();' "$_cf" || true
     fi
   done
-    # ares MTK 4.14: Elliptic MTK backend depende de ABI SCP/IPI privada
-  # no publicada (scp_ipi_send / scp_ipi_registration / SCP_IPI_BUSY).
-  # No simulamos esa ABI; desactivamos solo el backend MTK de Elliptic.
+  # ares MTK 4.14: Elliptic depende de ABI SCP/IPI privada no publicada.
+  # Se desactiva el subárbol Elliptic completo para evitar scp_ipi_* / SCP_IPI_BUSY.
   if [ "$SEL_DEVICE_ID" = "ares" ]; then
-    _elliptic_mtk="drivers/misc/mediatek/elliptic/io_modules/mtk"
-    if [ -d "$_elliptic_mtk" ]; then
-      for _emf in "$_elliptic_mtk/Makefile" "$_elliptic_mtk/Kbuild"; do
-        if [ -f "$_emf" ]; then
-          printf '\n# suki-builder: skip incomplete private Elliptic SCP/IPI ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_emf"
-        fi
-      done
-      info "兼容修复: ares 禁用依赖缺失 SCP/IPI 私有 ABI 的 Elliptic MTK backend"
+    _elliptic_dir="drivers/misc/mediatek/elliptic"
+
+    if [ -d "$_elliptic_dir" ]; then
+      # Vacía los Makefile/Kbuild internos.
+      while IFS= read -r _emf; do
+        printf '\n# suki-builder: skip incomplete private Elliptic SCP/IPI ABI\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$_emf"
+      done < <(find "$_elliptic_dir" -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+
+      # Quita también cualquier referencia a elliptic desde Makefiles padres.
+      while IFS= read -r _pmf; do
+        sed -i -E '/^[[:space:]]*#/! /elliptic(\/|[[:space:]]|\.o|$)/ s@^@# suki-builder: unavailable private Elliptic SCP/IPI ABI; @' "$_pmf" || true
+      done < <(find drivers/misc/mediatek -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+
+      info "兼容修复: ares 禁用缺失 SCP/IPI 私有 ABI 的 Elliptic 子树"
     fi
   fi
   # scp_ipi.h 对应的 CCCI SCP 驱动依赖未公开的时钟/通知器私有 API；空桩无法安全模拟。
