@@ -1480,6 +1480,27 @@ EOF
   return 0
 }
 
+# MTK sensor 2.0 'mtk_nanohub' usa ABI privada SCP/IPI (SCP_IPI_ERROR / IPI_SENSOR /
+# enum ipi_id / enum scp_ipi_status) ausente en el arbol publico (ares 4.14).
+# Se desactiva todo el subarbol sensor/2.0/mtk_nanohub y se quita de los Makefile padres.
+fix_mtk_sensor20_nanohub() {
+  cd "$KERNEL_DIR"
+  local base=drivers/misc/mediatek/sensor/2.0
+  [ -d "$base/mtk_nanohub" ] || return 0
+  local f n=0
+  # 1) Vacia todos los Makefile/Kbuild dentro de mtk_nanohub (incluido nanohub/)
+  while IFS= read -r f; do
+    printf '\n# suki-builder: skip incomplete private SCP/IPI nanohub (sensor/2.0)\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$f"
+    n=$((n+1))
+  done < <(find -L "$base/mtk_nanohub" -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  # 2) Comenta cualquier entrada que meta mtk_nanohub/ desde sensor/ (padres incluidos)
+  while IFS= read -r f; do
+    sed -i -E '/^[[:space:]]*#/! /mtk_nanohub/ s@^@# suki-builder: unavailable private SCP/IPI ABI; @' "$f" || true
+  done < <(grep -rlE 'mtk_nanohub' --include='Makefile' --include='Kbuild' drivers/misc/mediatek/sensor 2>/dev/null || true)
+  [ "$n" -gt 0 ] && info "jian rong xiu fu: disable sensor/2.0/mtk_nanohub private SCP/IPI subtree ($n)"
+  return 0
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -2401,6 +2422,7 @@ build_kernel() {
   fi
   # 某些旧厂商 Kbuild 即使禁用私有子树仍会在父级聚合其 built-in.o；提供空归档占位，避免链接阶段因不存在文件中止（不伪造任何 ABI）。
   for _hub in drivers/staging/nanohub drivers/misc/mediatek/sensors-1.0/sensorHub \
+    drivers/misc/mediatek/sensor/2.0/mtk_nanohub \
     drivers/misc/mediatek/video/common/color20 \
     drivers/misc/mediatek/video/mt6765/dispsys \
     drivers/misc/mediatek/video/mt6768/dispsys; do
@@ -2714,6 +2736,7 @@ main() {
   fix_missing_makefile_objs || warn "缺失 Makefile 条目修复出现非致命错误, 继续构建"
   fix_vendor_api_compat || warn "vendor API 兼容修复出现非致命错误, 继续构建"
   fix_mtk_disp_arr_stub || warn "MTK 显示桩修复出现非致命错误, 继续构建"
+  fix_mtk_sensor20_nanohub || warn "sensor/2.0 nanohub xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
