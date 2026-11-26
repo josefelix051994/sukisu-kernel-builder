@@ -1537,6 +1537,28 @@ fix_mtk_vow() {
   return 0
 }
 
+# MTK MASP/ASFv2 (arranque seguro privado) referencia 'masp/built-in.o' desde Makefile padres,
+# pero su subarbol fue vaciado -> 'ar: masp/built-in.o: No such file'. La siembra generica no
+# basta porque kbuild entra en la carpeta y borra el placeholder. Aqui quitamos masp del grafo
+# de compilacion por completo: vaciamos el subarbol y borramos sus referencias en TODO drivers/misc.
+fix_mtk_masp() {
+  cd "$KERNEL_DIR"
+  local f
+  # 1) Vacia los subarboles masp y asfv2
+  while IFS= read -r f; do
+    case "$f" in
+      */masp/*|*/asfv2/*)
+        printf '\n# suki-builder: skip private MASP/ASFv2 security subtree\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$f" ;;
+    esac
+  done < <(find -L drivers/misc/mediatek -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  # 2) Quita masp/ asfv2/ sec_boot (como segmento de ruta) de los padres de TODA la rama drivers/misc
+  while IFS= read -r f; do
+    sed -i -E '/^[[:space:]]*#/! /(^|[[:space:]=/])(masp|asfv2|sec_boot)(\/|[[:space:]]|\.o|$)/ s@^@# suki-builder: unavailable private MASP ABI; @' "$f" || true
+  done < <(find -L drivers/misc -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  info "jian rong xiu fu: disable mtk masp/asfv2 security subtree (robusto)"
+  return 0
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -2791,6 +2813,7 @@ main() {
   fix_mtk_sensor20_nanohub || warn "sensor/2.0 nanohub xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_tee_sanity || warn "tee_sanity xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_vow || warn "vow xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
+  fix_mtk_masp || warn "masp xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
