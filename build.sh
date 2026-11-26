@@ -2469,6 +2469,21 @@ build_kernel() {
       "${AR:-ar}" rcs "$OUT_DIR/$_hub/built-in.o" 2>/dev/null || printf '!<arch>\n' > "$OUT_DIR/$_hub/built-in.o"
     fi
   done
+  # suki-builder: red general contra "ar: <dir>/built-in.o: No such file or directory".
+  # Siembra un built-in.o vacio en CADA subcarpeta de drivers/misc/mediatek. Si la carpeta
+  # realmente compila, kbuild sobreescribe el placeholder; si un subarbol privado fue vaciado
+  # por los fixups, el 'ar' del padre ya no falla. Idempotente y seguro.
+  if [ -d "drivers/misc/mediatek" ]; then
+    _seed_ar="${AR:-ar}"
+    [ -x "$GCC64_DIR/bin/aarch64-linux-android-ar" ] && _seed_ar="$GCC64_DIR/bin/aarch64-linux-android-ar"
+    while IFS= read -r _d; do
+      mkdir -p "$OUT_DIR/$_d"
+      if [ ! -e "$OUT_DIR/$_d/built-in.o" ]; then
+        "$_seed_ar" rcs "$OUT_DIR/$_d/built-in.o" 2>/dev/null || printf '!<arch>\n' > "$OUT_DIR/$_d/built-in.o"
+      fi
+    done < <(cd "$KERNEL_DIR" && find drivers/misc/mediatek -type d 2>/dev/null)
+    info "jian rong xiu fu: sembrados built-in.o vacios de respaldo en drivers/misc/mediatek"
+  fi
   # 快速预检: 单独编译 drivers/kernelsu, 尽早暴露集成兼容错误 (约 2~3 分钟, -k 一次暴露全部错误)
   info "预检: 快速编译 drivers/kernelsu/ (尽早发现兼容错误)..."
   # 诊断: 确认 autoconf.h 中的核心配置 (排查 run #24 的 atomic64_t 未定义)
