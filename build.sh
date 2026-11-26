@@ -1501,6 +1501,22 @@ fix_mtk_sensor20_nanohub() {
   return 0
 }
 
+# MTK 'tee_sanity' usa sched_set_cpuprefer(pid, SCHED_PREFER_BIG), una API privada del
+# planificador MTK no publicada (ares 4.14). SCHED_PREFER_BIG no existe en el arbol publico.
+# Neutralizamos esa unica llamada (el chequeo de TEE sigue funcionando; solo pierde el hint de
+# afinidad a nucleos grandes). Si la linea cambia, se desactiva el objeto como respaldo.
+fix_mtk_tee_sanity() {
+  cd "$KERNEL_DIR"
+  local c=drivers/misc/mediatek/tee_sanity/tee_sanity.c
+  [ -f "$c" ] || return 0
+  if grep -q 'SCHED_PREFER_BIG' "$c"; then
+    # Comenta cualquier linea que use SCHED_PREFER_BIG (normalmente el sched_set_cpuprefer)
+    sed -i -E 's@^([[:space:]]*)(.*SCHED_PREFER_BIG.*)$@\1/* suki-builder: unavailable private MTK sched API; \2 */@' "$c" || true
+    info "jian rong xiu fu: tee_sanity neutraliza SCHED_PREFER_BIG (API privada MTK sched)"
+  fi
+  return 0
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -2737,6 +2753,7 @@ main() {
   fix_vendor_api_compat || warn "vendor API 兼容修复出现非致命错误, 继续构建"
   fix_mtk_disp_arr_stub || warn "MTK 显示桩修复出现非致命错误, 继续构建"
   fix_mtk_sensor20_nanohub || warn "sensor/2.0 nanohub xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
+  fix_mtk_tee_sanity || warn "tee_sanity xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
