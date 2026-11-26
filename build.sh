@@ -1559,6 +1559,48 @@ fix_mtk_masp() {
   return 0
 }
 
+# Enlace final de vmlinux: varios drivers del nucleo/consumidores todavia llaman simbolos
+# privados cuyos subarboles (AEE/MASP/SCP/elliptic/task_turbo/usb_boost) fueron desactivados
+# -> "undefined reference". Anadimos un objeto de STUBS DEBILES: define esos simbolos como
+# funciones vacias (return 0) y una variable cero. __weak => si existe el real, gana el real;
+# estos solo rellenan huecos. Runtime: esas funciones privadas quedan no-op (el kernel arranca).
+fix_mtk_vendor_stubs() {
+  cd "$KERNEL_DIR"
+  local c=drivers/misc/suki_vendor_stubs.c mk=drivers/misc/Makefile
+  [ -d drivers/misc ] || return 0
+  cat > "$c" <<'STUBEOF'
+// SPDX-License-Identifier: GPL-2.0
+/* suki-builder: weak stubs for private MTK vendor symbols absent from the public ares tree. */
+#include <linux/types.h>
+
+#define SUKI_WEAK_FN(name) long __attribute__((weak)) name(void) { return 0; }
+SUKI_WEAK_FN(aee_in_nested_panic)
+SUKI_WEAK_FN(aee_nested_printf)
+SUKI_WEAK_FN(update_userlimit_cpu_freq)
+SUKI_WEAK_FN(pob_qos_tracker)
+SUKI_WEAK_FN(masp_hal_set_dm_verity_error)
+SUKI_WEAK_FN(devfreq_update_stats)
+SUKI_WEAK_FN(binder_stop_turbo_inherit)
+SUKI_WEAK_FN(binder_start_turbo_inherit)
+SUKI_WEAK_FN(scp_get_reserve_mem_phys)
+SUKI_WEAK_FN(scp_get_reserve_mem_virt)
+SUKI_WEAK_FN(scp_get_reserve_mem_size)
+SUKI_WEAK_FN(scp_A_register_notify)
+SUKI_WEAK_FN(scp_register_feature)
+SUKI_WEAK_FN(scp_deregister_feature)
+SUKI_WEAK_FN(is_scp_ready)
+SUKI_WEAK_FN(elliptic_add_platform_controls)
+
+/* variable referenciada por el IPI de audio SCP; buffer cero grande para accesos a campos */
+unsigned char __attribute__((weak)) scp_ipidev[4096];
+STUBEOF
+  if [ -f "$mk" ] && ! grep -q 'suki_vendor_stubs.o' "$mk"; then
+    printf '\n# suki-builder: weak stubs for absent private vendor symbols\nobj-y += suki_vendor_stubs.o\n' >> "$mk"
+  fi
+  info "jian rong xiu fu: anadido drivers/misc/suki_vendor_stubs.o (weak stubs de simbolos privados)"
+  return 0
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -2814,6 +2856,7 @@ main() {
   fix_mtk_tee_sanity || warn "tee_sanity xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_vow || warn "vow xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_masp || warn "masp xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
+  fix_mtk_vendor_stubs || warn "vendor stubs xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
