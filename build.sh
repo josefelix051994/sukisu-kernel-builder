@@ -1517,6 +1517,26 @@ fix_mtk_tee_sanity() {
   return 0
 }
 
+# MTK 'vow' (Voice On Wakeup) depende de mt-plat/aee.h y ABI SCP privada no publicada.
+# El arreglo generico del script comenta sus .o pero deja la carpeta v02/ referenciada, y
+# luego 'ar' falla con "vow/v02/built-in.o: No such file or directory". Aqui vaciamos TODO
+# el subarbol vow y quitamos su entrada de los Makefile padres.
+fix_mtk_vow() {
+  cd "$KERNEL_DIR"
+  local base=drivers/misc/mediatek/vow
+  [ -d "$base" ] || return 0
+  local f
+  while IFS= read -r f; do
+    printf '\n# suki-builder: skip incomplete private VOW (mt-plat AEE / SCP ABI)\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$f"
+  done < <(find -L "$base" -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  # quita 'vow/' de los Makefile/Kbuild padres (como segmento de ruta, no substring)
+  while IFS= read -r f; do
+    sed -i -E '/^[[:space:]]*#/! /(^|[[:space:]=/])vow(\/|[[:space:]]|\.o|$)/ s@^@# suki-builder: unavailable private VOW; @' "$f" || true
+  done < <(find -L drivers/misc/mediatek -maxdepth 1 -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  info "jian rong xiu fu: disable mtk vow subtree"
+  return 0
+}
+
 fetch_kernel() {
   local repo="$SEL_REPO"
   [[ "$repo" == *.git ]] || repo="${repo}.git"
@@ -2439,6 +2459,7 @@ build_kernel() {
   # 某些旧厂商 Kbuild 即使禁用私有子树仍会在父级聚合其 built-in.o；提供空归档占位，避免链接阶段因不存在文件中止（不伪造任何 ABI）。
   for _hub in drivers/staging/nanohub drivers/misc/mediatek/sensors-1.0/sensorHub \
     drivers/misc/mediatek/sensor/2.0/mtk_nanohub \
+    drivers/misc/mediatek/vow drivers/misc/mediatek/vow/v02 \
     drivers/misc/mediatek/video/common/color20 \
     drivers/misc/mediatek/video/mt6765/dispsys \
     drivers/misc/mediatek/video/mt6768/dispsys; do
@@ -2754,6 +2775,7 @@ main() {
   fix_mtk_disp_arr_stub || warn "MTK 显示桩修复出现非致命错误, 继续构建"
   fix_mtk_sensor20_nanohub || warn "sensor/2.0 nanohub xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_tee_sanity || warn "tee_sanity xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
+  fix_mtk_vow || warn "vow xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
   # d_is_reg、seq_has_overflowed …), 官方也标为实验性 → 提前失败, 不浪费一次完整编译
