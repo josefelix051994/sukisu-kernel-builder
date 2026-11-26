@@ -1590,6 +1590,10 @@ SUKI_WEAK_FN(scp_register_feature)
 SUKI_WEAK_FN(scp_deregister_feature)
 SUKI_WEAK_FN(is_scp_ready)
 SUKI_WEAK_FN(elliptic_add_platform_controls)
+SUKI_WEAK_FN(is_turbo_task)
+SUKI_WEAK_FN(sched_get_cpu_load)
+SUKI_WEAK_FN(mrdump_common_die)
+SUKI_WEAK_FN(mrdump_ddr_reserve_ready)
 
 /* variable referenciada por el IPI de audio SCP; buffer cero grande para accesos a campos */
 unsigned char __attribute__((weak)) scp_ipidev[4096];
@@ -1598,6 +1602,24 @@ STUBEOF
     printf '\n# suki-builder: weak stubs for absent private vendor symbols\nobj-y += suki_vendor_stubs.o\n' >> "$mk"
   fi
   info "jian rong xiu fu: anadido drivers/misc/suki_vendor_stubs.o (weak stubs de simbolos privados)"
+  return 0
+}
+
+# MTK 'eccci' (interfaz del modem) quedo a medias: la parte core (dependiente de SCP privado)
+# fue desactivada, pero md_sys1_platform.o sigue compilando y usa ccci_debug_enable / modem_sys
+# (sin definir) -> undefined reference + error de reubicacion -fPIC en vmlinux. Desactivamos TODO
+# el subarbol eccci (se pierde datos moviles; WiFi y lo demas arrancan).
+fix_mtk_eccci() {
+  cd "$KERNEL_DIR"
+  local base=drivers/misc/mediatek/eccci f
+  [ -d "$base" ] || return 0
+  while IFS= read -r f; do
+    printf '\n# suki-builder: skip incomplete private eccci (modem/SCP) subtree\nobj-y :=\nobj-m :=\nsubdir-y :=\nsubdir-m :=\n' >> "$f"
+  done < <(find -L "$base" -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  while IFS= read -r f; do
+    sed -i -E '/^[[:space:]]*#/! /(^|[[:space:]=/])eccci(\/|[[:space:]]|\.o|$)/ s@^@# suki-builder: unavailable private eccci; @' "$f" || true
+  done < <(find -L drivers/misc -type f \( -name 'Makefile' -o -name 'Kbuild' \) -print 2>/dev/null)
+  info "jian rong xiu fu: disable mtk eccci (modem) subtree"
   return 0
 }
 
@@ -2856,6 +2878,7 @@ main() {
   fix_mtk_tee_sanity || warn "tee_sanity xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_vow || warn "vow xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_masp || warn "masp xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
+  fix_mtk_eccci || warn "eccci xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   fix_mtk_vendor_stubs || warn "vendor stubs xiu fu chu xian fei zhi ming cuo wu, ji xu gou jian"
   detect_kver
   # SukiSU builtin 面向 4.4+, 3.18/3.10 等更老内核缺太多新内核接口 (nullptr、ns_get_path、
